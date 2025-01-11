@@ -1,0 +1,74 @@
+{
+ "name":"Newbot",
+ "version":"v2025.0.0",
+ "type":"Swerve",
+ "variables":{
+  "expressions":{},
+  "poses":{}
+ },
+ "config":{
+  "frontLeft":{
+   "x":{
+    "exp":"7.875 in",
+    "val":0.200025
+   },
+   "y":{
+    "exp":"11.375 in",
+    "val":0.288925
+   }
+  },
+  "backLeft":{
+   "x":{
+    "exp":"-7.875 in",
+    "val":-0.200025
+   },
+   "y":{
+    "exp":"11.375 in",
+    "val":0.288925
+   }
+  },
+  "mass":{
+   "exp":"50.73 kg",
+   "val":50.73
+  },
+  "inertia":{
+   "exp":"4 kg m ^ 2",
+   "val":4.0
+  },
+  "gearing":{
+   "exp":"300 / 49",
+   "val":6.122448979591836
+  },
+  "radius":{
+   "exp":"1.94 in",
+   "val":0.04927599999999999
+  },
+  "vmax":{
+   "exp":"509.3568889020251 rad / s",
+   "val":509.3568889020251
+  },
+  "tmax":{
+   "exp":"0.5763157894736842 N m",
+   "val":0.5763157894736842
+  },
+  "bumper":{
+   "front":{
+    "exp":"19.25 in",
+    "val":0.48895
+   },
+   "side":{
+    "exp":"16.25 in",
+    "val":0.41275
+   },
+   "back":{
+    "exp":"13.25 in",
+    "val":0.33654999999999996
+   }
+  },
+  "differentialTrackWidth":{
+   "exp":"22 in",
+   "val":0.5588
+  }
+ },
+ "generationFeatures":[]
+}
