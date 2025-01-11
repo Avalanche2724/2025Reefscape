@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -293,10 +294,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             SmartDashboard.putNumber("chr avg diff rad", avgDiff);
             // find the circle radius of the wheels
             double radius = getModuleLocations()[0].getNorm();
-            // find the circumference
-            double circumference = 2 * Math.PI * radius;
             // find the distance that should have been traveled
-            double distance = yawDifference * circumference;
+            double distance = yawDifference * radius;
             // find what the radius of the wheel should be based on the distance traveled
             double calculatedRadius = distance / avgDiff;
             // print that out
@@ -305,7 +304,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     private final SwerveRequest.FieldCentric characterizationRotate = new SwerveRequest.FieldCentric()
-        .withDriveRequestType(DriveRequestType.Velocity).withRotationalRate(0.5);
+        .withDriveRequestType(DriveRequestType.Velocity).withRotationalRate(0.4);
 
     public Command wheelCharacterization() {
         var data = new WheelCharacterizationData();
@@ -315,7 +314,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             // Next: record initial data
             runOnce(data::reset),
             parallel(
-                run(data::postToDashboard),
+                Commands.run(data::postToDashboard),
                 applyRequest(() -> characterizationRotate)
             )
         );
