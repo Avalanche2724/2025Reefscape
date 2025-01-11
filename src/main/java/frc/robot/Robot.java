@@ -4,11 +4,7 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.hardware.TalonFX;
-
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -50,8 +46,6 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousExit() {}
 
-
-
   @Override
   public void teleopInit() {
     if (m_autonomousCommand != null) {
@@ -59,25 +53,8 @@ public class Robot extends TimedRobot {
     }
   }
 
-  TalonFX shooterMotor = new TalonFX(20);
-
   @Override
-  public void teleopPeriodic() {
-    double tc = shooterMotor.getTorqueCurrent().getValueAsDouble();
-    double accel = shooterMotor.getAcceleration().getValueAsDouble();
-    SmartDashboard.putNumber("tc", tc);
-    SmartDashboard.putNumber("accel", accel);
-    double tca = tc/accel;
-    if (tca > 100) { tca = 100;} if(tca<-100) {tca=-100;}
-    SmartDashboard.putNumber("tc accel", tca);
-
-    if (DriverStation.getStickButton(0, 1)) {
-      shooterMotor.set(0.15);
-    } else {
-      shooterMotor.set(0);
-    }
-
-  }
+  public void teleopPeriodic() {}
 
   @Override
   public void teleopExit() {}
