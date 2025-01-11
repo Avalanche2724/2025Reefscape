@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import edu.wpi.first.epilogue.Epilogue;
+//import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -18,7 +18,7 @@ public class Robot extends TimedRobot {
   private final RobotContainer m_robotContainer;
 
   public Robot() {    
-    Epilogue.bind(this);
+    //Epilogue.bind(this);
     
     m_robotContainer = new RobotContainer();
   }

@@ -1,27 +1,35 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModule.ClosedLoopOutputType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
+import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -249,5 +257,67 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
+    }
+
+    public class WheelCharacterizationData {
+        private final double[] directions = new double[4];
+        private final double[] initialPositions = new double[4];
+        private double initialYaw;
+        public void reset() {
+            for (int i = 0; i < 4; i++) {
+                var module = getModule(i);
+                directions[i] = Math.copySign(1, module.getCurrentState().speedMetersPerSecond);
+                initialPositions[i] = module.getPosition(false).distanceMeters;
+            }
+            initialYaw = getPigeon2().getYaw().getValue().in(Radians);
+        }
+
+        public void postToDashboard() {
+            double currentYaw = getPigeon2().getYaw().getValue().in(Radians);
+            double yawDifference = currentYaw - initialYaw;
+            SmartDashboard.putNumber("chr yaw diff", yawDifference);
+
+            double avgDiff = 0;
+
+            for (int i = 0; i < 4; i++) {
+                var module = getModule(i);
+                double difference = directions[i] *
+                        (module.getPosition(false).distanceMeters - initialPositions[i]);
+                avgDiff += difference;
+                SmartDashboard.putNumber("chr diff w" + i, difference);
+            }
+            avgDiff /= 4;
+            SmartDashboard.putNumber("chr avg diff", avgDiff);
+            // convert avgDiff to radians
+            avgDiff /= TunerConstants.kWheelRadius.in(Meter);
+            SmartDashboard.putNumber("chr avg diff rad", avgDiff);
+            // find the circle radius of the wheels
+            double radius = getModuleLocations()[0].getNorm();
+            // find the circumference
+            double circumference = 2 * Math.PI * radius;
+            // find the distance that should have been traveled
+            double distance = yawDifference * circumference;
+            // find what the radius of the wheel should be based on the distance traveled
+            double calculatedRadius = distance / avgDiff;
+            // print that out
+            SmartDashboard.putNumber("chr calc radius", edu.wpi.first.math.util.Units.metersToInches(calculatedRadius));
+        }
+    }
+
+    private final SwerveRequest.FieldCentric characterizationRotate = new SwerveRequest.FieldCentric()
+        .withDriveRequestType(DriveRequestType.Velocity).withRotationalRate(0.5);
+
+    public Command wheelCharacterization() {
+        var data = new WheelCharacterizationData();
+        return sequence(
+            // So we start with a bit of rotation to get the wheels into position
+            applyRequest(() -> characterizationRotate).withTimeout(0.5),
+            // Next: record initial data
+            runOnce(data::reset),
+            parallel(
+                run(data::postToDashboard),
+                applyRequest(() -> characterizationRotate)
+            )
+        );
     }
 }
