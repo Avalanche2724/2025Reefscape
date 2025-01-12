@@ -258,8 +258,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
-    /** By rotating the wheels and comparing the distance they travel to the angle given by the gyroscope,
-     * this command can calculate the radius of the wheels!
+    /**
+     * Wheel radius characterization inspired by 6328: by rotating the wheels and comparing the distance they travel
+     * to the angle given by the gyroscope, this command can calculate the radius of the wheels!
      * @return Command to run
      */
     public Command wheelCharacterization() {
