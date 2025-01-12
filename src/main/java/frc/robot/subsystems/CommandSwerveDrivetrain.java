@@ -267,7 +267,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 .withDriveRequestType(DriveRequestType.Velocity).withRotationalRate(0.4);
         var directions = new double[4];
         var initialWheelPositions = new Distance[4];
-        var initialYaw = Radians.mutable(0);
+        var initialYaw = Rotation.mutable(0);
 
         return sequence(
             // Start with a bit of rotation to make sure the wheels are in position:
@@ -290,29 +290,35 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     SmartDashboard.putNumber("Wheel characterization gyro difference", gyroYawDifference.in(Radians));
 
                     // Find how much the wheels have moved
-                    var avgWheelMovement = Meters.zero();
+                    var avgWheelMovement = Meters.mutable(0);
                     for (int i = 0; i < 4; i++) {
                         var module = getModule(i);
                         var wheelMovement = (Meters.of(module.getPosition(false).distanceMeters)
                                 .minus(initialWheelPositions[i])).times(directions[i]);
-                        avgWheelMovement = avgWheelMovement.plus(wheelMovement);
+                        avgWheelMovement.mut_plus(wheelMovement);
                     }
-                    avgWheelMovement = avgWheelMovement.div(4);
+                    avgWheelMovement.mut_divide(4);
                     SmartDashboard.putNumber("Wheel characterization wheel movement", avgWheelMovement.in(Meters));
-                    // Convert wheel movement in meters to rotations
-                    var avgWheelMovementAngle = Radians.of(avgWheelMovement.div(TunerConstants.kWheelRadius).magnitude());
+                    // Find wheel circumference
+                    var currentWheelCircumference = TunerConstants.kWheelRadius.times(2 * Math.PI);
+                    // Based on wheel circumference, convert wheel movement in meters to rotations
+                    var avgWheelMovementAngle = avgWheelMovement.div(currentWheelCircumference).times(Rotation.one());
                     SmartDashboard.putNumber("Wheel characterization wheel movement radians", avgWheelMovementAngle.in(Radians));
 
                     // Find the drive base radius of the wheels
-                    var radius = Meters.of(getModuleLocations()[0].getNorm());
+                    var drivebaseRadius = Meters.of(getModuleLocations()[0].getNorm());
+                    // Find the circumference from this radius
+                    var drivebaseCircumference = drivebaseRadius.times(2 * Math.PI);
                     // Find the arc length that was actually traveled by each wheel based on gyro
-                    var distance = Meters.of(gyroYawDifference.in(Radians) * radius.in(Meters));
-                    SmartDashboard.putNumber("arc length traveled by wheels", distance.in(Meters));
+                    var arcLength = drivebaseCircumference.times(gyroYawDifference.div(Rotation.one()));
+                    SmartDashboard.putNumber("Wheel characterization arc traveled", arcLength.in(Meters));
 
-                    // Find what the wheel radius should be based on the arc length
-                    var calculatedRadius = Meters.of(distance.in(Meters) / avgWheelMovementAngle.in(Radians));
-                    // print that out
-                    SmartDashboard.putNumber("chr calc radius", calculatedRadius.in(Inches));
+                    // Find what the wheel circumference should be based on the arc length
+                    var actualWheelCircumference = arcLength.div(avgWheelMovementAngle.div(Rotation.one()));
+                    // Find what the wheel radius should be
+                    var calculatedRadius = actualWheelCircumference.div(2 * Math.PI);
+                    // Put to dashboard
+                    SmartDashboard.putNumber("Wheel characterization CALCULATED RADIUS", calculatedRadius.in(Inches));
                 })
             )
         );
