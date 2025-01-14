@@ -101,7 +101,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               this));
 
   /* The SysId routine to test */
-  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
 
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -255,7 +255,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     var rotateRequest =
         new SwerveRequest.FieldCentric()
             .withDriveRequestType(DriveRequestType.Velocity)
-            .withRotationalRate(0.75);
+            .withRotationalRate(0.4);
     var directions = new double[4];
     var initialWheelPositions = new Distance[4];
     var initialYaw = Rotation.mutable(0);
