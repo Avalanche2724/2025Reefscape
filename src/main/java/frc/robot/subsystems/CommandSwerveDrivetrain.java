@@ -255,13 +255,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     var rotateRequest =
         new SwerveRequest.FieldCentric()
             .withDriveRequestType(DriveRequestType.Velocity)
-            .withRotationalRate(0.4);
+            .withRotationalRate(0.75);
     var directions = new double[4];
     var initialWheelPositions = new Distance[4];
     var initialYaw = Rotation.mutable(0);
     return sequence(
         // Start with a bit of rotation to make sure the wheels are in position:
-        applyRequest(() -> rotateRequest).withTimeout(0.5),
+        applyRequest(() -> rotateRequest).withTimeout(2),
         // Record initial data:
         runOnce(
             () -> {
