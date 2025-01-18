@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Vision;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import java.util.function.Supplier;
@@ -36,6 +37,8 @@ import java.util.function.Supplier;
  * be used in command-based projects.
  */
 public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+  public Vision vision = new Vision();
+
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
@@ -280,6 +283,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
               });
     }
+
+    // Do vision
+    correctFromVision();
   }
 
   private void startSimThread() {
@@ -378,5 +384,25 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                   SmartDashboard.putNumber(
                       "Wheel characterization CALCULATED RADIUS", calculatedRadius.in(Inches));
                 })));
+  }
+
+  public void correctFromVision() {
+    var visionEst = vision.getEstimatedGlobalPose();
+    visionEst.ifPresent(
+        est -> {
+          // Change our trust in the measurement based on the tags we can see
+          var estStdDevs = vision.getEstimationStdDevs();
+
+          addVisionMeasurement(
+              est.estimatedPose.toPose2d(),
+              Utils.fpgaToCurrentTime(est.timestampSeconds),
+              estStdDevs);
+        });
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    var debugField = vision.getSimDebugField();
+    debugField.getObject("EstimatedRobot").setPose(getState().Pose);
   }
 }
