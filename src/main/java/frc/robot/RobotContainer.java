@@ -11,6 +11,7 @@ import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -92,7 +93,11 @@ public class RobotContainer {
                     point.withModuleDirection(
                         new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
 
-    joystick.x().whileTrue(drivetrain.wheelCharacterization());
+    // joystick.x().whileTrue(drivetrain.wheelCharacterization());
+
+    joystick
+        .x()
+        .whileTrue(drivetrain.driveToPosition(() -> new Pose2d(5, 5, Rotation2d.fromDegrees(180))));
 
     joystick
         .pov(0)

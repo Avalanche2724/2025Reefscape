@@ -14,7 +14,9 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Distance;
@@ -52,6 +54,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   /** Swerve request to apply during field-centric path following */
   private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds =
+      new SwerveRequest.ApplyFieldSpeeds();
+
+  /** Swerve request to apply during PID to point */
+  private final SwerveRequest.ApplyFieldSpeeds pathApplyPoint =
       new SwerveRequest.ApplyFieldSpeeds();
 
   private final PIDController m_pathXController = new PIDController(10, 0, 0);
@@ -404,5 +410,30 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   public void simulationPeriodic() {
     var debugField = vision.getSimDebugField();
     debugField.getObject("EstimatedRobot").setPose(getState().Pose);
+    vision.simulationPeriodic(getState().Pose);
+  }
+
+  /**
+   * Drives robot towards given position
+   *
+   * @param target Sample along the path to follow
+   */
+  private void pidToPosition(Pose2d target) {
+    m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    var pose = getState().Pose;
+
+    var speeds =
+        new ChassisSpeeds(
+            m_pathXController.calculate(pose.getX(), target.getX()),
+            m_pathYController.calculate(pose.getY(), target.getY()),
+            m_pathThetaController.calculate(
+                pose.getRotation().getRadians(), target.getRotation().getRadians()));
+
+    setControl(pathApplyPoint.withSpeeds(speeds));
+  }
+
+  public Command driveToPosition(Supplier<Pose2d> target) {
+    return run(() -> pidToPosition(target.get()));
   }
 }
