@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class elevator extends SubsystemBase {
-  private static final int ELEVATOR_ID = 11;
+  private static final int ELEVATOR_ID = 40;
 
   private static final double ELEVATOR_DOWN_POSITION = 0;
   private static final double ELEVATOR_MID_UP_POSITION = 4;
