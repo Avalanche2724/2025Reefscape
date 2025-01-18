@@ -24,6 +24,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
@@ -45,10 +47,12 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   // Constants:
-  public static final String kCameraName = "YOUR CAMERA NAME";
+  public static final String kCameraName = "Arducam_OV9281_USB_Camera";
   // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
   public static final Transform3d kRobotToCam =
-      new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0, 0, 0));
+      new Transform3d(
+          new Translation3d(Inches.of(3.3125), Inches.of(0.0), Inches.of(11.75)),
+          new Rotation3d(0.0, Math.toRadians(-30.0), 0.0));
 
   // The layout of the AprilTags on the field
   public static final AprilTagFieldLayout kTagLayout =
@@ -82,11 +86,11 @@ public class Vision {
       visionSim.addAprilTags(kTagLayout);
       // Create simulated camera properties. These can be set to mimic your actual camera.
       var cameraProp = new SimCameraProperties();
-      cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
-      cameraProp.setCalibError(0.35, 0.10);
-      cameraProp.setFPS(15);
-      cameraProp.setAvgLatencyMs(50);
-      cameraProp.setLatencyStdDevMs(15);
+      cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(78.95));
+      cameraProp.setCalibError(0.33, 0.10);
+      cameraProp.setFPS(30);
+      cameraProp.setAvgLatencyMs(35);
+      cameraProp.setLatencyStdDevMs(3);
       // Create a PhotonCameraSim which will update the linked PhotonCamera's values with visible
       // targets.
       cameraSim = new PhotonCameraSim(camera, cameraProp);
