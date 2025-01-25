@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.LEDSubsystem;
 
 public class RobotContainer {
   private double MaxSpeed =
@@ -66,6 +67,8 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
+    joystick.x().onTrue(led.thingy());
+    joystick.y().onTrue(led.thingy2());
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
     drivetrain.setDefaultCommand(
@@ -95,10 +98,10 @@ public class RobotContainer {
 
     // joystick.x().whileTrue(drivetrain.wheelCharacterization());
 
-    joystick
+    /*joystick
         .x()
         .whileTrue(drivetrain.driveToPosition(() -> new Pose2d(5, 5, Rotation2d.fromDegrees(180))));
-
+*/
     joystick
         .pov(0)
         .whileTrue(
@@ -124,4 +127,6 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return autoChooser.selectedCommand();
   }
+
+  public LEDSubsystem led = new LEDSubsystem();
 }
