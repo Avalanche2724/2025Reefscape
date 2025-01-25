@@ -10,7 +10,7 @@ import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,7 +30,7 @@ public class RobotContainer {
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
           .withDeadband(MaxSpeed * 0.01)
-          .withRotationalDeadband(MaxAngularRate * 0.01) // Add a 10% deadband
+          .withRotationalDeadband(MaxAngularRate * 0.01) // Add a 1% deadband
           .withDriveRequestType(
               DriveRequestType.Velocity); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
@@ -61,7 +61,8 @@ public class RobotContainer {
   }
 
   private double deadband(double d) {
-    return MathUtil.applyDeadband(d, 0.05);
+    return d;
+    // return MathUtil.applyDeadband(d, 0.05);
   }
 
   private void configureBindings() {
@@ -92,7 +93,11 @@ public class RobotContainer {
                     point.withModuleDirection(
                         new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
 
-    joystick.x().whileTrue(drivetrain.wheelCharacterization());
+    // joystick.x().whileTrue(drivetrain.wheelCharacterization());
+
+    joystick
+        .x()
+        .whileTrue(drivetrain.driveToPosition(() -> new Pose2d(5, 5, Rotation2d.fromDegrees(180))));
 
     joystick
         .pov(0)
