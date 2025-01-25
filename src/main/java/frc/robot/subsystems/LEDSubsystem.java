@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Percent;
+import static edu.wpi.first.units.Units.Second;
+
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
@@ -41,9 +44,9 @@ public class LEDSubsystem extends SubsystemBase {
     return run(() -> pattern.applyTo(m_buffer));
   }
 
-
   public Command thingy() {
-    return runPattern(LEDPattern.rainbow(10, 20));
+    return runPattern(
+        LEDPattern.rainbow(255, 255).scrollAtRelativeSpeed(Percent.per(Second).of(90)));
   }
 
   public Command thingy2() {
