@@ -18,7 +18,6 @@ public class Elevator extends SubsystemBase {
   private static final int ELEVATOR_ID = 40;
   private static final int ELEVATOR2_ID = 41;
 
-
   private static final double GEAR_RATIO = 20.0;
   private static final Mass MASS = Kilograms.of(4.0);
   private static final Distance DRUM_RADIUS = Inches.of(2.0);
@@ -67,16 +66,17 @@ public class Elevator extends SubsystemBase {
     m_elevatorSim.update(0.02);
 
     motorSim.setRotorVelocity(
-      Meters.of(m_elevatorSim.getVelocityMetersPerSecond()).div(
-        DRUM_RADIUS.times(2*Math.PI)
-      ).times(Rotation.one()).div(Seconds.one()).times(GEAR_RATIO)
-    );
+        Meters.of(m_elevatorSim.getVelocityMetersPerSecond())
+            .div(DRUM_RADIUS.times(2 * Math.PI))
+            .times(Rotation.one())
+            .div(Seconds.one())
+            .times(GEAR_RATIO));
 
     motorSim.setRawRotorPosition(
-      Meters.of(m_elevatorSim.getPositionMeters()).div(
-        DRUM_RADIUS.times(2*Math.PI)
-      ).times(Rotation.one()).times(GEAR_RATIO)
-    );
+        Meters.of(m_elevatorSim.getPositionMeters())
+            .div(DRUM_RADIUS.times(2 * Math.PI))
+            .times(Rotation.one())
+            .times(GEAR_RATIO));
 
     BatterySim.calculateDefaultBatteryLoadedVoltage(null);
   }
