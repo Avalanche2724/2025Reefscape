@@ -11,6 +11,10 @@ public class LEDSubsystem extends SubsystemBase {
   private static final int kPort = 7;
   private static final int kLength = 30;
 
+    public Command thingy() {
+      return runPattern(LEDPattern.rainbow(10, 20));
+    }
+}
   private final AddressableLED m_led;
   private final AddressableLEDBuffer m_buffer;
 
