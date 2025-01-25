@@ -11,10 +11,6 @@ public class LEDSubsystem extends SubsystemBase {
   private static final int kPort = 7;
   private static final int kLength = 30;
 
-    public Command thingy() {
-      return runPattern(LEDPattern.rainbow(10, 20));
-    }
-}
   private final AddressableLED m_led;
   private final AddressableLEDBuffer m_buffer;
 
@@ -45,14 +41,12 @@ public class LEDSubsystem extends SubsystemBase {
     return run(() -> pattern.applyTo(m_buffer));
   }
 
-  public void LEDColor() {
-    // Create an LED pattern that sets the entire strip to solid red
-    LEDPattern red = LEDPattern.solid(Color.kRed);
 
-    // Apply the LED pattern to the data buffer
-    red.applyTo(m_buffer);
+  public Command thingy() {
+    return runPattern(LEDPattern.rainbow(10, 20));
+  }
 
-    // Write the data to the LED strip
-    m_led.setData(m_buffer);
+  public Command thingy2() {
+    return runPattern(LEDPattern.solid(Color.kBlack));
   }
 }
