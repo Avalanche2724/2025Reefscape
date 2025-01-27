@@ -9,7 +9,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -25,19 +24,6 @@ public class Elevator extends SubsystemBase {
   private static final Distance MAX_HEIGHT = Meters.of(5.0);
 
   private final PositionVoltage control = new PositionVoltage(0);
-
-  private final ElevatorSim m_elevatorSim =
-      new ElevatorSim(
-          DCMotor.getKrakenX60Foc(2),
-          GEAR_RATIO,
-          MASS.in(Kilograms),
-          DRUM_RADIUS.in(Meters),
-          MIN_HEIGHT.in(Meters),
-          MAX_HEIGHT.in(Meters),
-          true,
-          MIN_HEIGHT.in(Meters),
-          0.01,
-          0.0);
 
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
   private final TalonFX followerMotor = new TalonFX(ELEVATOR_ID);
@@ -59,6 +45,19 @@ public class Elevator extends SubsystemBase {
     return runOnce(() -> setMotorPosition(pos));
   }
 
+  private final ElevatorSim m_elevatorSim =
+      new ElevatorSim(
+          DCMotor.getKrakenX60Foc(2),
+          GEAR_RATIO,
+          MASS.in(Kilograms),
+          DRUM_RADIUS.in(Meters),
+          MIN_HEIGHT.in(Meters),
+          MAX_HEIGHT.in(Meters),
+          true,
+          MIN_HEIGHT.in(Meters),
+          0.01,
+          0.0);
+
   @Override
   public void simulationPeriodic() {
     var motorSim = motor.getSimState();
@@ -77,7 +76,5 @@ public class Elevator extends SubsystemBase {
             .div(DRUM_RADIUS.times(2 * Math.PI))
             .times(Rotation.one())
             .times(GEAR_RATIO));
-
-    BatterySim.calculateDefaultBatteryLoadedVoltage(null);
   }
 }
