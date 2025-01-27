@@ -21,7 +21,24 @@ public class Elevator extends SubsystemBase {
   private static final Mass MASS = Kilograms.of(4.0);
   private static final Distance DRUM_RADIUS = Inches.of(2.0);
   private static final Distance MIN_HEIGHT = Meters.of(0.0);
-  private static final Distance MAX_HEIGHT = Meters.of(5.0);
+  private static final Distance MAX_HEIGHT = Meters.of(3.0);
+
+  public enum ElevatorPosition {
+    BASE(Meters.of(0)),
+    L1_SCORE(Meters.of(0.5)),
+    L2_ALGAE(Meters.of(0.8)),
+    L2_SCORE(Meters.of(1.1)),
+    L3_ALGAE(Meters.of(1.3)),
+    L3_SCORE(Meters.of(1.5)),
+    L4_SCORE(Meters.of(1.7)),
+    TOP(Meters.of(2.0));
+
+    public final Distance distance;
+
+    ElevatorPosition(Distance distance) {
+      this.distance = distance;
+    }
+  }
 
   private final PositionVoltage control = new PositionVoltage(0);
 

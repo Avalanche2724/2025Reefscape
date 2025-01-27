@@ -19,9 +19,21 @@ public class Wrist extends SubsystemBase {
   private static final double GEAR_RATIO = 20.0;
   private static final Mass MASS = Kilograms.of(4.0);
   private static final Distance ARM_LEN = Inches.of(10);
-  private static final Angle UP_LIMIT = Rotation.of(0.2);
-  private static final Angle DOWN_LIMIT = Rotations.of(-0.2);
-  private static final Angle ARM_START = Rotations.of(0);
+  private static final Angle UP_LIMIT = Degrees.of(90);
+  private static final Angle DOWN_LIMIT = Degrees.of(-90);
+  private static final Angle ARM_START = Degrees.of(0);
+
+  public enum WristPosition {
+    BASE(Degrees.of(0)),
+    SCORE(Degrees.of(-30)),
+    UP(Degrees.of(30));
+
+    public final Angle rotation;
+
+    WristPosition(Angle rotation) {
+      this.rotation = rotation;
+    }
+  }
 
   private final PositionVoltage control = new PositionVoltage(0);
 
