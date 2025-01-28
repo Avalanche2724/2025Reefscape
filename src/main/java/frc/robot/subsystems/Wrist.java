@@ -19,6 +19,7 @@ public class Wrist extends SubsystemBase {
   private static final double GEAR_RATIO = 20.0;
   private static final Mass MASS = Kilograms.of(4.0);
   private static final Distance ARM_LEN = Inches.of(10);
+  public static final Distance TOTAL_LEN = Inches.of(20);
   private static final Angle UP_LIMIT = Degrees.of(90);
   private static final Angle DOWN_LIMIT = Degrees.of(-90);
   private static final Angle ARM_START = Degrees.of(0);
@@ -78,5 +79,9 @@ public class Wrist extends SubsystemBase {
             .in(RotationsPerSecond));
 
     motorSim.setRawRotorPosition(Radians.of(armSim.getAngleRads()).times(GEAR_RATIO).in(Rotations));
+  }
+
+  public Angle getWristAngle() {
+    return motor.getPosition().getValue();
   }
 }

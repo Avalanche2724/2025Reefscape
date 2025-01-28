@@ -20,8 +20,10 @@ public class Elevator extends SubsystemBase {
   private static final double GEAR_RATIO = 20.0;
   private static final Mass MASS = Kilograms.of(4.0);
   private static final Distance DRUM_RADIUS = Inches.of(2.0);
-  private static final Distance MIN_HEIGHT = Meters.of(0.0);
+  public static final Distance MIN_HEIGHT = Meters.of(0.0);
   private static final Distance MAX_HEIGHT = Meters.of(3.0);
+
+  private static final Distance CIRCUMFERENCE = DRUM_RADIUS.times(2 * Math.PI);
 
   public enum ElevatorPosition {
     BASE(Meters.of(0)),
@@ -83,15 +85,19 @@ public class Elevator extends SubsystemBase {
 
     motorSim.setRotorVelocity(
         Meters.of(m_elevatorSim.getVelocityMetersPerSecond())
-            .div(DRUM_RADIUS.times(2 * Math.PI))
+            .div(CIRCUMFERENCE)
             .times(Rotation.one())
             .div(Seconds.one())
             .times(GEAR_RATIO));
 
     motorSim.setRawRotorPosition(
         Meters.of(m_elevatorSim.getPositionMeters())
-            .div(DRUM_RADIUS.times(2 * Math.PI))
+            .div(CIRCUMFERENCE)
             .times(Rotation.one())
             .times(GEAR_RATIO));
+  }
+
+  public Distance getElevatorDistance() {
+    return motor.getPosition().getValue().div(Rotation.one()).times(CIRCUMFERENCE);
   }
 }

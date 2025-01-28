@@ -6,10 +6,15 @@ package frc.robot;
 
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
+import edu.wpi.first.wpilibj.smartdashboard.*;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
+
+import static edu.wpi.first.units.Units.Meters;
 
 public class RobotContainer {
   // Subsystems
@@ -41,5 +46,25 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     return autoChooser.selectedCommand();
+  }
+
+  public void createMechanism2d() {
+    // the main mechanism object
+    var mech = new Mechanism2d(3, 3);
+    // the mechanism root node
+    var root = mech.getRoot("root", 1.5, 0);
+
+    var m_elevator =
+        root.append(new MechanismLigament2d("elevator", Elevator.MIN_HEIGHT.in(Meters), 90));
+    var m_wrist =
+        m_elevator.append(
+            new MechanismLigament2d(
+                "wrist", Wrist.TOTAL_LEN.in(Meters), 90, 6, new Color8Bit(Color.kPurple)));
+  }
+
+  public void updateMechanism2d() {
+    // m_elevator.setLength(kElevatorMinimumLength + m_elevatorEncoder.getDistance());
+    // m_wrist.setAngle(m_wristPot.get());
+
   }
 }
