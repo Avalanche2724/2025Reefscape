@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.*;
+
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.smartdashboard.*;
@@ -13,9 +15,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
-
-import static edu.wpi.first.units.Units.Degree;
-import static edu.wpi.first.units.Units.Meters;
 
 public class RobotContainer {
   // Subsystems
@@ -54,9 +53,9 @@ public class RobotContainer {
 
   public void createMechanism2d() {
     // the main mechanism object
-    var mech = new Mechanism2d(3, 3);
+    var mech = new Mechanism2d(Inches.of(30).in(Meters), 4);
     // the mechanism root node
-    var root = mech.getRoot("root", 1.5, 0);
+    var root = mech.getRoot("root", Inches.of(24).in(Meters), 0);
 
     elevatorMechanism =
         root.append(new MechanismLigament2d("elevator", Elevator.MIN_HEIGHT.in(Meters), 90));
