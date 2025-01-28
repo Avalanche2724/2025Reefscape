@@ -49,7 +49,7 @@ public class Elevator extends SubsystemBase {
 
   public Elevator() {
     var config = new TalonFXConfiguration();
-    config.Slot0.kP = 1;
+    config.Slot0.kP = 2;
     config.Feedback.RotorToSensorRatio = GEAR_RATIO;
     followerMotor.setControl(new Follower(ELEVATOR2_ID, true));
     motor.getConfigurator().apply(config);

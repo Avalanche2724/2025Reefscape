@@ -42,6 +42,8 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
     // Set up controls
     controls.configureBindings();
+
+    createMechanism2d();
   }
 
   public Command getAutonomousCommand() {
