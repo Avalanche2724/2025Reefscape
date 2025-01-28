@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Wrist extends SubsystemBase {
   private static final int WRIST_ID = 30;
 
-  private static final double GEAR_RATIO = 20.0;
+  private static final double GEAR_RATIO = 30.0;
   private static final Mass MASS = Kilograms.of(4.0);
   private static final Distance ARM_LEN = Inches.of(10);
   public static final Distance TOTAL_LEN = Inches.of(20);
@@ -42,7 +42,7 @@ public class Wrist extends SubsystemBase {
 
   public Wrist() {
     var config = new TalonFXConfiguration();
-    config.Slot0.kP = 1;
+    config.Slot0.kP = 5;
     config.Feedback.RotorToSensorRatio = GEAR_RATIO;
     motor.getConfigurator().apply(config);
     motor.setPosition(0);

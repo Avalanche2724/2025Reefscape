@@ -4,6 +4,9 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Meters;
+
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.smartdashboard.*;
@@ -13,9 +16,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
-
-import static edu.wpi.first.units.Units.Degree;
-import static edu.wpi.first.units.Units.Meters;
 
 public class RobotContainer {
   // Subsystems
@@ -43,6 +43,8 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
     // Set up controls
     controls.configureBindings();
+
+    createMechanism2d();
   }
 
   public Command getAutonomousCommand() {
