@@ -4,131 +4,42 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
-
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.LEDSubsystem;
+import frc.robot.subsystems.*;
 
 public class RobotContainer {
-  private double MaxSpeed =
-      TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-  private double MaxAngularRate =
-      RotationsPerSecond.of(0.75)
-          .in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+  // Subsystems
+  public final Drivetrain drivetrain = TunerConstants.createDrivetrain();
+  public final LED led = new LED();
+  public final Intake intake = new Intake();
+  public final Elevator elevator = new Elevator();
+  public final Wrist wrist = new Wrist();
 
-  /* Setting up bindings for necessary control of the swerve drive platform */
-  private final SwerveRequest.FieldCentric drive =
-      new SwerveRequest.FieldCentric()
-          .withDeadband(MaxSpeed * 0.01)
-          .withRotationalDeadband(MaxAngularRate * 0.01) // Add a 1% deadband
-          .withDriveRequestType(
-              DriveRequestType.Velocity); // Use open-loop control for drive motors
-  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+  // Other utility classes
+  private final Controls controls = new Controls(this);
+  private final Telemetry logger = new Telemetry();
 
-  private final SwerveRequest.RobotCentric forwardStraight =
-      new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-
-  private final Telemetry logger = new Telemetry(MaxSpeed);
-
-  private final CommandXboxController joystick = new CommandXboxController(0);
-
-  public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-
-  /* Path follower */
-  private final AutoFactory autoFactory;
-  private final AutoRoutines autoRoutines;
+  // Auto stuff
+  private final AutoFactory autoFactory = drivetrain.createAutoFactory();
+  private final AutoRoutines autoRoutines = new AutoRoutines(autoFactory);
   private final AutoChooser autoChooser = new AutoChooser();
 
   public RobotContainer() {
-    autoFactory = drivetrain.createAutoFactory();
-    autoRoutines = new AutoRoutines(autoFactory);
-
+    // Register autos
     autoChooser.addRoutine("SimplePath", autoRoutines::simplePathAuto);
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
-    configureBindings();
-  }
-
-  private double deadband(double d) {
-    return d;
-    // return MathUtil.applyDeadband(d, 0.05);
-  }
-
-  private void configureBindings() {
-    joystick.x().onTrue(led.thingy());
-    joystick.y().onTrue(led.thingy2());
-    // Note that X is defined as forward according to WPILib convention,
-    // and Y is defined as to the left according to WPILib convention.
-    drivetrain.setDefaultCommand(
-        // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(
-            () ->
-                drive
-                    .withVelocityX(
-                        deadband(-joystick.getLeftY())
-                            * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(
-                        deadband(-joystick.getLeftX())
-                            * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(
-                        deadband(-joystick.getRightX())
-                            * MaxAngularRate) // Drive counterclockwise with negative X (left)
-            ));
-
-    joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    joystick
-        .b()
-        .whileTrue(
-            drivetrain.applyRequest(
-                () ->
-                    point.withModuleDirection(
-                        new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
-
-    // joystick.x().whileTrue(drivetrain.wheelCharacterization());
-
-    /*joystick
-            .x()
-            .whileTrue(drivetrain.driveToPosition(() -> new Pose2d(5, 5, Rotation2d.fromDegrees(180))));
-    */
-    joystick
-        .pov(0)
-        .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(0.5).withVelocityY(0)));
-    joystick
-        .pov(180)
-        .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-0.5).withVelocityY(0)));
-
-    // Run SysId routines when holding back/start and X/Y.
-    // Note that each routine should be run exactly once in a single log.
-    joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-    joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-    joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-    joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
-    // reset the field-centric heading on left bumper press
-    joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-
+    // Set up drivetrain telemetry
     drivetrain.registerTelemetry(logger::telemeterize);
+    // Set up controls
+    controls.configureBindings();
   }
 
   public Command getAutonomousCommand() {
     return autoChooser.selectedCommand();
   }
-
-  public LEDSubsystem led = new LEDSubsystem();
-
-  public Intake intake = new Intake();
 }

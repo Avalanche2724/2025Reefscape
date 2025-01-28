@@ -1,5 +1,7 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -18,17 +20,11 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.generated.TunerConstants;
 
 public class Telemetry {
-  private final double MaxSpeed;
-
-  /**
-   * Construct a telemetry object, with the specified max speed of the robot
-   *
-   * @param maxSpeed Maximum speed in meters per second
-   */
-  public Telemetry(double maxSpeed) {
-    MaxSpeed = maxSpeed;
+  /** Construct a telemetry object */
+  public Telemetry() {
     SignalLogger.start();
   }
 
@@ -134,7 +130,9 @@ public class Telemetry {
     for (int i = 0; i < 4; ++i) {
       m_moduleSpeeds[i].setAngle(state.ModuleStates[i].angle);
       m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
-      m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
+      m_moduleSpeeds[i].setLength(
+          state.ModuleStates[i].speedMetersPerSecond
+              / (2 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond)));
 
       SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
     }
