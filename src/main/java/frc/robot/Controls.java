@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.TunerConstants;
@@ -73,7 +72,7 @@ public class Controls {
                   .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
             }));
 
-    driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    /* driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
     driver
         .b()
         .whileTrue(
@@ -93,7 +92,12 @@ public class Controls {
 
     configureSysidBindings();
     // reset the field-centric heading on left bumper press
-    driver.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+    driver.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));*/
+
+    driver.a().whileTrue(wrist.setMotorPositionCmd(0.25));
+    driver.b().whileTrue(wrist.setMotorPositionCmd(-0.12));
+    driver.x().whileTrue(elevator.setMotorPositionCmd(0.5));
+    driver.y().whileTrue(elevator.setMotorPositionCmd(2));
   }
 
   private void configureSysidBindings() {

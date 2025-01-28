@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Meters;
 
 public class RobotContainer {
@@ -48,23 +49,26 @@ public class RobotContainer {
     return autoChooser.selectedCommand();
   }
 
+  MechanismLigament2d elevatorMechanism;
+  MechanismLigament2d wristMechanism;
+
   public void createMechanism2d() {
     // the main mechanism object
     var mech = new Mechanism2d(3, 3);
     // the mechanism root node
     var root = mech.getRoot("root", 1.5, 0);
 
-    var m_elevator =
+    elevatorMechanism =
         root.append(new MechanismLigament2d("elevator", Elevator.MIN_HEIGHT.in(Meters), 90));
-    var m_wrist =
-        m_elevator.append(
+    wristMechanism =
+        elevatorMechanism.append(
             new MechanismLigament2d(
                 "wrist", Wrist.TOTAL_LEN.in(Meters), 90, 6, new Color8Bit(Color.kPurple)));
   }
 
   public void updateMechanism2d() {
-    // m_elevator.setLength(kElevatorMinimumLength + m_elevatorEncoder.getDistance());
-    // m_wrist.setAngle(m_wristPot.get());
-
+    elevatorMechanism.setLength(
+        Elevator.MIN_HEIGHT.plus(elevator.getElevatorDistance()).in(Meters));
+    wristMechanism.setAngle(wrist.getWristAngle().in(Degree));
   }
 }
