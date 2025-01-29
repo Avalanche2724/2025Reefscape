@@ -7,6 +7,7 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -18,15 +19,23 @@ public class Elevator extends SubsystemBase {
   private static final int ELEVATOR2_ID = 41;
 
   private static final double GEAR_RATIO = 20.0;
-  private static final Mass MASS = Kilograms.of(4.0);
+  private static final Mass MASS = Kilograms.of(3.0);
   private static final Distance DRUM_RADIUS = Inches.of(2.0);
-  public static final Distance MIN_HEIGHT = Meters.of(0.0);
+  public static final Distance MIN_HEIGHT = Meters.of(0.4);
   private static final Distance MAX_HEIGHT = Meters.of(3.0);
 
   private static final Distance CIRCUMFERENCE = DRUM_RADIUS.times(2 * Math.PI);
 
+  public Angle heightToRotations(Distance height) {
+    return height.div(CIRCUMFERENCE).times(Rotation.one());
+  }
+
+  public Distance rotationsToHeight(Angle rotations) {
+    return rotations.div(Rotation.one()).times(CIRCUMFERENCE);
+  }
+
   public enum ElevatorPosition {
-    BASE(Meters.of(0)),
+    BASE(MIN_HEIGHT),
     L1_SCORE(Meters.of(0.5)),
     L2_ALGAE(Meters.of(0.8)),
     L2_SCORE(Meters.of(1.1)),
@@ -49,11 +58,10 @@ public class Elevator extends SubsystemBase {
 
   public Elevator() {
     var config = new TalonFXConfiguration();
-    config.Slot0.kP = 2;
-    config.Feedback.RotorToSensorRatio = GEAR_RATIO;
+    config.Slot0.kP = 10;
+    config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     followerMotor.setControl(new Follower(ELEVATOR2_ID, true));
     motor.getConfigurator().apply(config);
-    motor.setPosition(0);
   }
 
   private void setMotorPosition(double pos) {
@@ -62,6 +70,10 @@ public class Elevator extends SubsystemBase {
 
   public Command setMotorPositionCmd(double pos) {
     return runOnce(() -> setMotorPosition(pos));
+  }
+
+  public Distance getElevatorDistance() {
+    return motor.getPosition().getValue().div(Rotation.one()).times(CIRCUMFERENCE);
   }
 
   private final ElevatorSim m_elevatorSim =
@@ -73,9 +85,7 @@ public class Elevator extends SubsystemBase {
           MIN_HEIGHT.in(Meters),
           MAX_HEIGHT.in(Meters),
           true,
-          MIN_HEIGHT.in(Meters),
-          0.01,
-          0.0);
+          MIN_HEIGHT.in(Meters));
 
   @Override
   public void simulationPeriodic() {
@@ -84,20 +94,10 @@ public class Elevator extends SubsystemBase {
     m_elevatorSim.update(0.02);
 
     motorSim.setRotorVelocity(
-        Meters.of(m_elevatorSim.getVelocityMetersPerSecond())
-            .div(CIRCUMFERENCE)
-            .times(Rotation.one())
+        heightToRotations(
+                MetersPerSecond.of(m_elevatorSim.getVelocityMetersPerSecond()).times(Seconds.one()))
             .div(Seconds.one())
             .times(GEAR_RATIO));
-
-    motorSim.setRawRotorPosition(
-        Meters.of(m_elevatorSim.getPositionMeters())
-            .div(CIRCUMFERENCE)
-            .times(Rotation.one())
-            .times(GEAR_RATIO));
-  }
-
-  public Distance getElevatorDistance() {
-    return motor.getPosition().getValue().div(Rotation.one()).times(CIRCUMFERENCE);
+    motorSim.setRawRotorPosition(heightToRotations(Meters.of(m_elevatorSim.getPositionMeters())));
   }
 }

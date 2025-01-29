@@ -65,11 +65,13 @@ public class RobotContainer {
         elevatorMechanism.append(
             new MechanismLigament2d(
                 "wrist", Wrist.TOTAL_LEN.in(Meters), 90, 6, new Color8Bit(Color.kPurple)));
+
+    SmartDashboard.putData("Mechanism", mech);
   }
 
   public void updateMechanism2d() {
     elevatorMechanism.setLength(
         Elevator.MIN_HEIGHT.plus(elevator.getElevatorDistance()).in(Meters));
-    wristMechanism.setAngle(wrist.getWristAngle().in(Degree));
+    wristMechanism.setAngle(wrist.getWristAngle().minus(Degrees.of(90)).in(Degree));
   }
 }

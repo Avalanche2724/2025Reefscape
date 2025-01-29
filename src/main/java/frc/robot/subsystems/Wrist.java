@@ -43,7 +43,7 @@ public class Wrist extends SubsystemBase {
   public Wrist() {
     var config = new TalonFXConfiguration();
     config.Slot0.kP = 5;
-    config.Feedback.RotorToSensorRatio = GEAR_RATIO;
+    config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     motor.getConfigurator().apply(config);
     motor.setPosition(0);
   }
@@ -54,6 +54,10 @@ public class Wrist extends SubsystemBase {
 
   public Command setMotorPositionCmd(double pos) {
     return runOnce(() -> setMotorPosition(pos));
+  }
+
+  public Angle getWristAngle() {
+    return motor.getPosition().getValue();
   }
 
   private final SingleJointedArmSim armSim =
@@ -79,9 +83,5 @@ public class Wrist extends SubsystemBase {
             .in(RotationsPerSecond));
 
     motorSim.setRawRotorPosition(Radians.of(armSim.getAngleRads()).times(GEAR_RATIO).in(Rotations));
-  }
-
-  public Angle getWristAngle() {
-    return motor.getPosition().getValue();
   }
 }
