@@ -6,33 +6,28 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Wrist extends SubsystemBase {
   private static final int WRIST_ID = 30;
-
-  private static final double GEAR_RATIO = 30.0;
-  private static final Mass MASS = Kilograms.of(4.0);
-  private static final Distance ARM_LEN = Inches.of(10);
-  public static final Distance TOTAL_LEN = Inches.of(20);
-  private static final Angle UP_LIMIT = Degrees.of(90);
-  private static final Angle DOWN_LIMIT = Degrees.of(-90);
-  private static final Angle ARM_START = Degrees.of(0);
+  public static final double GEAR_RATIO = 30.0;
+  public static final double MASS = 4.0;
+  public static final double ARM_LEN = Meters.convertFrom(10, Inches);
+  public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
+  public static final double DOWN_LIMIT = Rotations.convertFrom(-90, Degrees);
+  public static final double ARM_START = 0;
 
   public enum WristPosition {
-    BASE(Degrees.of(0)),
-    SCORE(Degrees.of(-30)),
-    UP(Degrees.of(30));
+    BASE(0),
+    SCORE(-30),
+    UP(30);
 
-    public final Angle rotation;
+    public final double rotation;
 
-    WristPosition(Angle rotation) {
-      this.rotation = rotation;
+    WristPosition(double degrees) {
+      this.rotation = Rotations.convertFrom(degrees, Degrees);
     }
   }
 
@@ -56,20 +51,24 @@ public class Wrist extends SubsystemBase {
     return runOnce(() -> setMotorPosition(pos));
   }
 
-  public Angle getWristAngle() {
-    return motor.getPosition().getValue();
+  public double getWristRotations() {
+    return motor.getPosition().getValueAsDouble();
+  }
+
+  public double getWristDegrees() {
+    return Degrees.convertFrom(getWristRotations(), Rotations);r
   }
 
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
           DCMotor.getKrakenX60Foc(1),
           GEAR_RATIO,
-          SingleJointedArmSim.estimateMOI(ARM_LEN.in(Meters), MASS.in(Kilograms)),
-          ARM_LEN.in(Meters),
-          DOWN_LIMIT.in(Radians),
-          UP_LIMIT.in(Radians),
+          SingleJointedArmSim.estimateMOI(ARM_LEN, MASS),
+          ARM_LEN,
+          Radians.convertFrom(DOWN_LIMIT, Rotations),
+          Radians.convertFrom(UP_LIMIT, Rotations),
           true,
-          ARM_START.in(Radians));
+          Radians.convertFrom(ARM_START, Rotations));
 
   @Override
   public void simulationPeriodic() {
@@ -78,10 +77,10 @@ public class Wrist extends SubsystemBase {
     armSim.update(0.02);
 
     motorSim.setRotorVelocity(
-        RadiansPerSecond.of(armSim.getVelocityRadPerSec())
-            .times(GEAR_RATIO)
-            .in(RotationsPerSecond));
+        RotationsPerSecond.convertFrom(armSim.getVelocityRadPerSec(), RadiansPerSecond)
+            * GEAR_RATIO);
 
-    motorSim.setRawRotorPosition(Radians.of(armSim.getAngleRads()).times(GEAR_RATIO).in(Rotations));
+    motorSim.setRawRotorPosition(
+        Rotations.convertFrom(armSim.getAngleRads(), Radians) * GEAR_RATIO);
   }
 }

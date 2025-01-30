@@ -59,19 +59,16 @@ public class RobotContainer {
     // the mechanism root node
     var root = mech.getRoot("root", Inches.of(24).in(Meters), 0);
 
-    elevatorMechanism =
-        root.append(new MechanismLigament2d("elevator", Elevator.MIN_HEIGHT.in(Meters), 90));
+    elevatorMechanism = root.append(new MechanismLigament2d("elevator", Elevator.MIN_HEIGHT, 90));
     wristMechanism =
         elevatorMechanism.append(
-            new MechanismLigament2d(
-                "wrist", Wrist.TOTAL_LEN.in(Meters), 90, 6, new Color8Bit(Color.kPurple)));
+            new MechanismLigament2d("wrist", Wrist.ARM_LEN, 90, 6, new Color8Bit(Color.kPurple)));
 
     SmartDashboard.putData("Mechanism", mech);
   }
 
   public void updateMechanism2d() {
-    elevatorMechanism.setLength(
-        Elevator.MIN_HEIGHT.plus(elevator.getElevatorDistance()).in(Meters));
-    wristMechanism.setAngle(wrist.getWristAngle().minus(Degrees.of(90)).in(Degree));
+    elevatorMechanism.setLength(elevator.getElevatorHeight());
+    wristMechanism.setAngle(wrist.getWristDegrees() - 90);
   }
 }
