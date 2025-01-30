@@ -56,7 +56,7 @@ public class Wrist extends SubsystemBase {
   }
 
   public double getWristDegrees() {
-    return Degrees.convertFrom(getWristRotations(), Rotations);r
+    return Degrees.convertFrom(getWristRotations(), Rotations);
   }
 
   private final SingleJointedArmSim armSim =
