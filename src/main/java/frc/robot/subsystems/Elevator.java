@@ -21,7 +21,7 @@ public class Elevator extends SubsystemBase {
   public static final double MASS = Kilograms.convertFrom(20, Pounds);
   public static final double DRUM_RADIUS = Meters.convertFrom(2.0, Inches);
   public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
-  public static final double MAX_HEIGHT = Meters.convertFrom(6.5 + 31.5 + 29.5, Inches);
+  public static final double MAX_HEIGHT = Meters.convertFrom(90, Inches); // estimate
   public static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
 
   public double heightToRotations(double height) {
@@ -64,11 +64,15 @@ public class Elevator extends SubsystemBase {
     motor.getConfigurator().apply(config);
   }
 
-  private void setMotorPosition(double pos) {
-    motor.setControl(control.withPosition(pos));
+  private void setMotorPosition(double height) {
+    motor.setControl(control.withPosition(heightToRotations(height)));
   }
 
-  public Command setMotorPositionCmd(double pos) {
+  private void setMotorPosition(ElevatorPosition pos) {
+    setMotorPosition(pos.distance);
+  }
+
+  public Command setMotorPositionCmd(ElevatorPosition pos) {
     return runOnce(() -> setMotorPosition(pos));
   }
 
@@ -97,8 +101,8 @@ public class Elevator extends SubsystemBase {
     m_elevatorSim.setInput(motorSim.getMotorVoltage());
     m_elevatorSim.update(0.02);
 
-    motorSim.setRotorVelocity(GEAR_RATIO * heightToRotations(m_elevatorSim.getPositionMeters()));
-    motorSim.setRawRotorPosition(
+    motorSim.setRawRotorPosition(GEAR_RATIO * heightToRotations(m_elevatorSim.getPositionMeters()));
+    motorSim.setRotorVelocity(
         GEAR_RATIO * heightToRotations(m_elevatorSim.getVelocityMetersPerSecond()));
   }
 }

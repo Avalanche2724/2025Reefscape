@@ -104,8 +104,8 @@ public class Controls {
 
     driver.a().whileTrue(wrist.setMotorPositionCmd(0.25));
     driver.b().whileTrue(wrist.setMotorPositionCmd(-0.12));
-    driver.x().whileTrue(elevator.setMotorPositionCmd(0.5));
-    driver.y().whileTrue(elevator.setMotorPositionCmd(2));
+    driver.x().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.BASE));
+    driver.y().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
   }
 
   private void configureSysidBindings() {

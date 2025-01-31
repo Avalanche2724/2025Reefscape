@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -16,11 +15,8 @@ public class Climber extends SubsystemBase {
     return run(
         () -> {
           motor.setControl(control.withPosition(arg));
-        });    
+        });
   }
-
-
-
 
   public Command goDown() {
     return goPosition(0);
@@ -29,11 +25,4 @@ public class Climber extends SubsystemBase {
   public Command goUp() {
     return goPosition(5);
   }
-  
-  
-
-
-
 }
-
-
