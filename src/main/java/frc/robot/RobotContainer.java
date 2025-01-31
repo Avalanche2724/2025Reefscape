@@ -23,6 +23,7 @@ public class RobotContainer {
   public final Intake intake = new Intake();
   public final Elevator elevator = new Elevator();
   public final Wrist wrist = new Wrist();
+  public final Climber climber = new Climber();
 
   // Other utility classes
   private final Controls controls = new Controls(this);
