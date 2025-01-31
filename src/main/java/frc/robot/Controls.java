@@ -21,6 +21,7 @@ public class Controls {
   private final Elevator elevator;
   private final Intake intake;
   private final Wrist wrist;
+  private final Climber climber;
   private final LED led;
 
   private final CommandXboxController driver = new CommandXboxController(0);
@@ -44,9 +45,16 @@ public class Controls {
     intake = bot.intake;
     wrist = bot.wrist;
     led = bot.led;
+    climber = bot.climber;
   }
 
+
+
+
   public void configureBindings() {
+    driver.a().onTrue(climber.goDown());
+    driver.b().onTrue(climber.goUp());
+
     driver.x().onTrue(led.thingy());
     driver.y().onTrue(led.thingy2());
     // Note that X is defined as forward according to WPILib convention,

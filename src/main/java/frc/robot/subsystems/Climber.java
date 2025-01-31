@@ -22,11 +22,21 @@ public class Climber extends SubsystemBase {
         });
   }
 
+
   public Command goDown() {
     return run(
         () -> {
           motor.setControl(control.withVelocity(0));
-          motor.setControl(control.withVelocity(0));
+          motor.setControl(control2.withVelocity(0));
         });
   }
+
+  
+
+
+
+
+
 }
+
+
