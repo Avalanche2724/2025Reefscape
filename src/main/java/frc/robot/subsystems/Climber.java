@@ -12,20 +12,19 @@ public class Climber extends SubsystemBase {
 
   private final VelocityVoltage control = new VelocityVoltage(1);
 
-  public Command goUp() {
+  public Command goPosition(double arg) {
     return run(
         () -> {
-          motor.setControl(control.withVelocity(5));
-        });
+          motor.setControl(control.withVelocity(arg));
+        });    
   }
 
 
   public Command goDown() {
-    return run(
-        () -> {
-          motor.setControl(control.withVelocity(0));
-        });
+    return goPosition(1);
   }
+
+
 
 
 
