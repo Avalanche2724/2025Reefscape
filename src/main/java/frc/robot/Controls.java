@@ -50,10 +50,10 @@ public class Controls {
 
   public void configureBindings() {
 
-    driver.a().onTrue(wrist.incrementMotorPositionForTesting(0.001));
-    driver.b().onTrue(wrist.incrementMotorPositionForTesting(-0.001));
-    driver.x().onTrue(elevator.incrementMotorPositionForTesting(0.01));
-    driver.y().onTrue(elevator.incrementMotorPositionForTesting(-0.01));
+    driver.a().whileTrue(wrist.incrementMotorPositionForTesting(0.001).repeatedly());
+    driver.b().whileTrue(wrist.incrementMotorPositionForTesting(-0.001).repeatedly());
+    driver.x().whileTrue(elevator.incrementMotorPositionForTesting(0.04).repeatedly());
+    driver.y().whileTrue(elevator.incrementMotorPositionForTesting(-0.04).repeatedly());
     /*driver.a().onTrue(climber.goDown());
     driver.b().onTrue(climber.goUp());
 

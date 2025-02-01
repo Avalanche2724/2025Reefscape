@@ -48,7 +48,10 @@ public class Wrist extends SubsystemBase {
     createMechanism2d();
   }
 
+  double targetPos;
+
   private void setMotorPosition(double pos) {
+    targetPos = pos;
     motor.setControl(control.withPosition(pos));
   }
 
@@ -57,11 +60,15 @@ public class Wrist extends SubsystemBase {
   }
 
   public Command incrementMotorPositionForTesting(double inc) {
-    return runOnce(() -> setMotorPosition(getWristRotations() + inc));
+    return runOnce(() -> setMotorPosition(targetPos + inc));
   }
 
   public double getWristRotations() {
     return motor.getPosition().getValueAsDouble();
+  }
+
+  public double getWristTargetRotations() {
+    return targetPos;
   }
 
   public double getWristDegrees() {
