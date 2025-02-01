@@ -7,6 +7,9 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -37,10 +40,12 @@ public class Wrist extends SubsystemBase {
 
   public Wrist() {
     var config = new TalonFXConfiguration();
-    config.Slot0.kP = 5;
+    config.Slot0.kP = 6;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     motor.getConfigurator().apply(config);
     motor.setPosition(0);
+
+    createMechanism2d();
   }
 
   private void setMotorPosition(double pos) {
@@ -51,12 +56,65 @@ public class Wrist extends SubsystemBase {
     return runOnce(() -> setMotorPosition(pos));
   }
 
+  public Command incrementMotorPositionForTesting(double inc) {
+    return runOnce(() -> setMotorPosition(getWristRotations() + inc));
+  }
+
   public double getWristRotations() {
     return motor.getPosition().getValueAsDouble();
   }
 
   public double getWristDegrees() {
     return Degrees.convertFrom(getWristRotations(), Rotations);
+  }
+
+  MechanismLigament2d wristMechanism;
+  MechanismLigament2d wristRotatePart;
+  MechanismLigament2d wristRotatePart2;
+  MechanismLigament2d wristEnd;
+
+  public MechanismLigament2d createMechanism2d() {
+    wristMechanism =
+        new MechanismLigament2d(
+            "wrist_base_elev_part_1",
+            Meters.convertFrom(1.5, Inch),
+            -90,
+            0,
+            new Color8Bit(Color.kRed));
+    wristRotatePart =
+        wristMechanism.append(
+            new MechanismLigament2d(
+                "wrist_rotate_part_2",
+                Meters.convertFrom(11.5, Inches),
+                getWristDegrees(),
+                Centimeters.convertFrom(1, Inch),
+                new Color8Bit(Color.kPurple)));
+    wristRotatePart2 =
+        wristRotatePart.append(
+            new MechanismLigament2d(
+                "wrist_rotate_part_3",
+                Meters.convertFrom(4, Inches),
+                90,
+                Centimeters.convertFrom(1, Inch),
+                new Color8Bit(Color.kPurple)));
+    wristEnd =
+        wristRotatePart2.append(
+            new MechanismLigament2d(
+                "wrist_end_part_4",
+                Meters.convertFrom(13, Inches),
+                -90,
+                Centimeters.convertFrom(4, Inches),
+                new Color8Bit(Color.kBlue)));
+    return wristMechanism;
+  }
+
+  public void updateMechanism2d() {
+    wristRotatePart.setAngle(getWristDegrees());
+  }
+
+  @Override
+  public void periodic() {
+    updateMechanism2d();
   }
 
   private final SingleJointedArmSim armSim =

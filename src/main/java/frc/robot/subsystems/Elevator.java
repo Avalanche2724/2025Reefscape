@@ -10,6 +10,9 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -58,7 +61,7 @@ public class Elevator extends SubsystemBase {
 
   public Elevator() {
     var config = new TalonFXConfiguration();
-    config.Slot0.kP = 10;
+    config.Slot0.kP = 12;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     followerMotor.setControl(new Follower(ELEVATOR2_ID, true));
     motor.getConfigurator().apply(config);
@@ -76,12 +79,37 @@ public class Elevator extends SubsystemBase {
     return runOnce(() -> setMotorPosition(pos));
   }
 
+  public Command incrementMotorPositionForTesting(double inc) {
+    return runOnce(() -> setMotorPosition(getElevatorHeight() + inc));
+  }
+
   public double getElevatorRotations() {
     return motorPosition.refresh().getValueAsDouble();
   }
 
   public double getElevatorHeight() {
     return rotationsToHeight(getElevatorRotations());
+  }
+
+  public MechanismLigament2d elevatorMechanism;
+
+  public MechanismLigament2d createMechanism2d() {
+    return elevatorMechanism =
+        new MechanismLigament2d(
+            "elevator",
+            getElevatorHeight(),
+            90,
+            Centimeter.convertFrom(1, Inch),
+            new Color8Bit(Color.kGreen));
+  }
+
+  public void updateMechanism2d() {
+    elevatorMechanism.setLength(getElevatorHeight());
+  }
+
+  @Override
+  public void periodic() {
+    updateMechanism2d();
   }
 
   private final ElevatorSim m_elevatorSim =

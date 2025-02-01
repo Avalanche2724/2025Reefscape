@@ -48,15 +48,17 @@ public class Controls {
     climber = bot.climber;
   }
 
-
-
-
   public void configureBindings() {
-    driver.a().onTrue(climber.goDown());
+
+    driver.a().onTrue(wrist.incrementMotorPositionForTesting(0.001));
+    driver.b().onTrue(wrist.incrementMotorPositionForTesting(-0.001));
+    driver.x().onTrue(elevator.incrementMotorPositionForTesting(0.01));
+    driver.y().onTrue(elevator.incrementMotorPositionForTesting(-0.01));
+    /*driver.a().onTrue(climber.goDown());
     driver.b().onTrue(climber.goUp());
 
     driver.x().onTrue(led.thingy());
-    driver.y().onTrue(led.thingy2());
+    driver.y().onTrue(led.thingy2());*/
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
     drivetrain.setDefaultCommand(
@@ -101,11 +103,6 @@ public class Controls {
     configureSysidBindings();
     // reset the field-centric heading on left bumper press
     driver.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));*/
-
-    driver.a().whileTrue(wrist.setMotorPositionCmd(0.25));
-    driver.b().whileTrue(wrist.setMotorPositionCmd(-0.12));
-    driver.x().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.BASE));
-    driver.y().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
   }
 
   private void configureSysidBindings() {
