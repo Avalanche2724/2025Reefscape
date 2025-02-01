@@ -46,13 +46,8 @@ import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
-  // Constants:
-  public static final String kCameraName = "Arducam_OV9281_USB_Camera";
-  // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
-  public static final Transform3d kRobotToCam =
-      new Transform3d(
-          new Translation3d(Inches.of(3.3125), Inches.of(0.0), Inches.of(11.75)),
-          new Rotation3d(0.0, Math.toRadians(-30.0), 0.0));
+  public final String cameraName;
+  public final Transform3d robotToCam;
 
   // The layout of the AprilTags on the field
   public static final AprilTagFieldLayout kTagLayout =
@@ -71,11 +66,30 @@ public class Vision {
   private PhotonCameraSim cameraSim;
   private VisionSystemSim visionSim;
 
-  public Vision() {
-    camera = new PhotonCamera(kCameraName);
+  public static Vision camera1() {
+    return new Vision(
+        "Arducam_OV9281_USB_Camera",
+        new Transform3d(
+            new Translation3d(Inches.of(0), Inches.of(10), Inches.of(0)),
+            new Rotation3d(0.0, Math.toRadians(-25.0), 0.0)));
+  }
+
+  public static Vision camera2() {
+    return new Vision(
+        "Arducam_OV9281_USB_Camera (1)",
+        new Transform3d(
+            new Translation3d(Inches.of(0), Inches.of(-10), Inches.of(0)),
+            new Rotation3d(0.0, Math.toRadians(-25.0), 0.0)));
+  }
+
+  public Vision(String cameraName, Transform3d robotToCam) {
+    this.cameraName = cameraName;
+    this.robotToCam = robotToCam;
+    camera = new PhotonCamera(this.cameraName);
 
     photonEstimator =
-        new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, kRobotToCam);
+        new PhotonPoseEstimator(
+            kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, this.robotToCam);
     photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
     // ----- Simulation
@@ -86,16 +100,16 @@ public class Vision {
       visionSim.addAprilTags(kTagLayout);
       // Create simulated camera properties. These can be set to mimic your actual camera.
       var cameraProp = new SimCameraProperties();
-      cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(78.95));
-      cameraProp.setCalibError(0.33, 0.10);
-      cameraProp.setFPS(30);
-      cameraProp.setAvgLatencyMs(35);
+      cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(79));
+      cameraProp.setCalibError(0.3, 0.1);
+      cameraProp.setFPS(45);
+      cameraProp.setAvgLatencyMs(25);
       cameraProp.setLatencyStdDevMs(3);
       // Create a PhotonCameraSim which will update the linked PhotonCamera's values with visible
       // targets.
       cameraSim = new PhotonCameraSim(camera, cameraProp);
       // Add the simulated camera to view the targets on this simulated field.
-      visionSim.addCamera(cameraSim, kRobotToCam);
+      visionSim.addCamera(cameraSim, this.robotToCam);
 
       cameraSim.enableDrawWireframe(true);
     }

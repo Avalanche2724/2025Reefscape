@@ -39,7 +39,8 @@ import java.util.function.Supplier;
  * be used in command-based projects.
  */
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
-  public Vision vision = new Vision();
+  public Vision camera1 = Vision.camera1();
+  public Vision camera2 = Vision.camera2();
 
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private Notifier m_simNotifier = null;
@@ -291,7 +292,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     // Do vision
-    correctFromVision();
+    correctFromVision(camera1);
+    correctFromVision(camera2);
   }
 
   private void startSimThread() {
@@ -392,13 +394,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 })));
   }
 
-  public void correctFromVision() {
-    var visionEst = vision.getEstimatedGlobalPose();
+  public void correctFromVision(Vision camera) {
+    var visionEst = camera.getEstimatedGlobalPose();
     visionEst.ifPresent(
         est -> {
-          // Change our trust in the measurement based on the tags we can see
-          var estStdDevs = vision.getEstimationStdDevs();
-
+          var estStdDevs = camera.getEstimationStdDevs();
           addVisionMeasurement(
               est.estimatedPose.toPose2d(),
               Utils.fpgaToCurrentTime(est.timestampSeconds),
@@ -408,9 +408,13 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
   @Override
   public void simulationPeriodic() {
-    var debugField = vision.getSimDebugField();
+    var debugField = camera1.getSimDebugField();
     debugField.getObject("EstimatedRobot").setPose(getState().Pose);
-    vision.simulationPeriodic(getState().Pose);
+    camera1.simulationPeriodic(getState().Pose);
+
+    var debugField2 = camera2.getSimDebugField();
+    debugField2.getObject("EstimatedRobot").setPose(getState().Pose);
+    camera2.simulationPeriodic(getState().Pose);
   }
 
   /**

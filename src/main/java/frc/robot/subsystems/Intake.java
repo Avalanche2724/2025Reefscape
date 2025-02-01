@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
   private final TalonFX motor = new TalonFX(55);
-  private final TalonFX motor2 = new TalonFX(66);
+  private final TalonFX motor2 = new TalonFX(60);
 
   private final VelocityVoltage control = new VelocityVoltage(1);
   private final VelocityVoltage control2 = new VelocityVoltage(1);
