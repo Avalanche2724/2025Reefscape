@@ -23,9 +23,11 @@ public class Elevator extends SubsystemBase {
   private static final int ELEVATOR_ID = 40;
   private static final int ELEVATOR2_ID = 41;
 
-  public static final double GEAR_RATIO = 20.0;
-  public static final double MASS = Kilograms.convertFrom(25, Pounds); // estimate
-  public static final double DRUM_RADIUS = Meters.convertFrom(0.95766, Inches);
+  public static final double GEAR_RATIO = 64.0 / 8.0 * 58.0 / 22.0;g
+  public static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
+  // approx 0.957 inches:
+  public static final double DRUM_RADIUS =
+      Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 24.0))), Inches);
   public static final double MIN_HEIGHT = Meters.convertFrom(3.75, Inches);
   public static final double MAX_HEIGHT = Meters.convertFrom(3.75 + 59.5, Inches);
   public static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
