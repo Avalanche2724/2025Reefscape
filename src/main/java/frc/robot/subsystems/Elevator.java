@@ -23,7 +23,7 @@ public class Elevator extends SubsystemBase {
   private static final int ELEVATOR_ID = 40;
   private static final int ELEVATOR2_ID = 41;
 
-  public static final double GEAR_RATIO = 64.0 / 8.0 * 58.0 / 22.0;g
+  public static final double GEAR_RATIO = 64.0 / 8.0 * 58.0 / 22.0;
   public static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
   // approx 0.957 inches:
   public static final double DRUM_RADIUS =
