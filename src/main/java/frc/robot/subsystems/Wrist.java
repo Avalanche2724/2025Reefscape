@@ -17,9 +17,11 @@ public class Wrist extends SubsystemBase {
   private static final int WRIST_ID = 30;
   public static final double GEAR_RATIO = 30.0;
   public static final double MASS = 4.0;
-  public static final double ARM_LEN = Meters.convertFrom(10, Inches);
-  public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
-  public static final double DOWN_LIMIT = Rotations.convertFrom(-90, Degrees);
+  public static final double ARM_LEN = Meters.convertFrom(24, Inches);
+  // angle from arm flat to center of gravity; approximated rn
+  public static final double ARM_OFFSET = -9.0;
+  public static final double UP_LIMIT = Rotations.convertFrom(90 + ARM_OFFSET, Degrees);
+  public static final double DOWN_LIMIT = Rotations.convertFrom(-90 + ARM_OFFSET, Degrees);
   public static final double ARM_START = 0;
 
   public enum WristPosition {
@@ -30,7 +32,7 @@ public class Wrist extends SubsystemBase {
     public final double rotation;
 
     WristPosition(double degrees) {
-      this.rotation = Rotations.convertFrom(degrees, Degrees);
+      this.rotation = Rotations.convertFrom(degrees + ARM_OFFSET, Degrees);
     }
   }
 
@@ -44,8 +46,6 @@ public class Wrist extends SubsystemBase {
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     motor.getConfigurator().apply(config);
     motor.setPosition(0);
-
-    createMechanism2d();
   }
 
   double targetPos;
@@ -73,6 +73,10 @@ public class Wrist extends SubsystemBase {
 
   public double getWristDegrees() {
     return Degrees.convertFrom(getWristRotations(), Rotations);
+  }
+
+  public double getWristDegreesOffset() {
+    return getWristDegrees() - ARM_OFFSET;
   }
 
   MechanismLigament2d wristMechanism;
@@ -116,7 +120,7 @@ public class Wrist extends SubsystemBase {
   }
 
   public void updateMechanism2d() {
-    wristRotatePart.setAngle(getWristDegrees());
+    wristRotatePart.setAngle(getWristDegreesOffset());
   }
 
   @Override

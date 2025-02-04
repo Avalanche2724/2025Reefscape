@@ -2,10 +2,12 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
@@ -15,16 +17,17 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Elevator extends SubsystemBase {
   private static final int ELEVATOR_ID = 40;
   private static final int ELEVATOR2_ID = 41;
 
   public static final double GEAR_RATIO = 20.0;
-  public static final double MASS = Kilograms.convertFrom(20, Pounds);
-  public static final double DRUM_RADIUS = Meters.convertFrom(2.0, Inches);
-  public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
-  public static final double MAX_HEIGHT = Meters.convertFrom(90, Inches); // estimate
+  public static final double MASS = Kilograms.convertFrom(25, Pounds); // estimate
+  public static final double DRUM_RADIUS = Meters.convertFrom(0.95766, Inches);
+  public static final double MIN_HEIGHT = Meters.convertFrom(3.75, Inches);
+  public static final double MAX_HEIGHT = Meters.convertFrom(3.75 + 59.5, Inches);
   public static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
 
   public double heightToRotations(double height) {
@@ -133,4 +136,16 @@ public class Elevator extends SubsystemBase {
     motorSim.setRotorVelocity(
         GEAR_RATIO * heightToRotations(m_elevatorSim.getVelocityMetersPerSecond()));
   }
+
+  public VoltageOut sysIdControl = new VoltageOut(0);
+
+  public SysIdRoutine sysIdRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              null,
+              Volts.of(6),
+              null,
+              (state) -> SignalLogger.writeString("elevator_sysid", state.toString())),
+          new SysIdRoutine.Mechanism(
+              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))), null, this));
 }
