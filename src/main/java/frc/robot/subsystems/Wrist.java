@@ -2,9 +2,12 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -12,17 +15,17 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Wrist extends SubsystemBase {
-  private static final int WRIST_ID = 30;
-  public static final double GEAR_RATIO = 30.0;
-  public static final double MASS = 4.0;
-  public static final double ARM_LEN = Meters.convertFrom(24, Inches);
+  private static final int WRIST_ID = 51;
+  public static final double GEAR_RATIO = 42.18;
+  public static final double MASS = Kilograms.convertFrom(15, Pounds);
+  public static final double ARM_LEN = Meters.convertFrom(30, Inches);
   // angle from arm flat to center of gravity; approximated rn
   public static final double ARM_OFFSET = -9.0;
   public static final double UP_LIMIT = Rotations.convertFrom(90 + ARM_OFFSET, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-90 + ARM_OFFSET, Degrees);
-  public static final double ARM_START = 0;
 
   public enum WristPosition {
     BASE(0),
@@ -44,6 +47,8 @@ public class Wrist extends SubsystemBase {
     var config = new TalonFXConfiguration();
     config.Slot0.kP = 6;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
     motor.getConfigurator().apply(config);
     motor.setPosition(WristPosition.BASE.rotations);
   }
@@ -137,7 +142,7 @@ public class Wrist extends SubsystemBase {
           Radians.convertFrom(DOWN_LIMIT, Rotations),
           Radians.convertFrom(UP_LIMIT, Rotations),
           true,
-          Radians.convertFrom(ARM_START, Rotations));
+          Radians.convertFrom(ARM_OFFSET, Degrees));
 
   @Override
   public void simulationPeriodic() {
@@ -152,4 +157,16 @@ public class Wrist extends SubsystemBase {
     motorSim.setRawRotorPosition(
         Rotations.convertFrom(armSim.getAngleRads(), Radians) * GEAR_RATIO);
   }
+
+  public VoltageOut sysIdControl = new VoltageOut(0);
+
+  public SysIdRoutine sysIdRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              null,
+              Volts.of(4),
+              null,
+              (state) -> SignalLogger.writeString("arm_sysid", state.toString())),
+          new SysIdRoutine.Mechanism(
+              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))), null, this));
 }

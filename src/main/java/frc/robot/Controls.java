@@ -66,7 +66,7 @@ public class Controls {
         driver.x().whileTrue(intake.leftMajority());
     */
 
-    // configureSysidBindings();
+    configureSysidBindings();
     /*driver.a().onTrue(climber.goDown());
     driver.b().onTrue(climber.goUp());
 
@@ -122,7 +122,7 @@ public class Controls {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
 
-    final SysIdRoutine routine = elevator.sysIdRoutine;
+    final SysIdRoutine routine = wrist.sysIdRoutine;
     driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
     driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
     driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));

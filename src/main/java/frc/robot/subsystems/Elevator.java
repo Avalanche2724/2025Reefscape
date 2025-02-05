@@ -21,8 +21,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Elevator extends SubsystemBase {
-  private static final int ELEVATOR_ID = 40;
-  private static final int ELEVATOR2_ID = 41;
+  private static final int ELEVATOR_ID = 41;
+  private static final int ELEVATOR2_ID = 42;
 
   public static final double GEAR_RATIO = 64.0 / 8.0 * 58.0 / 22.0;
   public static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
