@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -39,14 +40,24 @@ public class Wrist extends SubsystemBase {
     }
   }
 
-  private final PositionVoltage control = new PositionVoltage(0);
+  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
 
   private final TalonFX motor = new TalonFX(WRIST_ID);
 
   public Wrist() {
     var config = new TalonFXConfiguration();
-    config.Slot0.kP = 6;
+    // values from sim, fix later
+    config.Slot0.kP = 50.674;
+    config.Slot0.kD = 5.5743;
+    config.Slot0.kS = 0.078264;
+    config.Slot0.kV = 4.8984;
+    config.Slot0.kA = 0.27535;
+    config.Slot0.kG = 0.76522;
+
+    config.MotionMagic.MotionMagicAcceleration = 400;
+    config.MotionMagic.MotionMagicCruiseVelocity = 75;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     motor.getConfigurator().apply(config);
@@ -62,6 +73,10 @@ public class Wrist extends SubsystemBase {
 
   public Command setMotorPositionCmd(double pos) {
     return runOnce(() -> setMotorPosition(pos));
+  }
+
+  public Command setMotorPositionBetterCmd(WristPosition pos) {
+    return runOnce(() -> setMotorPosition(pos.rotations));
   }
 
   public Command incrementMotorPositionForTesting(double inc) {

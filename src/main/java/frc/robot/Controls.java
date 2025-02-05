@@ -57,9 +57,11 @@ public class Controls {
 
     */
 
-    driver.x().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
-    driver.y().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.BASE));
+    driver.a().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
+    driver.b().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.BASE));
 
+    driver.x().whileTrue(wrist.setMotorPositionBetterCmd(Wrist.WristPosition.UP));
+    driver.y().whileTrue(wrist.setMotorPositionBetterCmd(Wrist.WristPosition.SCORE));
     /*
         driver.a().whileTrue(intake.runIntake());
         driver.b().whileTrue(intake.stopIntake()));
