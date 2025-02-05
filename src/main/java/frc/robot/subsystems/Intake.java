@@ -1,46 +1,53 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
-  private final TalonFX motor = new TalonFX(55);
-  private final TalonFX motor2 = new TalonFX(60);
+  private final TalonFX leftMotor = new TalonFX(55);
+  private final TalonFX rightMotor = new TalonFX(56);
 
-  private final VelocityVoltage control = new VelocityVoltage(1);
-  private final VelocityVoltage control2 = new VelocityVoltage(1);
+  private final VoltageOut voltageOut = new VoltageOut(0);
+
+  public Intake() {
+    var config = new TalonFXConfiguration();
+    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    leftMotor.getConfigurator().apply(config);
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    rightMotor.getConfigurator().apply(config);
+
+    setDefaultCommand(stopIntake());
+  }
+
+  public static final double intakeVolts = 10;
 
   public Command runIntake() {
     return run(
         () -> {
-          motor.setControl(control.withVelocity(5));
-          motor2.setControl(control2.withVelocity(5));
+          leftMotor.setControl(voltageOut.withOutput(intakeVolts));
+          rightMotor.setControl(voltageOut.withOutput(intakeVolts));
         });
   }
 
   public Command stopIntake() {
     return run(
         () -> {
-          motor.setControl(control.withVelocity(0));
-          motor.setControl(control.withVelocity(0));
+          leftMotor.setControl(voltageOut.withOutput(0));
+          rightMotor.setControl(voltageOut.withOutput(0));
         });
   }
 
   public Command leftMajority() {
     return run(
         () -> {
-          motor.setControl(control.withVelocity(5));
-          motor2.setControl(control2.withVelocity(2));
-        });
-  }
-
-  public Command rightMajority() {
-    return run(
-        () -> {
-          motor.setControl(control.withVelocity(2));
-          motor2.setControl(control2.withVelocity(5));
+          leftMotor.setControl(voltageOut.withOutput(10));
+          rightMotor.setControl(voltageOut.withOutput(4));
         });
   }
 }
