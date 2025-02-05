@@ -102,7 +102,8 @@ public class Vision {
       var cameraProp = new SimCameraProperties();
       cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(79));
       cameraProp.setCalibError(0.3, 0.1);
-      cameraProp.setFPS(45);
+      // cameraProp.setFPS(45);
+      cameraProp.setFPS(15);
       cameraProp.setAvgLatencyMs(25);
       cameraProp.setLatencyStdDevMs(3);
       // Create a PhotonCameraSim which will update the linked PhotonCamera's values with visible
