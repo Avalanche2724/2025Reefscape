@@ -63,7 +63,7 @@ public class Elevator extends SubsystemBase {
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
 
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
-  private final TalonFX followerMotor = new TalonFX(ELEVATOR_ID);
+  private final TalonFX followerMotor = new TalonFX(ELEVATOR2_ID);
 
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
 
