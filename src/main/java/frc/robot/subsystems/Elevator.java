@@ -165,7 +165,7 @@ public class Elevator extends SubsystemBase {
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
-              Volts.of(6),
+              Volts.of(4),
               null,
               (state) -> SignalLogger.writeString("elevator_sysid", state.toString())),
           new SysIdRoutine.Mechanism(
