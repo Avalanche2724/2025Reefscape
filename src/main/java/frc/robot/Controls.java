@@ -50,14 +50,17 @@ public class Controls {
 
   public void configureBindings() {
 
-    /*  driver.a().whileTrue(wrist.incrementMotorPositionForTesting(0.001).repeatedly());
+    driver.a().whileTrue(wrist.incrementMotorPositionForTesting(0.001).repeatedly());
     driver.b().whileTrue(wrist.incrementMotorPositionForTesting(-0.001).repeatedly());
-    driver.x().whileTrue(elevator.incrementMotorPositionForTesting(0.04).repeatedly());
+    /*driver.x().whileTrue(elevator.incrementMotorPositionForTesting(0.04).repeatedly());
     driver.y().whileTrue(elevator.incrementMotorPositionForTesting(-0.04).repeatedly());
 
     */
 
-    configureSysidBindings();
+    driver.x().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
+    driver.y().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.L1_SCORE));
+
+    // configureSysidBindings();
     /*driver.a().onTrue(climber.goDown());
     driver.b().onTrue(climber.goUp());
 
