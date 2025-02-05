@@ -85,7 +85,7 @@ public class Elevator extends SubsystemBase {
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = heightToRotations(MIN_HEIGHT);
 
     config.MotionMagic.MotionMagicAcceleration = 120; // rotations per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 25; // rotations per second
+    config.MotionMagic.MotionMagicCruiseVelocity = 4.25; // rotations per second
     followerMotor.setControl(new Follower(ELEVATOR2_ID, true));
     motor.getConfigurator().apply(config);
 
