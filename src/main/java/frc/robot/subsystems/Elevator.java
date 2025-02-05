@@ -63,7 +63,7 @@ public class Elevator extends SubsystemBase {
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
 
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
-  private final TalonFX followerMotor = new TalonFX(ELEVATOR_ID);
+  private final TalonFX followerMotor = new TalonFX(ELEVATOR2_ID);
 
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
 
@@ -84,8 +84,8 @@ public class Elevator extends SubsystemBase {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = heightToRotations(MIN_HEIGHT);
 
-    config.MotionMagic.MotionMagicAcceleration = 20; // rotations per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 4.5; // rotations per second
+    config.MotionMagic.MotionMagicAcceleration = 120; // rotations per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 4.25; // rotations per second
     followerMotor.setControl(new Follower(ELEVATOR2_ID, true));
     motor.getConfigurator().apply(config);
 
