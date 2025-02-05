@@ -58,7 +58,7 @@ public class Controls {
     */
 
     driver.x().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
-    driver.y().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.L1_SCORE));
+    driver.y().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.BASE));
 
     // configureSysidBindings();
     /*driver.a().onTrue(climber.goDown());
