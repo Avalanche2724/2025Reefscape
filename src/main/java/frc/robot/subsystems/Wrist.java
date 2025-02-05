@@ -29,10 +29,10 @@ public class Wrist extends SubsystemBase {
     SCORE(-30),
     UP(30);
 
-    public final double rotation;
+    public final double rotations;
 
     WristPosition(double degrees) {
-      this.rotation = Rotations.convertFrom(degrees + ARM_OFFSET, Degrees);
+      this.rotations = Rotations.convertFrom(degrees + ARM_OFFSET, Degrees);
     }
   }
 
@@ -45,7 +45,7 @@ public class Wrist extends SubsystemBase {
     config.Slot0.kP = 6;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     motor.getConfigurator().apply(config);
-    motor.setPosition(0);
+    motor.setPosition(WristPosition.BASE.rotations);
   }
 
   double targetPos;

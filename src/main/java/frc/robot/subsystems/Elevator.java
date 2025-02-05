@@ -6,9 +6,10 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -32,11 +33,11 @@ public class Elevator extends SubsystemBase {
   public static final double MAX_HEIGHT = Meters.convertFrom(3.75 + 59.5, Inches);
   public static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
 
-  public double heightToRotations(double height) {
+  public static double heightToRotations(double height) {
     return height / CIRCUMFERENCE;
   }
 
-  public double rotationsToHeight(double rotations) {
+  public static double rotationsToHeight(double rotations) {
     return rotations * CIRCUMFERENCE;
   }
 
@@ -48,16 +49,18 @@ public class Elevator extends SubsystemBase {
     L3_ALGAE(1.3),
     L3_SCORE(1.5),
     L4_SCORE(1.7),
-    TOP(2.0);
+    TOP(MAX_HEIGHT);
 
     public final double distance;
+    public final double rotations;
 
     ElevatorPosition(double distance) {
       this.distance = distance;
+      this.rotations = heightToRotations(distance);
     }
   }
 
-  private final PositionVoltage control = new PositionVoltage(0);
+  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
 
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
   private final TalonFX followerMotor = new TalonFX(ELEVATOR_ID);
@@ -66,10 +69,27 @@ public class Elevator extends SubsystemBase {
 
   public Elevator() {
     var config = new TalonFXConfiguration();
-    config.Slot0.kP = 12;
+    // values from sim, fix later
+    config.Slot0.kP = 20.117;
+    config.Slot0.kD = 0.10678;
+    config.Slot0.kS = 0.004399;
+    config.Slot0.kV = 2.5966;
+    config.Slot0.kA = 0.040565;
+    config.Slot0.kG = 0.099457;
+
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = heightToRotations(MAX_HEIGHT);
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = heightToRotations(MIN_HEIGHT);
+
+    config.MotionMagic.MotionMagicAcceleration = 120; // rotations per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 25; // rotations per second
     followerMotor.setControl(new Follower(ELEVATOR2_ID, true));
     motor.getConfigurator().apply(config);
+
+    motor.setPosition(ElevatorPosition.BASE.rotations);
   }
 
   private void setMotorPosition(double height) {
