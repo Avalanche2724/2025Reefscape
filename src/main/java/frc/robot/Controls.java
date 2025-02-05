@@ -50,10 +50,14 @@ public class Controls {
 
   public void configureBindings() {
 
-    driver.a().whileTrue(wrist.incrementMotorPositionForTesting(0.001).repeatedly());
+    /*  driver.a().whileTrue(wrist.incrementMotorPositionForTesting(0.001).repeatedly());
     driver.b().whileTrue(wrist.incrementMotorPositionForTesting(-0.001).repeatedly());
     driver.x().whileTrue(elevator.incrementMotorPositionForTesting(0.04).repeatedly());
     driver.y().whileTrue(elevator.incrementMotorPositionForTesting(-0.04).repeatedly());
+
+    */
+
+    configureSysidBindings();
     /*driver.a().onTrue(climber.goDown());
     driver.b().onTrue(climber.goUp());
 
@@ -108,22 +112,12 @@ public class Controls {
   private void configureSysidBindings() {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
-    driver
-        .back()
-        .and(driver.y())
-        .whileTrue(drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    driver
-        .back()
-        .and(driver.x())
-        .whileTrue(drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    driver
-        .start()
-        .and(driver.y())
-        .whileTrue(drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    driver
-        .start()
-        .and(driver.x())
-        .whileTrue(drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+
+    final SysIdRoutine routine = elevator.sysIdRoutine;
+    driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
+    driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
+    driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
+    driver.start().and(driver.x()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
   }
 
   private static double deadband(double val) {
