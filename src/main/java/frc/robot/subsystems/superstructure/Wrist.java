@@ -1,11 +1,10 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -14,35 +13,21 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
-public class Wrist extends SubsystemBase {
+public class Wrist {
+  // Constants
   private static final int WRIST_ID = 51;
   public static final double GEAR_RATIO = 42.18;
   public static final double MASS = Kilograms.convertFrom(15, Pounds);
   public static final double ARM_LEN = Meters.convertFrom(30, Inches);
-  // angle from arm flat to center of gravity; approximated rn
-  public static final double ARM_OFFSET = -9.0;
-  public static final double UP_LIMIT = Rotations.convertFrom(90 + ARM_OFFSET, Degrees);
-  public static final double DOWN_LIMIT = Rotations.convertFrom(-90 + ARM_OFFSET, Degrees);
-
-  public enum WristPosition {
-    BASE(0),
-    SCORE(-30),
-    UP(30);
-
-    public final double rotations;
-
-    WristPosition(double degrees) {
-      this.rotations = Rotations.convertFrom(degrees + ARM_OFFSET, Degrees);
-    }
-  }
-
-  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
+  public static final double ARM_OFFSET_DEG = -9.0;
+  public static final double ARM_OFFSET = Rotations.convertFrom(ARM_OFFSET_DEG, Degrees);
+  public static final double UP_LIMIT = Rotations.convertFrom(90 + ARM_OFFSET_DEG, Degrees);
+  public static final double DOWN_LIMIT = Rotations.convertFrom(-90 + ARM_OFFSET_DEG, Degrees);
 
   private final TalonFX motor = new TalonFX(WRIST_ID);
+  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
 
   public Wrist() {
     var config = new TalonFXConfiguration();
@@ -61,34 +46,19 @@ public class Wrist extends SubsystemBase {
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     motor.getConfigurator().apply(config);
-    motor.setPosition(WristPosition.BASE.rotations);
+    motor.setPosition(ARM_OFFSET);
   }
 
-  double targetPos;
-
-  private void setMotorPosition(double pos) {
-    targetPos = pos;
+  private void setMotorRotations(double pos) {
     motor.setControl(control.withPosition(pos));
   }
 
-  public Command setMotorPositionCmd(double pos) {
-    return runOnce(() -> setMotorPosition(pos));
-  }
-
-  public Command setMotorPositionBetterCmd(WristPosition pos) {
-    return runOnce(() -> setMotorPosition(pos.rotations));
-  }
-
-  public Command incrementMotorPositionForTesting(double inc) {
-    return runOnce(() -> setMotorPosition(targetPos + inc));
+  private void setMotorDegreesOffset(double deg) {
+    motor.setControl(control.withPosition(Rotations.convertFrom(deg, Degrees) + ARM_OFFSET_DEG));
   }
 
   public double getWristRotations() {
     return motor.getPosition().getValueAsDouble();
-  }
-
-  public double getWristTargetRotations() {
-    return targetPos;
   }
 
   public double getWristDegrees() {
@@ -96,16 +66,15 @@ public class Wrist extends SubsystemBase {
   }
 
   public double getWristDegreesOffset() {
-    return getWristDegrees() - ARM_OFFSET;
+    return getWristDegrees() - ARM_OFFSET_DEG;
   }
 
-  MechanismLigament2d wristMechanism;
+  // Mechanism2d:
   MechanismLigament2d wristRotatePart;
-  MechanismLigament2d wristRotatePart2;
   MechanismLigament2d wristEnd;
 
   public MechanismLigament2d createMechanism2d() {
-    wristMechanism =
+    var wristMechanism =
         new MechanismLigament2d(
             "wrist_base_elev_part_1",
             Meters.convertFrom(1.5, Inch),
@@ -120,7 +89,7 @@ public class Wrist extends SubsystemBase {
                 getWristDegrees(),
                 Centimeters.convertFrom(1, Inch),
                 new Color8Bit(Color.kPurple)));
-    wristRotatePart2 =
+    var wristRotatePart2 =
         wristRotatePart.append(
             new MechanismLigament2d(
                 "wrist_rotate_part_3",
@@ -143,11 +112,7 @@ public class Wrist extends SubsystemBase {
     wristRotatePart.setAngle(getWristDegreesOffset());
   }
 
-  @Override
-  public void periodic() {
-    updateMechanism2d();
-  }
-
+  // Simulation
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
           DCMotor.getKrakenX60Foc(1),
@@ -157,13 +122,12 @@ public class Wrist extends SubsystemBase {
           Radians.convertFrom(DOWN_LIMIT, Rotations),
           Radians.convertFrom(UP_LIMIT, Rotations),
           true,
-          Radians.convertFrom(ARM_OFFSET, Degrees));
+          Radians.convertFrom(ARM_OFFSET, Rotations));
 
-  @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodic(double deltaTime) {
     var motorSim = motor.getSimState();
     armSim.setInput(motorSim.getMotorVoltage());
-    armSim.update(0.02);
+    armSim.update(deltaTime);
 
     motorSim.setRotorVelocity(
         RotationsPerSecond.convertFrom(armSim.getVelocityRadPerSec(), RadiansPerSecond)
@@ -173,6 +137,7 @@ public class Wrist extends SubsystemBase {
         Rotations.convertFrom(armSim.getAngleRads(), Radians) * GEAR_RATIO);
   }
 
+  // SysId
   public VoltageOut sysIdControl = new VoltageOut(0);
 
   public SysIdRoutine sysIdRoutine =
@@ -183,5 +148,7 @@ public class Wrist extends SubsystemBase {
               null,
               (state) -> SignalLogger.writeString("arm_sysid", state.toString())),
           new SysIdRoutine.Mechanism(
-              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))), null, this));
+              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
+              null,
+              Superstructure.instance));
 }

@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -16,23 +16,21 @@ import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
-public class Elevator extends SubsystemBase {
+public class Elevator {
+  // Constants
   private static final int ELEVATOR_ID = 41;
   private static final int ELEVATOR2_ID = 42;
-
-  public static final double GEAR_RATIO = 64.0 / 8.0 * 58.0 / 22.0;
-  public static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
-  // approx 0.957 inches:
-  public static final double DRUM_RADIUS =
+  private static final double GEAR_RATIO = 64.0 / 8.0 * 58.0 / 22.0;
+  private static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
+  private static final double DRUM_RADIUS =
       Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 24.0))), Inches);
-  public static final double MIN_HEIGHT = Meters.convertFrom(3.75, Inches);
-  public static final double MAX_HEIGHT = Meters.convertFrom(3.75 + 59.5, Inches);
-  public static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
+  private static final double MIN_HEIGHT = Meters.convertFrom(3.75, Inches);
+  private static final double MAX_HEIGHT = Meters.convertFrom(3.75 + 59.5, Inches);
+  private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
 
+  // Static methods
   public static double heightToRotations(double height) {
     return height / CIRCUMFERENCE;
   }
@@ -41,35 +39,15 @@ public class Elevator extends SubsystemBase {
     return rotations * CIRCUMFERENCE;
   }
 
-  public enum ElevatorPosition {
-    BASE(MIN_HEIGHT),
-    L1_SCORE(0.5),
-    L2_ALGAE(0.8),
-    L2_SCORE(1.1),
-    L3_ALGAE(1.3),
-    L3_SCORE(1.5),
-    L4_SCORE(1.7),
-    TOP(MAX_HEIGHT);
-
-    public final double distance;
-    public final double rotations;
-
-    ElevatorPosition(double distance) {
-      this.distance = distance;
-      this.rotations = heightToRotations(distance);
-    }
-  }
-
-  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
-
+  // I/O
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
   private final TalonFX followerMotor = new TalonFX(ELEVATOR2_ID);
-
+  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
 
   public Elevator() {
     var config = new TalonFXConfiguration();
-    // values from sim, fix later
+
     config.Slot0.kP = 20.117;
     config.Slot0.kD = 0.10678;
     config.Slot0.kS = 0.004399;
@@ -84,28 +62,16 @@ public class Elevator extends SubsystemBase {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = heightToRotations(MIN_HEIGHT);
 
-    config.MotionMagic.MotionMagicAcceleration = 120; // rotations per second squared
+    config.MotionMagic.MotionMagicAcceleration = 20; // rotations per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 4.25; // rotations per second
-    followerMotor.setControl(new Follower(ELEVATOR2_ID, true));
     motor.getConfigurator().apply(config);
 
-    motor.setPosition(ElevatorPosition.BASE.rotations);
+    followerMotor.setControl(new Follower(ELEVATOR_ID, true));
+    motor.setPosition(heightToRotations(MIN_HEIGHT));
   }
 
   private void setMotorPosition(double height) {
     motor.setControl(control.withPosition(heightToRotations(height)));
-  }
-
-  private void setMotorPosition(ElevatorPosition pos) {
-    setMotorPosition(pos.distance);
-  }
-
-  public Command setMotorPositionCmd(ElevatorPosition pos) {
-    return runOnce(() -> setMotorPosition(pos));
-  }
-
-  public Command incrementMotorPositionForTesting(double inc) {
-    return runOnce(() -> setMotorPosition(getElevatorHeight() + inc));
   }
 
   public double getElevatorRotations() {
@@ -116,6 +82,7 @@ public class Elevator extends SubsystemBase {
     return rotationsToHeight(getElevatorRotations());
   }
 
+  // Mechanism2d
   public MechanismLigament2d elevatorMechanism;
 
   public MechanismLigament2d createMechanism2d() {
@@ -132,11 +99,7 @@ public class Elevator extends SubsystemBase {
     elevatorMechanism.setLength(getElevatorHeight());
   }
 
-  @Override
-  public void periodic() {
-    updateMechanism2d();
-  }
-
+  // Simulation
   private final ElevatorSim m_elevatorSim =
       new ElevatorSim(
           DCMotor.getKrakenX60Foc(2),
@@ -148,17 +111,17 @@ public class Elevator extends SubsystemBase {
           true,
           MIN_HEIGHT);
 
-  @Override
-  public void simulationPeriodic() {
+  public void simulationPeriodic(double dt) {
     var motorSim = motor.getSimState();
     m_elevatorSim.setInput(motorSim.getMotorVoltage());
-    m_elevatorSim.update(0.02);
+    m_elevatorSim.update(dt);
 
     motorSim.setRawRotorPosition(GEAR_RATIO * heightToRotations(m_elevatorSim.getPositionMeters()));
     motorSim.setRotorVelocity(
         GEAR_RATIO * heightToRotations(m_elevatorSim.getVelocityMetersPerSecond()));
   }
 
+  // SysId
   public VoltageOut sysIdControl = new VoltageOut(0);
 
   public SysIdRoutine sysIdRoutine =
@@ -169,5 +132,7 @@ public class Elevator extends SubsystemBase {
               null,
               (state) -> SignalLogger.writeString("elevator_sysid", state.toString())),
           new SysIdRoutine.Mechanism(
-              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))), null, this));
+              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
+              null,
+              Superstructure.instance));
 }

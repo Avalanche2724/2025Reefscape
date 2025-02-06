@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.superstructure.Superstructure;
 
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
@@ -18,9 +19,8 @@ public class Controls {
 
   private final RobotContainer bot;
   private final Drivetrain drivetrain;
-  private final Elevator elevator;
+  private final Superstructure superstructure;
   private final Intake intake;
-  private final Wrist wrist;
   private final Climber climber;
   private final LED led;
 
@@ -41,9 +41,8 @@ public class Controls {
   public Controls(RobotContainer robot) {
     bot = robot;
     drivetrain = bot.drivetrain;
-    elevator = bot.elevator;
+    superstructure = bot.superstructure;
     intake = bot.intake;
-    wrist = bot.wrist;
     led = bot.led;
     climber = bot.climber;
   }
@@ -57,11 +56,6 @@ public class Controls {
 
     */
 
-    driver.a().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
-    driver.b().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.BASE));
-
-    driver.x().whileTrue(wrist.setMotorPositionBetterCmd(Wrist.WristPosition.UP));
-    driver.y().whileTrue(wrist.setMotorPositionBetterCmd(Wrist.WristPosition.SCORE));
     /*
         driver.a().whileTrue(intake.runIntake());
         driver.b().whileTrue(intake.stopIntake()));
@@ -124,7 +118,7 @@ public class Controls {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
 
-    final SysIdRoutine routine = wrist.sysIdRoutine;
+    final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
     driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
     driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
     driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));

@@ -13,14 +13,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.superstructure.Superstructure;
 
 public class RobotContainer {
   // Subsystems
   public final Drivetrain drivetrain = TunerConstants.createDrivetrain();
   public final LED led = new LED();
   public final Intake intake = new Intake();
-  public final Elevator elevator = new Elevator();
-  public final Wrist wrist = new Wrist();
+  public final Superstructure superstructure = new Superstructure();
   public final Climber climber = new Climber();
 
   // Other utility classes
@@ -41,22 +41,9 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
     // Set up controls
     controls.configureBindings();
-
-    createMechanism2d();
   }
 
   public Command getAutonomousCommand() {
     return autoChooser.selectedCommand();
-  }
-
-  public void createMechanism2d() {
-    // the main mechanism object
-    var mech = new Mechanism2d(Meters.convertFrom(28, Inches), 4);
-    // the mechanism root node
-    var root = mech.getRoot("root", Inches.of(19.5).in(Meters), 0);
-
-    root.append(elevator.createMechanism2d()).append(wrist.createMechanism2d());
-
-    SmartDashboard.putData("Mechanism", mech);
   }
 }

@@ -39,8 +39,7 @@ import java.util.function.Supplier;
  * be used in command-based projects.
  */
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
-  public Vision camera1 = Vision.camera1();
-  public Vision camera2 = Vision.camera2();
+  public Vision vision = new Vision();
 
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private Notifier m_simNotifier = null;
@@ -292,8 +291,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     // Do vision
-    correctFromVision(camera1);
-    correctFromVision(camera2);
+    correctFromVision(vision.camera1);
+    correctFromVision(vision.camera2);
   }
 
   private void startSimThread() {
@@ -309,6 +308,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
               /* use the measured time delta, get battery voltage from WPILib */
               updateSimState(deltaTime, RobotController.getBatteryVoltage());
+
+              // Camera simulation
+              var debugField = vision.getSimDebugField();
+              debugField.getObject("EstimatedRobot").setPose(getState().Pose);
+              vision.simulationPeriodic(getState().Pose);
             });
     m_simNotifier.startPeriodic(kSimLoopPeriod);
   }
@@ -394,7 +398,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 })));
   }
 
-  public void correctFromVision(Vision camera) {
+  public void correctFromVision(Vision.Camera camera) {
     var visionEst = camera.getEstimatedGlobalPose();
     visionEst.ifPresent(
         est -> {
@@ -404,17 +408,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               Utils.fpgaToCurrentTime(est.timestampSeconds),
               estStdDevs);
         });
-  }
-
-  @Override
-  public void simulationPeriodic() {
-    var debugField = camera1.getSimDebugField();
-    debugField.getObject("EstimatedRobot").setPose(getState().Pose);
-    camera1.simulationPeriodic(getState().Pose);
-
-    var debugField2 = camera2.getSimDebugField();
-    debugField2.getObject("EstimatedRobot").setPose(getState().Pose);
-    camera2.simulationPeriodic(getState().Pose);
   }
 
   /**
