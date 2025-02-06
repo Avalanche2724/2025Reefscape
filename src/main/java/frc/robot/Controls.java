@@ -49,25 +49,10 @@ public class Controls {
 
   public void configureBindings() {
 
-    // driver.a().whileTrue(wrist.incrementMotorPositionForTesting(0.001).repeatedly());
-    // driver.b().whileTrue(wrist.incrementMotorPositionForTesting(-0.001).repeatedly());
-    /*driver.x().whileTrue(elevator.incrementMotorPositionForTesting(0.04).repeatedly());
-    driver.y().whileTrue(elevator.incrementMotorPositionForTesting(-0.04).repeatedly());
+    driver.a().whileTrue(intake.runIntake());
+    driver.b().whileTrue(intake.stopIntake());
+    driver.x().whileTrue(intake.leftMajority());
 
-    */
-
-    /*
-        driver.a().whileTrue(intake.runIntake());
-        driver.b().whileTrue(intake.stopIntake()));
-        driver.x().whileTrue(intake.leftMajority());
-    */
-
-    configureSysidBindings();
-    /*driver.a().onTrue(climber.goDown());
-    driver.b().onTrue(climber.goUp());
-
-    driver.x().onTrue(led.thingy());
-    driver.y().onTrue(led.thingy2());*/
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
     drivetrain.setDefaultCommand(
