@@ -11,11 +11,30 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public class Superstructure implements Subsystem {
   public enum Position {
-    A(1, 1),
-    B(2, 1);
+    // Intake:
+    INTAKE_CORAL_STATION(0.625, 35),
+    INTAKE_VERTICAL_CORAL(0.22, -15),
+    // Straight outtake:
+    OUTTAKE_L1(0.53, 0),
+    OUTTAKE_L2(0.927, -35),
+    OUTTAKE_L3(1.3, -35),
+    // Launching outtake:
+    OUTTAKE_L2_LAUNCH(0.36, 35),
+    OUTTAKE_L3_LAUNCH(0.74, 35),
+    OUTTAKE_L4_LAUNCH(1.2, 63),
+    // Vertical outtake:
+    OUTTAKE_L1_VERTICAL(0.875, -45),
+    OUTTAKE_L4_VERT_P1(1.676, 60),
+    OUTTAKE_L4_VERT_P2(1.676, 0),
+    // Algae:
+    INTAKE_ALGAE_L2(0.88, 0),
+    INTAKE_ALGAE_L3(1.25, 0),
+    OUTTAKE_NET(1.676, 60);
 
-    double elevatorHeight;
-    double wristAngle;
+    // Meters
+    public final double elevatorHeight;
+    // Degrees
+    public final double wristAngle;
 
     Position(double elevatorHeight, double wristAngle) {
       this.elevatorHeight = elevatorHeight;
@@ -28,6 +47,11 @@ public class Superstructure implements Subsystem {
 
   {
     instance = this;
+  }
+
+  public Superstructure() {
+    createMechanism2d();
+    createSimulationThread();
   }
 
   public Elevator elevator = new Elevator();

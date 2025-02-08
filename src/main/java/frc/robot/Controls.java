@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.TunerConstants;
@@ -22,33 +23,24 @@ public class Controls {
   private final Superstructure superstructure;
   private final Intake intake;
   private final Climber climber;
-  private final LED led;
 
   private final CommandXboxController driver = new CommandXboxController(0);
 
-  // Swerve requests necessary for drivetrain control
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
           .withDeadband(MAX_SPEED * SWERVEAPI_DEADBAND)
           .withRotationalDeadband(MAX_ANGLE_RATE * SWERVEAPI_DEADBAND)
           .withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
-  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-  private final SwerveRequest.RobotCentric forwardStraight =
-      new SwerveRequest.RobotCentric()
-          .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
 
   public Controls(RobotContainer robot) {
     bot = robot;
     drivetrain = bot.drivetrain;
     superstructure = bot.superstructure;
     intake = bot.intake;
-    led = bot.led;
     climber = bot.climber;
   }
 
   public void configureBindings() {
-
     driver.a().whileTrue(intake.run(3));
     driver.b().whileTrue(intake.run(-3));
     driver.x().whileTrue(intake.run(12));
@@ -76,16 +68,16 @@ public class Controls {
                   .withVelocityY(-x * MAX_SPEED)
                   .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
             }));
+    driver.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+  }
 
-    /* driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    driver
-        .b()
-        .whileTrue(
-            drivetrain.applyRequest(
-                () ->
-                    point.withModuleDirection(
-                        new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+  private final SwerveRequest.RobotCentric forwardStraight =
+      new SwerveRequest.RobotCentric()
+          .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
 
+  private void configureDriveTuningBindings() {
     driver
         .pov(0)
         .whileTrue(
@@ -95,10 +87,14 @@ public class Controls {
         .whileTrue(
             drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-0.5).withVelocityY(0)));
 
-    configureSysidBindings();
-
-     */
-    driver.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+    driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    driver
+        .b()
+        .whileTrue(
+            drivetrain.applyRequest(
+                () ->
+                    point.withModuleDirection(
+                        new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
   }
 
   private void configureSysidBindings() {
