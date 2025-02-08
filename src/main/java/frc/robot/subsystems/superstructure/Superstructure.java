@@ -7,6 +7,7 @@ import com.ctre.phoenix6.Utils;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -51,6 +52,9 @@ public class Superstructure extends SubsystemBase {
     instance = this;
   }
 
+  public Elevator elevator = new Elevator();
+  public Wrist wrist = new Wrist();
+
   public Superstructure() {
     createMechanism2d();
     if (Robot.isSimulation()) {
@@ -58,12 +62,17 @@ public class Superstructure extends SubsystemBase {
     }
   }
 
-  public Elevator elevator = new Elevator();
-  public Wrist wrist = new Wrist();
-
   @Override
   public void periodic() {
     updateMechanism2d();
+  }
+
+  public Command goToPosition(Position pos) {
+    return runOnce(
+        () -> {
+          elevator.setMotorPosition(pos.elevatorHeight);
+          wrist.setMotorDegreesOffset(pos.wristAngle);
+        });
   }
 
   // Simulation

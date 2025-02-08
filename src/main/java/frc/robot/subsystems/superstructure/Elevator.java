@@ -54,7 +54,7 @@ public class Elevator {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 5; // meters per second squared
+    config.MotionMagic.MotionMagicAcceleration = 8; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 0.65; // meters per second
     motor.getConfigurator().apply(config);
 
@@ -62,7 +62,7 @@ public class Elevator {
     motor.setPosition(MIN_HEIGHT);
   }
 
-  private void setMotorPosition(double height) {
+  void setMotorPosition(double height) {
     motor.setControl(control.withPosition(height));
   }
 

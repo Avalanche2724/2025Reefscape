@@ -32,15 +32,15 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
     // values from sim, fix later
-    config.Slot0.kP = 50.674;
-    config.Slot0.kD = 5.5743;
-    config.Slot0.kS = 0.078264;
-    config.Slot0.kV = 4.8984;
-    config.Slot0.kA = 0.27535;
-    config.Slot0.kG = 0.76522;
+    config.Slot0.kP = 59.86;
+    config.Slot0.kD = 7.1244;
+    config.Slot0.kS = 0.00235;
+    config.Slot0.kV = 5.2052;
+    config.Slot0.kA = 0.2534;
+    config.Slot0.kG = 0.77609;
 
-    config.MotionMagic.MotionMagicAcceleration = 400;
-    config.MotionMagic.MotionMagicCruiseVelocity = 75;
+    config.MotionMagic.MotionMagicAcceleration = 6; // rotations per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 2; // rotations per second
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -53,8 +53,8 @@ public class Wrist {
     motor.setControl(control.withPosition(pos));
   }
 
-  private void setMotorDegreesOffset(double deg) {
-    motor.setControl(control.withPosition(Rotations.convertFrom(deg, Degrees) + ARM_OFFSET_DEG));
+  void setMotorDegreesOffset(double deg) {
+    setMotorRotations(Rotations.convertFrom(deg, Degrees) + ARM_OFFSET_DEG);
   }
 
   public double getWristRotations() {
