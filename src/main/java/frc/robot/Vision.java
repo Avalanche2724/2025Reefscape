@@ -79,7 +79,7 @@ public class Vision {
         var cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(79));
         cameraProp.setCalibError(0.3, 0.1);
-        cameraProp.setFPS(30);
+        cameraProp.setFPS(20);
         cameraProp.setAvgLatencyMs(20);
         cameraProp.setLatencyStdDevMs(4);
         cameraSim = new PhotonCameraSim(camera, cameraProp);
@@ -165,6 +165,16 @@ public class Vision {
   // Simulation
   private VisionSystemSim visionSim;
 
+  {
+    // ----- Simulation
+    if (Robot.isSimulation()) {
+      // Create the vision system simulation which handles cameras and targets on the field.
+      visionSim = new VisionSystemSim("main");
+      // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
+      visionSim.addAprilTags(kTagLayout);
+    }
+  }
+
   public Camera camera1 =
       new Camera(
           "Arducam_OV9281_USB_Camera",
@@ -178,16 +188,6 @@ public class Vision {
           new Transform3d(
               new Translation3d(Inches.of(0), Inches.of(-10), Inches.of(0)),
               new Rotation3d(0.0, Math.toRadians(-25.0), 0.0)));
-
-  public Vision() {
-    // ----- Simulation
-    if (Robot.isSimulation()) {
-      // Create the vision system simulation which handles cameras and targets on the field.
-      visionSim = new VisionSystemSim("main");
-      // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
-      visionSim.addAprilTags(kTagLayout);
-    }
-  }
 
   // ----- Simulation
 
