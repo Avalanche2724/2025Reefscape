@@ -20,8 +20,11 @@ public class Intake extends SubsystemBase {
     var config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    config.CurrentLimits.StatorCurrentLimitEnable = false;
-    config.CurrentLimits.SupplyCurrentLimitEnable = false;
+    // config.CurrentLimits.SupplyCurrentLimit = 500;
+    // config.CurrentLimits.StatorCurrentLimit = 500;
+    config.CurrentLimits.StatorCurrentLimitEnable = true;
+    config.CurrentLimits.SupplyCurrentLimitEnable = true;
+
     leftMotor.getConfigurator().apply(config);
     config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     rightMotor.getConfigurator().apply(config);
@@ -47,7 +50,7 @@ public class Intake extends SubsystemBase {
         });
   }
 
-  DutyCycleOut fullSend = new DutyCycleOut(1.0);
+  DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
   public Command fullSend() {
     return run(
