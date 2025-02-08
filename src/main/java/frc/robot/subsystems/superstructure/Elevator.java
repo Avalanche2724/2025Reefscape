@@ -29,7 +29,7 @@ public class Elevator {
   private static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
   private static final double MAX_HEIGHT = Meters.convertFrom(6.5 + 59.5, Inches);
   private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
-  private static final double MOTOR_TO_METERS = GEAR_RATIO * CIRCUMFERENCE;
+  private static final double METERS_PER_MOTOR_ROTATION = GEAR_RATIO * CIRCUMFERENCE;
 
   // I/O
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
@@ -47,7 +47,7 @@ public class Elevator {
     config.Slot0.kA = 0.64618;
     config.Slot0.kG = 0.12862;
 
-    config.Feedback.SensorToMechanismRatio = MOTOR_TO_METERS;
+    config.Feedback.SensorToMechanismRatio = METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
@@ -104,8 +104,9 @@ public class Elevator {
     m_elevatorSim.setInput(motorSim.getMotorVoltage());
     m_elevatorSim.update(dt);
 
-    motorSim.setRawRotorPosition(MOTOR_TO_METERS * m_elevatorSim.getPositionMeters());
-    motorSim.setRotorVelocity(MOTOR_TO_METERS * m_elevatorSim.getVelocityMetersPerSecond());
+    motorSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() / METERS_PER_MOTOR_ROTATION);
+    motorSim.setRotorVelocity(
+        m_elevatorSim.getVelocityMetersPerSecond() / METERS_PER_MOTOR_ROTATION);
   }
 
   // SysId
