@@ -23,6 +23,13 @@ public class Superstructure implements Subsystem {
     }
   }
 
+  // ONLY USE FOR SYSID!!!
+  static Subsystem instance;
+
+  {
+    instance = this;
+  }
+
   public Elevator elevator = new Elevator();
   public Wrist wrist = new Wrist();
 
@@ -66,12 +73,5 @@ public class Superstructure implements Subsystem {
   public void updateMechanism2d() {
     elevator.updateMechanism2d();
     wrist.updateMechanism2d();
-  }
-
-  // Only use for sysid
-  static Subsystem instance;
-
-  {
-    instance = this;
   }
 }

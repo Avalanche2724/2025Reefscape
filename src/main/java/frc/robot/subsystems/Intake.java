@@ -9,10 +9,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
-  private final TalonFX leftMotor = new TalonFX(55);
-  private final TalonFX rightMotor = new TalonFX(56);
+  private final TalonFX leftMotor = new TalonFX(55, "*");
+  private final TalonFX rightMotor = new TalonFX(56, "*");
 
-  private final VoltageOut voltageOut = new VoltageOut(0);
+  private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(false);
 
   public Intake() {
     var config = new TalonFXConfiguration();
@@ -25,7 +25,7 @@ public class Intake extends SubsystemBase {
     setDefaultCommand(stopIntake());
   }
 
-  public static final double intakeVolts = 10;
+  public static final double intakeVolts = 3;
 
   public Command runIntake() {
     return run(
@@ -35,11 +35,27 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  public Command run(double d) {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(d));
+          rightMotor.setControl(voltageOut.withOutput(d));
+        });
+  }
+
   public Command stopIntake() {
     return run(
         () -> {
           leftMotor.setControl(voltageOut.withOutput(0));
           rightMotor.setControl(voltageOut.withOutput(0));
+        });
+  }
+
+  public Command ejectIntake() {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(-2));
+          rightMotor.setControl(voltageOut.withOutput(-2));
         });
   }
 

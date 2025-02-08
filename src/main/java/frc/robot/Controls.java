@@ -49,9 +49,10 @@ public class Controls {
 
   public void configureBindings() {
 
-    driver.a().whileTrue(intake.runIntake());
-    driver.b().whileTrue(intake.stopIntake());
-    driver.x().whileTrue(intake.leftMajority());
+    driver.a().whileTrue(intake.run(3));
+    driver.b().whileTrue(intake.run(-3));
+    driver.x().whileTrue(intake.run(12));
+    driver.y().whileTrue(intake.run(-12));
 
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
