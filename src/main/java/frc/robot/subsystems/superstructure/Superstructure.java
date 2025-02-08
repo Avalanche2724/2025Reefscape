@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.Robot;
 
 public class Superstructure implements Subsystem {
   public enum Position {
@@ -51,7 +52,9 @@ public class Superstructure implements Subsystem {
 
   public Superstructure() {
     createMechanism2d();
-    createSimulationThread();
+    if (Robot.isSimulation()) {
+      createSimulationThread();
+    }
   }
 
   public Elevator elevator = new Elevator();
@@ -76,6 +79,7 @@ public class Superstructure implements Subsystem {
               final double currentTime = Utils.getCurrentTimeSeconds();
               double deltaTime = currentTime - m_lastSimTime;
               m_lastSimTime = currentTime;
+              System.out.println("sim periodic" + deltaTime);
               elevator.simulationPeriodic(deltaTime);
               wrist.simulationPeriodic(deltaTime);
             });
