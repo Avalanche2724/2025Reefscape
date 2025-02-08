@@ -8,8 +8,10 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 
-public class Superstructure implements Subsystem {
+public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
     INTAKE_CORAL_STATION(0.625, 35),
@@ -51,12 +53,15 @@ public class Superstructure implements Subsystem {
 
   public Superstructure() {
     createMechanism2d();
-    createSimulationThread();
+    if (Robot.isSimulation()) {
+      createSimulationThread();
+    }
   }
 
   public Elevator elevator = new Elevator();
   public Wrist wrist = new Wrist();
 
+  @Override
   public void periodic() {
     updateMechanism2d();
   }
