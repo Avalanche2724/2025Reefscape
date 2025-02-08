@@ -22,7 +22,7 @@ public class Elevator {
   // Constants
   private static final int ELEVATOR_ID = 41;
   private static final int ELEVATOR2_ID = 42;
-  private static final double GEAR_RATIO = 64.0 / 8.0 * 58.0 / 22.0;
+  private static final double GEAR_RATIO = 14.0;
   private static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
   private static final double DRUM_RADIUS =
       Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 24.0))), Inches);
@@ -40,12 +40,12 @@ public class Elevator {
   public Elevator() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 116.16;
-    config.Slot0.kD = 50.263;
-    config.Slot0.kS = 0;
-    config.Slot0.kV = 16.463;
-    config.Slot0.kA = 0.64618;
-    config.Slot0.kG = 0.12862;
+    config.Slot0.kP = 72.681;
+    config.Slot0.kD = 17.41;
+    config.Slot0.kS = 0.0015318;
+    config.Slot0.kV = 11.312;
+    config.Slot0.kA = 0.037238;
+    config.Slot0.kG = 0.16096;
 
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -54,8 +54,8 @@ public class Elevator {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 8; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 0.65; // meters per second
+    config.MotionMagic.MotionMagicAcceleration = 7; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 1; // meters per second
     motor.getConfigurator().apply(config);
 
     followerMotor.setControl(new Follower(ELEVATOR_ID, true));
@@ -117,7 +117,7 @@ public class Elevator {
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
-              Volts.of(4),
+              null,
               null,
               (state) -> SignalLogger.writeString("elevator_sysid", state.toString())),
           new SysIdRoutine.Mechanism(
