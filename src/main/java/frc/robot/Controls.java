@@ -30,7 +30,7 @@ public class Controls {
       new SwerveRequest.FieldCentric()
           .withDeadband(MAX_SPEED * SWERVEAPI_DEADBAND)
           .withRotationalDeadband(MAX_ANGLE_RATE * SWERVEAPI_DEADBAND)
-          .withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
+          .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
 
   public Controls(RobotContainer robot) {
     bot = robot;
@@ -49,7 +49,8 @@ public class Controls {
     driver.y().whileTrue(intake.run(-12));*/
     driver.a().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * 12));
     driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -12));
-    driver.x().whileTrue(intake.run(2).withTimeout(0.3).andThen(intake.fullSend()));
+    driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
+    driver.y().whileTrue(intake.spinny());
     // driver.a().
 
     // Note that X is defined as forward according to WPILib convention,

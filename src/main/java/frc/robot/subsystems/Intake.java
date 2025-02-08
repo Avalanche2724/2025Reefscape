@@ -52,11 +52,27 @@ public class Intake extends SubsystemBase {
 
   DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
-  public Command fullSend() {
+  public Command fullSend2() {
     return run(
         () -> {
           leftMotor.setControl(fullSend);
           rightMotor.setControl(fullSend);
+        });
+  }
+
+  public Command fullSend() {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(-12));
+          rightMotor.setControl(voltageOut.withOutput(-12));
+        });
+  }
+
+  public Command spinny() {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(12));
+          rightMotor.setControl(voltageOut.withOutput(-12));
         });
   }
 
