@@ -29,7 +29,7 @@ public class Elevator {
   private static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
   private static final double MAX_HEIGHT = Meters.convertFrom(6.5 + 59.5, Inches);
   private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
-  private static final double METERS_PER_MOTOR_ROTATION = GEAR_RATIO * CIRCUMFERENCE;
+  private static final double METERS_PER_MOTOR_ROTATION = CIRCUMFERENCE / GEAR_RATIO;
 
   // I/O
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
@@ -47,7 +47,7 @@ public class Elevator {
     config.Slot0.kA = 0.64618;
     config.Slot0.kG = 0.12862;
 
-    config.Feedback.SensorToMechanismRatio = METERS_PER_MOTOR_ROTATION;
+    config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
