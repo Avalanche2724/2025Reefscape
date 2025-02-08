@@ -40,8 +40,8 @@ public class Elevator {
   public Elevator() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 72.681;
-    config.Slot0.kD = 17.41;
+    config.Slot0.kP = 145.21;
+    config.Slot0.kD = 17.485;
     config.Slot0.kS = 0.0015318;
     config.Slot0.kV = 11.312;
     config.Slot0.kA = 0.037238;
