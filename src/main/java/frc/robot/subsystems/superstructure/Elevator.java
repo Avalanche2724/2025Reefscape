@@ -104,7 +104,8 @@ public class Elevator {
     m_elevatorSim.setInput(motorSim.getMotorVoltage());
     m_elevatorSim.update(dt);
 
-    motorSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() / METERS_PER_MOTOR_ROTATION);
+    motorSim.setRawRotorPosition(
+        (m_elevatorSim.getPositionMeters() - MIN_HEIGHT) / METERS_PER_MOTOR_ROTATION);
     motorSim.setRotorVelocity(
         m_elevatorSim.getVelocityMetersPerSecond() / METERS_PER_MOTOR_ROTATION);
   }
