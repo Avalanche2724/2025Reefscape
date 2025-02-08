@@ -54,7 +54,7 @@ public class Wrist {
   }
 
   void setMotorDegreesOffset(double deg) {
-    setMotorRotations(Rotations.convertFrom(deg, Degrees) + ARM_OFFSET_DEG);
+    setMotorRotations(Rotations.convertFrom(deg + ARM_OFFSET_DEG, Degrees));
   }
 
   public double getWristRotations() {
