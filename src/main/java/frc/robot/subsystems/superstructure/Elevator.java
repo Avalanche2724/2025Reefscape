@@ -40,12 +40,12 @@ public class Elevator {
   public Elevator() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 20.117;
-    config.Slot0.kD = 0.10678;
-    config.Slot0.kS = 0.004399;
-    config.Slot0.kV = 2.5966;
-    config.Slot0.kA = 0.040565;
-    config.Slot0.kG = 0.099457;
+    config.Slot0.kP = 116.16;
+    config.Slot0.kD = 50.263;
+    config.Slot0.kS = 0;
+    config.Slot0.kV = 16.463;
+    config.Slot0.kA = 0.64618;
+    config.Slot0.kG = 0.12862;
 
     config.Feedback.SensorToMechanismRatio = MOTOR_TO_METERS;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
