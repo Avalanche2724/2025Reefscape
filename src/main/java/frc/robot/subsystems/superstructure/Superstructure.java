@@ -42,7 +42,7 @@ public class Superstructure implements Subsystem {
     }
   }
 
-  // ONLY USE FOR SYSID!!!
+  // Use for command dependencies:
   static Subsystem instance;
 
   {

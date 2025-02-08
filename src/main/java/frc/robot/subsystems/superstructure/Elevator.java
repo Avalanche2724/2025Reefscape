@@ -29,15 +29,7 @@ public class Elevator {
   private static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
   private static final double MAX_HEIGHT = Meters.convertFrom(6.5 + 59.5, Inches);
   private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
-
-  // Static methods
-  public static double heightToRotations(double height) {
-    return height / CIRCUMFERENCE;
-  }
-
-  public static double rotationsToHeight(double rotations) {
-    return rotations * CIRCUMFERENCE;
-  }
+  private static final double MOTOR_TO_METERS = GEAR_RATIO * CIRCUMFERENCE;
 
   // I/O
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
@@ -55,31 +47,27 @@ public class Elevator {
     config.Slot0.kA = 0.040565;
     config.Slot0.kG = 0.099457;
 
-    config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+    config.Feedback.SensorToMechanismRatio = MOTOR_TO_METERS;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = heightToRotations(MAX_HEIGHT);
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = heightToRotations(MIN_HEIGHT);
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 20; // rotations per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 4.25; // rotations per second
+    config.MotionMagic.MotionMagicAcceleration = 5; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 0.65; // meters per second
     motor.getConfigurator().apply(config);
 
     followerMotor.setControl(new Follower(ELEVATOR_ID, true));
-    motor.setPosition(heightToRotations(MIN_HEIGHT));
+    motor.setPosition(MIN_HEIGHT);
   }
 
   private void setMotorPosition(double height) {
-    motor.setControl(control.withPosition(heightToRotations(height)));
-  }
-
-  public double getElevatorRotations() {
-    return motorPosition.refresh().getValueAsDouble();
+    motor.setControl(control.withPosition(height));
   }
 
   public double getElevatorHeight() {
-    return rotationsToHeight(getElevatorRotations());
+    return motorPosition.refresh().getValueAsDouble();
   }
 
   // Mechanism2d
@@ -116,9 +104,8 @@ public class Elevator {
     m_elevatorSim.setInput(motorSim.getMotorVoltage());
     m_elevatorSim.update(dt);
 
-    motorSim.setRawRotorPosition(GEAR_RATIO * heightToRotations(m_elevatorSim.getPositionMeters()));
-    motorSim.setRotorVelocity(
-        GEAR_RATIO * heightToRotations(m_elevatorSim.getVelocityMetersPerSecond()));
+    motorSim.setRawRotorPosition(MOTOR_TO_METERS * m_elevatorSim.getPositionMeters());
+    motorSim.setRotorVelocity(MOTOR_TO_METERS * m_elevatorSim.getVelocityMetersPerSecond());
   }
 
   // SysId
