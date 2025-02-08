@@ -41,12 +41,14 @@ public class Controls {
   }
 
   public void configureBindings() {
-    driver.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L3));
-    driver.b().onTrue(superstructure.goToPosition(Superstructure.Position.INTAKE_VERTICAL_CORAL));
+    /*driver.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L3));
+    driver.b().onTrue(superstructure.goToPosition(Superstructure.Position.INTAKE_VERTICAL_CORAL));*/
     /*driver.a().whileTrue(intake.run(3));
     driver.b().whileTrue(intake.run(-3));
     driver.x().whileTrue(intake.run(12));
     driver.y().whileTrue(intake.run(-12));*/
+    driver.a().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * 1));
+    driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -1));
     // driver.a().
 
     // Note that X is defined as forward according to WPILib convention,

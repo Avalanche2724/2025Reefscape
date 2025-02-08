@@ -8,11 +8,13 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+import java.util.function.DoubleSupplier;
+
 public class Intake extends SubsystemBase {
   private final TalonFX leftMotor = new TalonFX(55, "*");
   private final TalonFX rightMotor = new TalonFX(56, "*");
 
-  private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(false);
+  private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(true);
 
   public Intake() {
     var config = new TalonFXConfiguration();
@@ -40,6 +42,14 @@ public class Intake extends SubsystemBase {
         () -> {
           leftMotor.setControl(voltageOut.withOutput(d));
           rightMotor.setControl(voltageOut.withOutput(d));
+        });
+  }
+
+  public Command runVariable(DoubleSupplier d) {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(d.getAsDouble()));
+          rightMotor.setControl(voltageOut.withOutput(d.getAsDouble()));
         });
   }
 
