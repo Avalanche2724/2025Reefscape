@@ -47,8 +47,9 @@ public class Controls {
     driver.b().whileTrue(intake.run(-3));
     driver.x().whileTrue(intake.run(12));
     driver.y().whileTrue(intake.run(-12));*/
-    driver.a().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * 1));
-    driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -1));
+    driver.a().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * 12));
+    driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -12));
+    driver.x().whileTrue(intake.run(0.5).withTimeout(0.5).andThen(intake.fullSend()));
     // driver.a().
 
     // Note that X is defined as forward according to WPILib convention,

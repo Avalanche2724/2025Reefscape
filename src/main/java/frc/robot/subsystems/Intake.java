@@ -1,13 +1,13 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import java.util.function.DoubleSupplier;
 
 public class Intake extends SubsystemBase {
@@ -20,6 +20,8 @@ public class Intake extends SubsystemBase {
     var config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.CurrentLimits.StatorCurrentLimitEnable = false;
+    config.CurrentLimits.SupplyCurrentLimitEnable = false;
     leftMotor.getConfigurator().apply(config);
     config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     rightMotor.getConfigurator().apply(config);
@@ -42,6 +44,16 @@ public class Intake extends SubsystemBase {
         () -> {
           leftMotor.setControl(voltageOut.withOutput(d));
           rightMotor.setControl(voltageOut.withOutput(d));
+        });
+  }
+
+  DutyCycleOut fullSend = new DutyCycleOut(1.0);
+
+  public Command fullSend() {
+    return run(
+        () -> {
+          leftMotor.setControl(fullSend);
+          rightMotor.setControl(fullSend);
         });
   }
 
