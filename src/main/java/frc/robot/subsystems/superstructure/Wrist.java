@@ -77,7 +77,7 @@ public class Wrist {
     var wristMechanism =
         new MechanismLigament2d(
             "wrist_base_elev_part_1",
-            Meters.convertFrom(1.5, Inch),
+            Meters.convertFrom(2, Inch),
             -90,
             0,
             new Color8Bit(Color.kRed));
