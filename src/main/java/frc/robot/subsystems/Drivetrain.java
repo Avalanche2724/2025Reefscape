@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
-import choreo.Choreo;
 import choreo.auto.AutoFactory;
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
@@ -45,16 +44,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   private boolean hasAppliedOperatorPerspectiveYet = false;
 
-  private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds =
-      new SwerveRequest.ApplyFieldSpeeds();
-
-  private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
-      new SwerveRequest.ApplyFieldSpeeds();
-
-  private final PIDController m_pathXController = new PIDController(10, 0, 0);
-  private final PIDController m_pathYController = new PIDController(10, 0, 0);
-  private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
-
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
    *
@@ -75,26 +64,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   /**
-   * Creates a new auto factory for this drivetrain.
-   *
-   * @return AutoFactory for this drivetrain
-   */
-  public AutoFactory createAutoFactory() {
-    return createAutoFactory((sample, isStart) -> {});
-  }
-
-  /**
-   * Creates a new auto factory for this drivetrain with the given trajectory logger.
-   *
-   * @param trajLogger Logger for the trajectory
-   * @return AutoFactory for this drivetrain
-   */
-  public AutoFactory createAutoFactory(Choreo.TrajectoryLogger<SwerveSample> trajLogger) {
-    return new AutoFactory(
-        () -> getState().Pose, this::resetPose, this::followPath, true, this, trajLogger);
-  }
-
-  /**
    * Returns a command that applies the specified control request to this swerve drivetrain.
    *
    * @param requestSupplier Function returning the request to apply
@@ -104,11 +73,23 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     return run(() -> this.setControl(requestSupplier.get()));
   }
 
-  /**
-   * Follows the given field-centric path sample with PID.
-   *
-   * @param sample Sample along the path to follow
-   */
+  public AutoFactory createAutoFactory() {
+    return new AutoFactory(
+        () -> getState().Pose,
+        this::resetPose,
+        this::followPath,
+        true,
+        this,
+        (sample, isStart) -> {});
+  }
+
+  private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds =
+      new SwerveRequest.ApplyFieldSpeeds();
+
+  private final PIDController m_pathXController = new PIDController(10, 0, 0);
+  private final PIDController m_pathYController = new PIDController(10, 0, 0);
+  private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
+
   public void followPath(SwerveSample sample) {
     m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -153,30 +134,39 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     correctFromVision(vision.camera2);
   }
 
-  private static final double kSimLoopPeriod = 0.005; // 5 ms
-  private Notifier m_simNotifier = null;
-  private double m_lastSimTime;
+  public void correctFromVision(Vision.Camera camera) {
+    var visionEst = camera.getEstimatedGlobalPose();
+    visionEst.ifPresent(
+        est -> {
+          var estStdDevs = camera.getEstimationStdDevs();
+          addVisionMeasurement(
+              est.estimatedPose.toPose2d(),
+              Utils.fpgaToCurrentTime(est.timestampSeconds),
+              estStdDevs);
+        });
+  }
 
-  private void startSimThread() {
-    m_lastSimTime = Utils.getCurrentTimeSeconds();
+  private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
+      new SwerveRequest.ApplyFieldSpeeds();
 
-    /* Run simulation at a faster rate so PID gains behave more reasonably */
-    m_simNotifier =
-        new Notifier(
-            () -> {
-              final double currentTime = Utils.getCurrentTimeSeconds();
-              double deltaTime = currentTime - m_lastSimTime;
-              m_lastSimTime = currentTime;
+  /** Command to PID to a position; useful for auto-align */
+  private void pidToPosition(Pose2d target) {
+    m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
-              /* use the measured time delta, get battery voltage from WPILib */
-              updateSimState(deltaTime, RobotController.getBatteryVoltage());
+    var pose = getState().Pose;
 
-              // Camera simulation
-              var debugField = vision.getSimDebugField();
-              debugField.getObject("EstimatedRobot").setPose(getState().Pose);
-              vision.simulationPeriodic(getState().Pose);
-            });
-    m_simNotifier.startPeriodic(kSimLoopPeriod);
+    var speeds =
+        new ChassisSpeeds(
+            m_pathXController.calculate(pose.getX(), target.getX()),
+            m_pathYController.calculate(pose.getY(), target.getY()),
+            m_pathThetaController.calculate(
+                pose.getRotation().getRadians(), target.getRotation().getRadians()));
+
+    setControl(pathPidToPoint.withSpeeds(speeds));
+  }
+
+  public Command driveToPosition(Supplier<Pose2d> target) {
+    return run(() -> pidToPosition(target.get()));
   }
 
   /**
@@ -260,42 +250,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 })));
   }
 
-  public void correctFromVision(Vision.Camera camera) {
-    var visionEst = camera.getEstimatedGlobalPose();
-    visionEst.ifPresent(
-        est -> {
-          var estStdDevs = camera.getEstimationStdDevs();
-          addVisionMeasurement(
-              est.estimatedPose.toPose2d(),
-              Utils.fpgaToCurrentTime(est.timestampSeconds),
-              estStdDevs);
-        });
-  }
-
-  /**
-   * Drives robot towards given position
-   *
-   * @param target Sample along the path to follow
-   */
-  private void pidToPosition(Pose2d target) {
-    m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-    var pose = getState().Pose;
-
-    var speeds =
-        new ChassisSpeeds(
-            m_pathXController.calculate(pose.getX(), target.getX()),
-            m_pathYController.calculate(pose.getY(), target.getY()),
-            m_pathThetaController.calculate(
-                pose.getRotation().getRadians(), target.getRotation().getRadians()));
-
-    setControl(pathPidToPoint.withSpeeds(speeds));
-  }
-
-  public Command driveToPosition(Supplier<Pose2d> target) {
-    return run(() -> pidToPosition(target.get()));
-  }
-
   // SysId
 
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -309,10 +263,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SysIdRoutine m_sysIdRoutineTranslation =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, // Use default ramp rate (1 V/s)
+              null,
               Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
-              null, // Use default timeout (10 s)
-              // Log state with SignalLogger class
+              null,
               state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
           new SysIdRoutine.Mechanism(
               output -> setControl(m_translationCharacterization.withVolts(output)), null, this));
@@ -321,10 +274,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SysIdRoutine m_sysIdRoutineSteer =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, // Use default ramp rate (1 V/s)
+              null,
               Volts.of(7), // Use dynamic voltage of 7 V
-              null, // Use default timeout (10 s)
-              // Log state with SignalLogger class
+              null,
               state -> SignalLogger.writeString("SysIdSteer_State", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(m_steerCharacterization.withVolts(volts)), null, this));
@@ -342,13 +294,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               /* This is in radians per second, but SysId only supports "volts" */
               Volts.of(Math.PI),
               null, // Use default timeout (10 s)
-              // Log state with SignalLogger class
               state -> SignalLogger.writeString("SysIdRotation_State", state.toString())),
           new SysIdRoutine.Mechanism(
               output -> {
                 /* output is actually radians per second, but SysId only supports "volts" */
                 setControl(m_rotationCharacterization.withRotationalRate(output.in(Volts)));
-                /* also log the requested output for SysId */
                 SignalLogger.writeDouble("Rotational_Rate", output.in(Volts));
               },
               null,
@@ -356,4 +306,31 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
   /* The SysId routine to test */
   private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
+
+  // Simulation:
+  private static final double kSimLoopPeriod = 0.005; // 5 ms
+  private Notifier m_simNotifier = null;
+  private double m_lastSimTime;
+
+  private void startSimThread() {
+    m_lastSimTime = Utils.getCurrentTimeSeconds();
+
+    /* Run simulation at a faster rate so PID gains behave more reasonably */
+    m_simNotifier =
+        new Notifier(
+            () -> {
+              final double currentTime = Utils.getCurrentTimeSeconds();
+              double deltaTime = currentTime - m_lastSimTime;
+              m_lastSimTime = currentTime;
+
+              /* use the measured time delta, get battery voltage from WPILib */
+              updateSimState(deltaTime, RobotController.getBatteryVoltage());
+
+              // Camera simulation
+              var debugField = vision.getSimDebugField();
+              debugField.getObject("EstimatedRobot").setPose(getState().Pose);
+              vision.simulationPeriodic(getState().Pose);
+            });
+    m_simNotifier.startPeriodic(kSimLoopPeriod);
+  }
 }
