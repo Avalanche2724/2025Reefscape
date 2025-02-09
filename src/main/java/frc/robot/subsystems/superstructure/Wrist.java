@@ -85,7 +85,7 @@ public class Wrist {
         wristMechanism.append(
             new MechanismLigament2d(
                 "wrist_rotate_part_2",
-                Meters.convertFrom(11.5, Inches),
+                Meters.convertFrom(11, Inches),
                 getWristDegrees(),
                 Centimeters.convertFrom(1, Inch),
                 new Color8Bit(Color.kPurple)));
