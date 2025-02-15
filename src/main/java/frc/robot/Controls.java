@@ -40,6 +40,33 @@ public class Controls {
     climber = bot.climber;
   }
 
+  public static final boolean keyboardMappings =
+      Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac");
+
+  public double getLeftY() {
+    if (keyboardMappings) {
+      return driver.getLeftY() * 0.5;
+    } else {
+      return driver.getLeftY();
+    }
+  }
+
+  public double getLeftX() {
+    if (keyboardMappings) {
+      return driver.getLeftX() * 0.5;
+    } else {
+      return driver.getLeftX();
+    }
+  }
+
+  public double getRightX() {
+    if (keyboardMappings) {
+      return driver.getLeftTriggerAxis()g * 0.5;
+    } else {
+      return driver.getRightX();
+    }
+  }
+
   public void configureBindings() {
     /*driver.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L3));
     driver.b().onTrue(superstructure.goToPosition(Superstructure.Position.INTAKE_VERTICAL_CORAL));*/
@@ -47,10 +74,12 @@ public class Controls {
     driver.b().whileTrue(intake.run(-3));
     driver.x().whileTrue(intake.run(12));
     driver.y().whileTrue(intake.run(-12));*/
-    driver.a().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * 12));
+    /*driver.a().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * 12));
     driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -12));
     driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
-    driver.y().whileTrue(intake.spinny());
+    driver.y().whileTrue(intake.spinny());*/
+    configureSuperstructureTuningBindings();
+
     // driver.a().
 
     // Note that X is defined as forward according to WPILib convention,
@@ -59,8 +88,9 @@ public class Controls {
         // Drivetrain will execute this command periodically
         drivetrain.applyRequest(
             () -> {
-              double y = -driver.getLeftY();
-              double x = driver.getLeftX();
+              getLeftY();
+              double y = -getLeftY();
+              double x = getLeftX();
               // Apply radial deadband
               double hypot = Math.hypot(x, y);
               double angle = Math.atan2(y, x);
@@ -68,7 +98,7 @@ public class Controls {
               x = hypot * Math.cos(angle);
               y = hypot * Math.sin(angle);
 
-              double turnX = deadband(driver.getRightX());
+              double turnX = deadband(getRightX());
 
               return drive
                   .withVelocityX(y * MAX_SPEED)
@@ -104,6 +134,13 @@ public class Controls {
                 () ->
                     point.withModuleDirection(
                         new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
+  }
+
+  private void configureSuperstructureTuningBindings() {
+    driver.a().whileTrue(superstructure.incrementElevator(0.005));
+    driver.b().whileTrue(superstructure.incrementElevator(-0.005));
+    driver.x().whileTrue(superstructure.incrementWrist(0.5));
+    driver.y().whileTrue(superstructure.incrementWrist(-0.5));
   }
 
   private void configureSysidBindings() {

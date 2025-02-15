@@ -26,8 +26,8 @@ public class Elevator {
   private static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
   private static final double DRUM_RADIUS =
       Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 24.0))), Inches);
-  private static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
-  private static final double MAX_HEIGHT = Meters.convertFrom(6.5 + 59.5, Inches);
+  public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
+  public static final double MAX_HEIGHT = Meters.convertFrom(6.5 + 59.5, Inches);
   private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
   private static final double METERS_PER_MOTOR_ROTATION = CIRCUMFERENCE / GEAR_RATIO;
 

@@ -67,12 +67,31 @@ public class Superstructure extends SubsystemBase {
     updateMechanism2d();
   }
 
+  double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
+  double currentWristTargetPosition = 0;
+
+  public void setPositions(double elevatorHeight, double wristAngle) {
+    currentElevatorTargetPosition = elevatorHeight;
+    currentWristTargetPosition = wristAngle;
+
+    elevator.setMotorPosition(elevatorHeight);
+    wrist.setMotorDegreesOffset(wristAngle);
+  }
+
+  public void setPositions(Position pos) {
+    setPositions(pos.elevatorHeight, pos.wristAngle);
+  }
+
   public Command goToPosition(Position pos) {
-    return runOnce(
-        () -> {
-          elevator.setMotorPosition(pos.elevatorHeight);
-          wrist.setMotorDegreesOffset(pos.wristAngle);
-        });
+    return runOnce(() -> setPositions(pos));
+  }
+
+  public Command incrementElevator(double d) {
+    return run(() -> setPositions(currentElevatorTargetPosition + d, currentWristTargetPosition));
+  }
+
+  public Command incrementWrist(double d) {
+    return run(() -> setPositions(currentElevatorTargetPosition, currentWristTargetPosition + d));
   }
 
   // Simulation
