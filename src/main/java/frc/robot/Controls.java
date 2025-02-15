@@ -61,7 +61,7 @@ public class Controls {
 
   public double getRightX() {
     if (keyboardMappings) {
-      return driver.getLeftTriggerAxis()g * 0.5;
+      return driver.getLeftTriggerAxis() * 0.5;
     } else {
       return driver.getRightX();
     }
