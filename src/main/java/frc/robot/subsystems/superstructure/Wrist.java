@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -13,6 +14,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Wrist {
@@ -32,8 +34,8 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
     // values from sim, fix later
-    config.Slot0.kP = 59.86;
-    config.Slot0.kD = 7.1244;
+    config.Slot0.kP = 30;
+    config.Slot0.kD = 3.5;
     config.Slot0.kS = 0.00235;
     config.Slot0.kV = 5.2052;
     config.Slot0.kA = 0.2534;
@@ -43,7 +45,13 @@ public class Wrist {
     config.MotionMagic.MotionMagicCruiseVelocity = 2; // rotations per second
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT;
+
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    // config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     motor.getConfigurator().apply(config);
     motor.setPosition(ARM_OFFSET);
@@ -67,6 +75,14 @@ public class Wrist {
 
   public double getWristDegreesOffset() {
     return getWristDegrees() - ARM_OFFSET_DEG;
+  }
+
+  private boolean nearUpLimit() {
+    return Math.abs(getWristRotations() - UP_LIMIT) < 0.035;
+  }
+
+  private boolean nearDownLimit() {
+    return Math.abs(getWristRotations() - DOWN_LIMIT) < 0.035;
   }
 
   // Mechanism2d:
@@ -144,11 +160,18 @@ public class Wrist {
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
-              Volts.of(4),
+              Volts.of(3),
               null,
               (state) -> SignalLogger.writeString("arm_sysid", state.toString())),
           new SysIdRoutine.Mechanism(
               (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
               null,
               Superstructure.instance));
+
+  public Command fullSysidRoutine =
+      sequence(
+          sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until(this::nearUpLimit),
+          sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until(this::nearDownLimit),
+          sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until(this::nearUpLimit),
+          sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until(this::nearDownLimit));
 }

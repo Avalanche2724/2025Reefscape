@@ -78,7 +78,9 @@ public class Controls {
     driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -12));
     driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
     driver.y().whileTrue(intake.spinny());*/
-    configureSuperstructureTuningBindings();
+    // configureSuperstructureTuningBindings();
+
+    driver.a().whileTrue(superstructure.wrist.fullSysidRoutine);
 
     // driver.a().
 
