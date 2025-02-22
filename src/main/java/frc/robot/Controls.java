@@ -79,7 +79,7 @@ public class Controls {
     driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
     driver.y().whileTrue(intake.spinny());*/
     configureSuperstructureTuningBindings();
-g
+
     // driver.a().
 
     // Note that X is defined as forward according to WPILib convention,
