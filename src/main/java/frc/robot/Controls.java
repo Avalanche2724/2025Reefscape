@@ -14,9 +14,9 @@ import frc.robot.subsystems.superstructure.Superstructure;
 
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
-  private static final double STICK_DEADBAND = 0.01;
-  private static final double SWERVEAPI_DEADBAND = 0.0001;
+  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
+  private static final double STICK_DEADBAND = 0.001;
+  private static final double SWERVEAPI_DEADBAND = 0.0;
 
   private final RobotContainer bot;
   private final Drivetrain drivetrain;
@@ -78,10 +78,8 @@ public class Controls {
     driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -12));
     driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
     driver.y().whileTrue(intake.spinny());*/
-    // configureSuperstructureTuningBindings();
-
-    driver.a().whileTrue(superstructure.wrist.fullSysidRoutine);
-
+    configureSuperstructureTuningBindings();
+g
     // driver.a().
 
     // Note that X is defined as forward according to WPILib convention,

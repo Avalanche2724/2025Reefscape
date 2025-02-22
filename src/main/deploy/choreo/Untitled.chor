@@ -1,6 +1,6 @@
 {
- "name":"Newbot",
- "version":"v2025.0.0",
+ "name":"Untitled",
+ "version":1,
  "type":"Swerve",
  "variables":{
   "expressions":{},
@@ -9,8 +9,8 @@
  "config":{
   "frontLeft":{
    "x":{
-    "exp":"7.875 in",
-    "val":0.200025
+    "exp":"11.375 in",
+    "val":0.288925
    },
    "y":{
     "exp":"11.375 in",
@@ -19,8 +19,8 @@
   },
   "backLeft":{
    "x":{
-    "exp":"-7.875 in",
-    "val":-0.200025
+    "exp":"-11.375 in",
+    "val":-0.288925
    },
    "y":{
     "exp":"11.375 in",
@@ -28,41 +28,45 @@
    }
   },
   "mass":{
-   "exp":"50.73 kg",
-   "val":50.73
+   "exp":"105 lb",
+   "val":47.62719885
   },
   "inertia":{
    "exp":"4 kg m ^ 2",
    "val":4.0
   },
   "gearing":{
-   "exp":"300 / 49",
-   "val":6.122448979591836
+   "exp":"5.902777777777778",
+   "val":5.902777777777778
   },
   "radius":{
-   "exp":"1.94 in",
-   "val":0.04927599999999999
+   "exp":"1.9 in",
+   "val":0.04826
   },
   "vmax":{
-   "exp":"509.3568889020251 rad / s",
-   "val":509.3568889020251
+   "exp":"500 rad / s",
+   "val":500.0
   },
   "tmax":{
-   "exp":"0.5763157894736842 N m",
-   "val":0.5763157894736842
+   "exp":"0.55 N m",
+   "val":0.55
+  },
+  "cof":{
+   "exp":"1",
+   "val":1.0
   },
   "bumper":{
    "front":{
-    "exp":"19.25 in",
-    "val":0.48895
+    "exp":"16 in",
+    "val":0.4064
    },
    "side":{
-    "exp":"16.25 in",
-    "val":0.41275
+    "exp":"16 in",
+    "val":0.4064
    },
    "back":{
-    "exp":"13.25 in",
-    "val":0.33654999999999996
+    "exp":"16 in",
+    "val":0.4064
    }
   },
   "differentialTrackWidth":{
