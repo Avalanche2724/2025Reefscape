@@ -32,7 +32,7 @@ public class Intake extends SubsystemBase {
     setDefaultCommand(stopIntake());
   }
 
-  public static final double intakeVolts = 3;
+  public static final double intakeVolts = 12;
 
   public Command runIntake() {
     return run(
@@ -73,6 +73,14 @@ public class Intake extends SubsystemBase {
         () -> {
           leftMotor.setControl(voltageOut.withOutput(12));
           rightMotor.setControl(voltageOut.withOutput(-12));
+        });
+  }
+
+  public Command semiSpinny() {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(12));
+          rightMotor.setControl(voltageOut.withOutput(0));
         });
   }
 

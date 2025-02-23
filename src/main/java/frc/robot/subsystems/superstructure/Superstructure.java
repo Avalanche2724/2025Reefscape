@@ -60,6 +60,9 @@ public class Superstructure extends SubsystemBase {
     if (Robot.isSimulation()) {
       createSimulationThread();
     }
+
+    elevator.setMotorDutyCycle(0);
+    wrist.setMotorDutyCycle(0);
   }
 
   @Override
@@ -74,8 +77,16 @@ public class Superstructure extends SubsystemBase {
     currentElevatorTargetPosition = elevatorHeight;
     currentWristTargetPosition = wristAngle;
 
-    elevator.setMotorPosition(elevatorHeight);
+    // elevator.setMotorPosition(elevatorHeight);
     wrist.setMotorDegreesOffset(wristAngle);
+  }
+
+  public Command stop() {
+    return run(
+        () -> {
+          elevator.setMotorDutyCycle(0);
+          wrist.setMotorDutyCycle(0);
+        });
   }
 
   public void setPositions(Position pos) {

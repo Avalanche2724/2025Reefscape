@@ -25,9 +25,9 @@ public class Elevator {
   private static final double GEAR_RATIO = 14.0;
   private static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
   private static final double DRUM_RADIUS =
-      Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 24.0))), Inches);
-  public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
-  public static final double MAX_HEIGHT = Meters.convertFrom(6.5 + 59.5, Inches);
+      Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 18.0))), Inches);
+  public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches); // 0.16m ish
+  public static final double MAX_HEIGHT = Meters.convertFrom(55, Inches); // 1.4m ish
   private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
   private static final double METERS_PER_MOTOR_ROTATION = CIRCUMFERENCE / GEAR_RATIO;
 
@@ -40,12 +40,12 @@ public class Elevator {
   public Elevator() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 145.21;
-    config.Slot0.kD = 17.485;
-    config.Slot0.kS = 0.0015318;
-    config.Slot0.kV = 11.312;
-    config.Slot0.kA = 0.037238;
-    config.Slot0.kG = 0.16096;
+    config.Slot0.kP = 603.43;
+    config.Slot0.kD = 22.735;
+    config.Slot0.kS = 0.045578;
+    config.Slot0.kV = 15.212;
+    config.Slot0.kA = 0.27364;
+    config.Slot0.kG = 0.27351;
 
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -54,16 +54,20 @@ public class Elevator {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 7; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 1; // meters per second
+    config.MotionMagic.MotionMagicAcceleration = 2; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 0.8; // meters per second
     motor.getConfigurator().apply(config);
 
-    followerMotor.setControl(new Follower(ELEVATOR_ID, true));
+    followerMotor.setControl(new Follower(ELEVATOR_ID, false));
     motor.setPosition(MIN_HEIGHT);
   }
 
   void setMotorPosition(double height) {
     motor.setControl(control.withPosition(height));
+  }
+
+  void setMotorDutyCycle(double d) {
+    motor.set(d);
   }
 
   public double getElevatorHeight() {
@@ -117,7 +121,7 @@ public class Elevator {
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
-              null,
+              Volts.of(4),
               null,
               (state) -> SignalLogger.writeString("elevator_sysid", state.toString())),
           new SysIdRoutine.Mechanism(
