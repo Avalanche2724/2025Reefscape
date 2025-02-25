@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -39,6 +40,7 @@ public class Wrist {
     config.Slot0.kV = 7.9144;
     config.Slot0.kA = 0.10046;
     config.Slot0.kG = 0.55565;
+    config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     config.MotionMagic.MotionMagicAcceleration = 3; // rotations per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second
