@@ -25,6 +25,7 @@ public class Controls {
   private final Climber climber;
 
   private final CommandXboxController driver = new CommandXboxController(0);
+  private final CommandXboxController operator = new CommandXboxController(1);
 
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
@@ -68,21 +69,21 @@ public class Controls {
   }
 
   public void configureBindings() {
-    configureSuperstructureTuningBindings();
-    /*
-    driver.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2));
-    driver.b().onTrue(superstructure.goToPosition(Superstructure.Position.INTAKE_VERTICAL_CORAL));
-    driver.x().onTrue(superstructure.stop());
-    */
+    // configureSuperstructureTuningBindings();
+
+    operator.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
+    operator.b().onTrue(superstructure.goToPosition(Superstructure.Position.INTAKE_VERTICAL_CORAL));
+    operator.x().onTrue(superstructure.stop());
+
     /*driver.a().whileTrue(intake.run(3));
     driver.b().whileTrue(intake.run(-3));
     driver.x().whileTrue(intake.run(12));
     driver.y().whileTrue(intake.run(-12));*/
-    /*driver.a().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * 12));
-    driver.b().whileTrue(intake.runVariable(() -> driver.getRightTriggerAxis() * -12));
-    driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
-    driver.y().whileTrue(intake.spinny());*/
-    // configureSuperstructureTuningBindings();
+    driver.leftBumper().whileTrue(intake.fullSend());
+    driver.rightBumper().whileTrue(intake.runIntake());
+    // driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
+    // driver.y().whileTrue(intake.spinny());
+    configureSuperstructureTuningBindings();
 
     // driver.a().
 
@@ -109,7 +110,7 @@ public class Controls {
                   .withVelocityY(-x * MAX_SPEED)
                   .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
             }));
-    driver.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+    driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
     // configureSysidBindings();
     /*driver.a().whileTrue(intake.runIntake());
@@ -145,8 +146,8 @@ public class Controls {
   }
 
   private void configureSuperstructureTuningBindings() {
-    // driver.a().whileTrue(superstructure.incrementElevator(0.005));
-    // driver.b().whileTrue(superstructure.incrementElevator(-0.005));
+    driver.a().whileTrue(superstructure.incrementElevator(0.001));
+    driver.b().whileTrue(superstructure.incrementElevator(-0.001));
     driver.x().whileTrue(superstructure.incrementWrist(0.5));
     driver.y().whileTrue(superstructure.incrementWrist(-0.5));
   }
@@ -155,7 +156,7 @@ public class Controls {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
 
-    final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
+    final SysIdRoutine routine = superstructure.elevator.sysIdRoutine;
     driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
     driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
     driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));

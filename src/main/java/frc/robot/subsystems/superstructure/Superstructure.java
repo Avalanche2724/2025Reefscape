@@ -77,7 +77,7 @@ public class Superstructure extends SubsystemBase {
     currentElevatorTargetPosition = elevatorHeight;
     currentWristTargetPosition = wristAngle;
 
-    // elevator.setMotorPosition(elevatorHeight);
+    elevator.setMotorPosition(elevatorHeight);
     wrist.setMotorDegreesOffset(wristAngle);
   }
 

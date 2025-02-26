@@ -40,22 +40,22 @@ public class Elevator {
   public Elevator() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 603.43;
-    config.Slot0.kD = 22.735;
-    config.Slot0.kS = 0.045578;
-    config.Slot0.kV = 15.212;
-    config.Slot0.kA = 0.27364;
-    config.Slot0.kG = 0.27351;
+    config.Slot0.kP = 244.15;
+    config.Slot0.kD = 19.404;
+    config.Slot0.kS = 0.11697;
+    config.Slot0.kV = 7.5487;
+    config.Slot0.kA = 0.17841;
+    config.Slot0.kG = 0.26462;
 
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 2; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 0.8; // meters per second
+    config.MotionMagic.MotionMagicAcceleration = 1.0; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.0; // meters per second
     motor.getConfigurator().apply(config);
 
     followerMotor.setControl(new Follower(ELEVATOR_ID, false));
@@ -120,7 +120,7 @@ public class Elevator {
   public SysIdRoutine sysIdRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null,
+              Volts.of(0.5).div(Seconds.one()),
               Volts.of(4),
               null,
               (state) -> SignalLogger.writeString("elevator_sysid", state.toString())),
