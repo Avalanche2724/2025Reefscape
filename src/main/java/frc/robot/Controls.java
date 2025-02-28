@@ -81,6 +81,8 @@ public class Controls {
     driver.y().whileTrue(intake.run(-12));*/
     driver.leftBumper().whileTrue(intake.fullSend());
     driver.rightBumper().whileTrue(intake.runIntake());
+    driver.rightTrigger(0.5).whileTrue(superstructure.zeroElevatorCommand());
+    driver.leftTrigger(0.5).whileTrue(superstructure.zeroWristCommand());
     // driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
     // driver.y().whileTrue(intake.spinny());
     configureSuperstructureTuningBindings();

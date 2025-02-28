@@ -42,7 +42,7 @@ public class Wrist {
     config.Slot0.kG = 0.55565;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.MotionMagic.MotionMagicAcceleration = 3; // rotations per second squared
+    config.MotionMagic.MotionMagicAcceleration = 1; // rotations per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -55,6 +55,10 @@ public class Wrist {
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     motor.getConfigurator().apply(config);
+    zero();
+  }
+
+  void zero() {
     motor.setPosition(ARM_OFFSET);
   }
 

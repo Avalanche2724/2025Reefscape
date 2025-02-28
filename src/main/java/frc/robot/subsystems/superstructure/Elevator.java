@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import java.util.function.BooleanSupplier;
 
 public class Elevator {
   // Constants
@@ -36,6 +37,13 @@ public class Elevator {
   private final TalonFX followerMotor = new TalonFX(ELEVATOR2_ID);
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
+
+  final BooleanSupplier isStalling =
+      () -> {
+        return motor.getTorqueCurrent().getValueAsDouble() < -20
+            && motor.getAcceleration().getValueAsDouble() < 1
+            && motor.getVelocity().getValueAsDouble() < 1;
+      };
 
   public Elevator() {
     var config = new TalonFXConfiguration();
@@ -59,6 +67,10 @@ public class Elevator {
     motor.getConfigurator().apply(config);
 
     followerMotor.setControl(new Follower(ELEVATOR_ID, false));
+    zero();
+  }
+
+  public void zero() {
     motor.setPosition(MIN_HEIGHT);
   }
 

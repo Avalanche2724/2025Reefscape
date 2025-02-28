@@ -89,6 +89,15 @@ public class Superstructure extends SubsystemBase {
         });
   }
 
+  public Command zeroElevatorCommand() {
+    return run(() -> {
+          elevator.setMotorDutyCycle(-0.2);
+        })
+        .until(elevator.isStalling)
+        .andThen(() -> elevator.setMotorDutyCycle(0))
+        .andThen(runOnce(elevator::zero));
+  }
+
   public void setPositions(Position pos) {
     setPositions(pos.elevatorHeight, pos.wristAngle);
   }
@@ -103,6 +112,10 @@ public class Superstructure extends SubsystemBase {
 
   public Command incrementWrist(double d) {
     return run(() -> setPositions(currentElevatorTargetPosition, currentWristTargetPosition + d));
+  }
+
+  public Command zeroWristCommand() {
+    return runOnce(wrist::zero);
   }
 
   // Simulation
