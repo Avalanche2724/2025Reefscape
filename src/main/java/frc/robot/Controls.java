@@ -72,7 +72,7 @@ public class Controls {
     // configureSuperstructureTuningBindings();
 
     operator.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
-    operator.b().onTrue(superstructure.goToPosition(Superstructure.Position.INTAKE_VERTICAL_CORAL));
+    operator.b().onTrue(superstructure.goToPosition(Superstructure.Position.MIN_INTAKE_GROUND));
     operator.x().onTrue(superstructure.stop());
 
     /*driver.a().whileTrue(intake.run(3));
@@ -148,8 +148,8 @@ public class Controls {
   }
 
   private void configureSuperstructureTuningBindings() {
-    driver.a().whileTrue(superstructure.incrementElevator(0.001));
-    driver.b().whileTrue(superstructure.incrementElevator(-0.001));
+    driver.a().whileTrue(superstructure.incrementElevator(0.005));
+    driver.b().whileTrue(superstructure.incrementElevator(-0.005));
     driver.x().whileTrue(superstructure.incrementWrist(0.5));
     driver.y().whileTrue(superstructure.incrementWrist(-0.5));
   }

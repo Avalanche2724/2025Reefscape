@@ -34,15 +34,15 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 87.2;
-    config.Slot0.kD = 1.9133;
+    config.Slot0.kP = 70;
+    config.Slot0.kD = 2.5;
     config.Slot0.kS = 0.038097;
     config.Slot0.kV = 7.9144;
     config.Slot0.kA = 0.10046;
     config.Slot0.kG = 0.55565;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.MotionMagic.MotionMagicAcceleration = 1; // rotations per second squared
+    config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 

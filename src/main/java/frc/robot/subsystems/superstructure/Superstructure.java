@@ -15,6 +15,7 @@ import frc.robot.Robot;
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
+    MIN_INTAKE_GROUND(0.165, 0),
     INTAKE_CORAL_STATION(0.625, 35),
     INTAKE_VERTICAL_CORAL(0.22, -15),
     // Straight outtake:
@@ -22,8 +23,8 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(0.36, 35),
-    OUTTAKE_L3_LAUNCH(0.74, 35),
+    OUTTAKE_L2_LAUNCH(0.56, 35),
+    OUTTAKE_L3_LAUNCH(1.25, 35),
     OUTTAKE_L4_LAUNCH(1.2, 63),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
@@ -91,7 +92,7 @@ public class Superstructure extends SubsystemBase {
 
   public Command zeroElevatorCommand() {
     return run(() -> {
-          elevator.setMotorDutyCycle(-0.2);
+          elevator.setMotorDutyCycle(-0.04);
         })
         .until(elevator.isStalling)
         .andThen(() -> elevator.setMotorDutyCycle(0))

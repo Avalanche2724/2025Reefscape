@@ -40,9 +40,9 @@ public class Elevator {
 
   final BooleanSupplier isStalling =
       () -> {
-        return motor.getTorqueCurrent().getValueAsDouble() < -20
-            && motor.getAcceleration().getValueAsDouble() < 1
-            && motor.getVelocity().getValueAsDouble() < 1;
+        return motor.getTorqueCurrent().getValueAsDouble() < -15
+            // && Math.abs(motor.getAcceleration().getValueAsDouble()) < 0.1
+            && Math.abs(motor.getVelocity().getValueAsDouble()) < 0.1;
       };
 
   public Elevator() {
