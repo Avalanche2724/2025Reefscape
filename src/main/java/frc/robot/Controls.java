@@ -5,63 +5,99 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.superstructure.Superstructure;
 
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
-  private static final double STICK_DEADBAND = 0.01;
-  private static final double SWERVEAPI_DEADBAND = 0.0001;
+  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
+  private static final double STICK_DEADBAND = 0.001;
+  private static final double SWERVEAPI_DEADBAND = 0.0;
 
   private final RobotContainer bot;
   private final Drivetrain drivetrain;
-  private final Elevator elevator;
+  private final Superstructure superstructure;
   private final Intake intake;
-  private final Wrist wrist;
   private final Climber climber;
-  private final LED led;
 
   private final CommandXboxController driver = new CommandXboxController(0);
+  private final CommandXboxController operator = new CommandXboxController(1);
 
-  // Swerve requests necessary for drivetrain control
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
           .withDeadband(MAX_SPEED * SWERVEAPI_DEADBAND)
           .withRotationalDeadband(MAX_ANGLE_RATE * SWERVEAPI_DEADBAND)
-          .withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
-  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-  private final SwerveRequest.RobotCentric forwardStraight =
-      new SwerveRequest.RobotCentric()
           .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
 
   public Controls(RobotContainer robot) {
     bot = robot;
     drivetrain = bot.drivetrain;
-    elevator = bot.elevator;
+    superstructure = bot.superstructure;
     intake = bot.intake;
-    wrist = bot.wrist;
-    led = bot.led;
     climber = bot.climber;
   }
 
-  public void configureBindings() {
-    driver.a().onTrue(climber.goDown());
-    driver.b().onTrue(climber.goUp());
+  public static final boolean keyboardMappings =
+      Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac");
 
-    driver.x().onTrue(led.thingy());
-    driver.y().onTrue(led.thingy2());
+  public double getLeftY() {
+    if (keyboardMappings) {
+      return driver.getLeftY() * 0.5;
+    } else {
+      return driver.getLeftY();
+    }
+  }
+
+  public double getLeftX() {
+    if (keyboardMappings) {
+      return driver.getLeftX() * 0.5;
+    } else {
+      return driver.getLeftX();
+    }
+  }
+
+  public double getRightX() {
+    if (keyboardMappings) {
+      return driver.getLeftTriggerAxis() * 0.5;
+    } else {
+      return driver.getRightX();
+    }
+  }
+
+  public void configureBindings() {
+    // configureSuperstructureTuningBindings();
+
+    operator.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
+    operator.b().onTrue(superstructure.goToPosition(Superstructure.Position.MIN_INTAKE_GROUND));
+    operator.x().onTrue(superstructure.stop());
+
+    /*driver.a().whileTrue(intake.run(3));
+    driver.b().whileTrue(intake.run(-3));
+    driver.x().whileTrue(intake.run(12));
+    driver.y().whileTrue(intake.run(-12));*/
+    driver.leftBumper().whileTrue(intake.fullSend());
+    driver.rightBumper().whileTrue(intake.runIntake());
+    driver.rightTrigger(0.5).whileTrue(superstructure.zeroElevatorCommand());
+    driver.leftTrigger(0.5).whileTrue(superstructure.zeroWristCommand());
+    // driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
+    // driver.y().whileTrue(intake.spinny());
+    configureSuperstructureTuningBindings();
+
+    // driver.a().
+
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
         drivetrain.applyRequest(
             () -> {
-              double y = -driver.getLeftY();
-              double x = driver.getLeftX();
+              getLeftY();
+              double y = -getLeftY();
+              double x = getLeftX();
               // Apply radial deadband
               double hypot = Math.hypot(x, y);
               double angle = Math.atan2(y, x);
@@ -69,23 +105,29 @@ public class Controls {
               x = hypot * Math.cos(angle);
               y = hypot * Math.sin(angle);
 
-              double turnX = deadband(driver.getRightX());
+              double turnX = deadband(getRightX());
 
               return drive
                   .withVelocityX(y * MAX_SPEED)
                   .withVelocityY(-x * MAX_SPEED)
                   .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
             }));
+    driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-    /* driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    driver
-        .b()
-        .whileTrue(
-            drivetrain.applyRequest(
-                () ->
-                    point.withModuleDirection(
-                        new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
+    // configureSysidBindings();
+    /*driver.a().whileTrue(intake.runIntake());
+    driver.b().whileTrue(intake.ejectIntake());
+    driver.x().whileTrue(intake.semiSpinny());
+    driver.y().whileTrue(intake.spinny());*/
+  }
 
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+  private final SwerveRequest.RobotCentric forwardStraight =
+      new SwerveRequest.RobotCentric()
+          .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
+
+  private void configureDriveTuningBindings() {
     driver
         .pov(0)
         .whileTrue(
@@ -95,35 +137,32 @@ public class Controls {
         .whileTrue(
             drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-0.5).withVelocityY(0)));
 
-    configureSysidBindings();
-    // reset the field-centric heading on left bumper press
-    driver.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));*/
+    driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    driver
+        .b()
+        .whileTrue(
+            drivetrain.applyRequest(
+                () ->
+                    point.withModuleDirection(
+                        new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
+  }
 
-    driver.a().whileTrue(wrist.setMotorPositionCmd(0.25));
-    driver.b().whileTrue(wrist.setMotorPositionCmd(-0.12));
-    driver.x().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.BASE));
-    driver.y().whileTrue(elevator.setMotorPositionCmd(Elevator.ElevatorPosition.TOP));
+  private void configureSuperstructureTuningBindings() {
+    driver.a().whileTrue(superstructure.incrementElevator(0.005));
+    driver.b().whileTrue(superstructure.incrementElevator(-0.005));
+    driver.x().whileTrue(superstructure.incrementWrist(0.5));
+    driver.y().whileTrue(superstructure.incrementWrist(-0.5));
   }
 
   private void configureSysidBindings() {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
-    driver
-        .back()
-        .and(driver.y())
-        .whileTrue(drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    driver
-        .back()
-        .and(driver.x())
-        .whileTrue(drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    driver
-        .start()
-        .and(driver.y())
-        .whileTrue(drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    driver
-        .start()
-        .and(driver.x())
-        .whileTrue(drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+
+    final SysIdRoutine routine = superstructure.elevator.sysIdRoutine;
+    driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
+    driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
+    driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
+    driver.start().and(driver.x()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
   }
 
   private static double deadband(double val) {

@@ -10,19 +10,17 @@ import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.smartdashboard.*;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
-import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.superstructure.Superstructure;
 
 public class RobotContainer {
   // Subsystems
   public final Drivetrain drivetrain = TunerConstants.createDrivetrain();
   public final LED led = new LED();
   public final Intake intake = new Intake();
-  public final Elevator elevator = new Elevator();
-  public final Wrist wrist = new Wrist();
+  public final Superstructure superstructure = new Superstructure();
   public final Climber climber = new Climber();
 
   // Other utility classes
@@ -43,33 +41,9 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
     // Set up controls
     controls.configureBindings();
-
-    createMechanism2d();
   }
 
   public Command getAutonomousCommand() {
     return autoChooser.selectedCommand();
-  }
-
-  MechanismLigament2d elevatorMechanism;
-  MechanismLigament2d wristMechanism;
-
-  public void createMechanism2d() {
-    // the main mechanism object
-    var mech = new Mechanism2d(Inches.of(30).in(Meters), 4);
-    // the mechanism root node
-    var root = mech.getRoot("root", Inches.of(24).in(Meters), 0);
-
-    elevatorMechanism = root.append(new MechanismLigament2d("elevator", Elevator.MIN_HEIGHT, 90));
-    wristMechanism =
-        elevatorMechanism.append(
-            new MechanismLigament2d("wrist", Wrist.ARM_LEN, 90, 6, new Color8Bit(Color.kPurple)));
-
-    SmartDashboard.putData("Mechanism", mech);
-  }
-
-  public void updateMechanism2d() {
-    elevatorMechanism.setLength(elevator.getElevatorHeight());
-    wristMechanism.setAngle(wrist.getWristDegrees() - 90);
   }
 }

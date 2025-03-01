@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Climber extends SubsystemBase {
 
-  private final TalonFX motor = new TalonFX(55);
+  private final TalonFX motor = new TalonFX(57);
 
   private final PositionVoltage control = new PositionVoltage(1);
 
