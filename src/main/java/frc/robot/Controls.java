@@ -48,9 +48,6 @@ public class Controls {
     climber = bot.climber;
   }
 
-
-
-
   public void configureBindings() {
     driver.a().onTrue(climber.goDown());
     driver.b().onTrue(climber.goUp());
