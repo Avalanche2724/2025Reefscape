@@ -58,7 +58,11 @@ public class Elevator {
     config.MotionMagic.MotionMagicCruiseVelocity = 1.0; // meters per second
     motor.getConfigurator().apply(config);
 
+    var followerConfig = new TalonFXConfiguration();
+    followerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    followerMotor.getConfigurator().apply(followerConfig);
     followerMotor.setControl(new Follower(ELEVATOR_ID, false));
+
     zero();
   }
 
@@ -138,4 +142,8 @@ public class Elevator {
               (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
               null,
               Superstructure.instance));
+
+  public void periodic() {
+    // TODO add telemetry
+  }
 }

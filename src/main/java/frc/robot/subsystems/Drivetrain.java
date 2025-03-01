@@ -329,9 +329,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               updateSimState(deltaTime, RobotController.getBatteryVoltage());
 
               // Camera simulation
-              var debugField = vision.getSimDebugField();
-              debugField.getObject("EstimatedRobot").setPose(getState().Pose);
-              vision.simulationPeriodic(getState().Pose);
+              if (vision != null) {
+                var debugField = vision.getSimDebugField();
+                debugField.getObject("EstimatedRobot").setPose(getState().Pose);
+                vision.simulationPeriodic(getState().Pose);
+              }
             });
     m_simNotifier.startPeriodic(kSimLoopPeriod);
   }

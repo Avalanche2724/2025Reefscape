@@ -4,43 +4,67 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.DeviceIdentifier;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Robot;
 
 public class Wrist {
   // Constants
   private static final int WRIST_ID = 51;
+  private static final int WRIST_ENCODER_ID = 52;
   public static final double GEAR_RATIO = 64;
   public static final double MASS = Kilograms.convertFrom(15, Pounds);
   public static final double ARM_LEN = Meters.convertFrom(30, Inches);
+  // Offset we need to subtract from motor to get the actual position (defined as 0=horizontal arm)
+  // This is because 0 in motor should be max gravity but the center of gravity is off center
   public static final double ARM_OFFSET_DEG = Degrees.convertFrom(-0.072131, Rotations);
   public static final double ARM_OFFSET = Rotations.convertFrom(ARM_OFFSET_DEG, Degrees);
   public static final double UP_LIMIT = Rotations.convertFrom(90 + ARM_OFFSET_DEG, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-90 + ARM_OFFSET_DEG, Degrees);
 
   private final TalonFX motor = new TalonFX(WRIST_ID);
-  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
+
+  private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
+  private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(1);
+
+  public final SparkMax absoluteEncoderSparkMax =
+      new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
+  public final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
 
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 70;
-    config.Slot0.kD = 2.5;
+    config.Slot0.kP = 50;
+    config.Slot0.kD = 20;
     config.Slot0.kS = 0.038097;
     config.Slot0.kV = 7.9144;
     config.Slot0.kA = 0.10046;
     config.Slot0.kG = 0.55565;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+
+    config.Slot1.kP = 40;
+    config.Slot1.kD = 20;
+    config.Slot1.kS = config.Slot0.kS;
+    config.Slot1.kG = config.Slot0.kG;
+    config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
 
     config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second
@@ -55,15 +79,47 @@ public class Wrist {
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     motor.getConfigurator().apply(config);
-    zero();
+
+    SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
+    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.2).inverted(false);
+    sparkMaxConfig.signals.absoluteEncoderPositionPeriodMs(1);
+    sparkMaxConfig.signals.absoluteEncoderPositionAlwaysOn(true);
+    absoluteEncoderSparkMax.configure(
+        sparkMaxConfig,
+        SparkBase.ResetMode.kResetSafeParameters,
+        SparkBase.PersistMode.kPersistParameters);
+
+    Robot.instance.addPeriodic(this::resetFromAbsoluteEncoder, 0.002);
   }
 
-  void zero() {
-    motor.setPosition(ARM_OFFSET);
+  // this is probably a horrible idea and I apologize to anybody looking at this in the future
+  private final CursedTalonFXConfigurator motorPositionSetter =
+      new CursedTalonFXConfigurator(new DeviceIdentifier(51, "talon fx", ""));
+
+  public static class CursedTalonFXConfigurator extends TalonFXConfigurator {
+    public CursedTalonFXConfigurator(DeviceIdentifier id) {
+      super(id);
+    }
+
+    @Override
+    protected void reportIfFrequent() {}
   }
+
+  private double absoluteEncoderPosition() {
+    return absoluteEncoder.getPosition();
+  }
+
+  void resetFromAbsoluteEncoder() {
+    motorPositionSetter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
+  }
+
+  private double lastPositionSet = 0;
+  private boolean setPosition = false;
 
   private void setMotorRotations(double pos) {
-    motor.setControl(control.withPosition(pos));
+    setPosition = true;
+    lastPositionSet = pos;
+    motor.setControl(positionControl.withPosition(pos));
   }
 
   void setMotorDegreesOffset(double deg) {
@@ -71,6 +127,7 @@ public class Wrist {
   }
 
   void setMotorDutyCycle(double d) {
+    setPosition = false;
     motor.set(d);
   }
 
@@ -84,14 +141,6 @@ public class Wrist {
 
   public double getWristDegreesOffset() {
     return getWristDegrees() - ARM_OFFSET_DEG;
-  }
-
-  private boolean nearUpLimit() {
-    return Math.abs(getWristRotations() - UP_LIMIT) < 0.035;
-  }
-
-  private boolean nearDownLimit() {
-    return Math.abs(getWristRotations() - DOWN_LIMIT) < 0.035;
   }
 
   // Mechanism2d:
@@ -168,7 +217,7 @@ public class Wrist {
   public SysIdRoutine sysIdRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null,
+              Volts.of(0.5).div(Second.one()),
               Volts.of(3),
               null,
               (state) -> SignalLogger.writeString("arm_sysid", state.toString())),
@@ -177,11 +226,10 @@ public class Wrist {
               null,
               Superstructure.instance));
 
-  /*public Command fullSysidRoutine =
-        sequence(
-            sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until(this::nearUpLimit),
-            sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until(this::nearDownLimit),
-            sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until(this::nearUpLimit),
-            sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until(this::nearDownLimit));
-  */
+  public void periodic() {
+    // TODO add telemetry
+    if (setPosition && Math.abs(motor.getPosition().getValueAsDouble() - lastPositionSet) < 0.02) {
+      motor.setControl(positionControl.withPosition(lastPositionSet));
+    }
+  }
 }

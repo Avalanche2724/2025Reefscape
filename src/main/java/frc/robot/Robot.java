@@ -13,7 +13,10 @@ public class Robot extends TimedRobot {
 
   private final RobotContainer robotContainer;
 
+  public static Robot instance;
+
   public Robot() {
+    instance = this;
     robotContainer = new RobotContainer();
   }
 

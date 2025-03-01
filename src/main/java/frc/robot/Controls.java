@@ -69,8 +69,6 @@ public class Controls {
   }
 
   public void configureBindings() {
-    // configureSuperstructureTuningBindings();
-
     operator.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
     operator.b().onTrue(superstructure.goToPosition(Superstructure.Position.MIN_INTAKE_GROUND));
     operator.x().onTrue(superstructure.stop());
@@ -114,7 +112,7 @@ public class Controls {
             }));
     driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-    // configureSysidBindings();
+    configureSysidBindings();
     /*driver.a().whileTrue(intake.runIntake());
     driver.b().whileTrue(intake.ejectIntake());
     driver.x().whileTrue(intake.semiSpinny());
@@ -158,7 +156,7 @@ public class Controls {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
 
-    final SysIdRoutine routine = superstructure.elevator.sysIdRoutine;
+    final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
     driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
     driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
     driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));

@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
 
 import com.ctre.phoenix6.Utils;
 import edu.wpi.first.wpilibj.Notifier;
@@ -10,12 +11,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Robot;
 
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
     MIN_INTAKE_GROUND(0.165, 0),
+    STOW(0.165, 90),
     INTAKE_CORAL_STATION(0.625, 35),
     INTAKE_VERTICAL_CORAL(0.22, -15),
     // Straight outtake:
@@ -62,13 +65,16 @@ public class Superstructure extends SubsystemBase {
       createSimulationThread();
     }
 
-    elevator.setMotorDutyCycle(0);
-    wrist.setMotorDutyCycle(0);
+    stopMotors();
+    RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
   }
 
   @Override
   public void periodic() {
     updateMechanism2d();
+
+    elevator.periodic();
+    wrist.periodic();
   }
 
   double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
@@ -82,12 +88,13 @@ public class Superstructure extends SubsystemBase {
     wrist.setMotorDegreesOffset(wristAngle);
   }
 
+  private void stopMotors() {
+    elevator.setMotorDutyCycle(0);
+    wrist.setMotorDutyCycle(0);
+  }
+
   public Command stop() {
-    return run(
-        () -> {
-          elevator.setMotorDutyCycle(0);
-          wrist.setMotorDutyCycle(0);
-        });
+    return run(this::stopMotors);
   }
 
   public Command zeroElevatorCommand() {
@@ -116,7 +123,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   public Command zeroWristCommand() {
-    return runOnce(wrist::zero);
+    return runOnce(wrist::resetFromAbsoluteEncoder);
   }
 
   // Simulation
