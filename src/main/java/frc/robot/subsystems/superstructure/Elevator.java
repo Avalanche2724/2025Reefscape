@@ -80,8 +80,8 @@ public class Elevator {
 
   public boolean isStalling() {
     return motor.getTorqueCurrent().getValueAsDouble() < -15
-            // && Math.abs(motor.getAcceleration().getValueAsDouble()) < 0.1
-            && Math.abs(motor.getVelocity().getValueAsDouble()) < 0.1;
+        // && Math.abs(motor.getAcceleration().getValueAsDouble()) < 0.1
+        && Math.abs(motor.getVelocity().getValueAsDouble()) < 0.1;
   }
 
   // Mechanism2d
