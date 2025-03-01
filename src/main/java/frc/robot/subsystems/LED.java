@@ -26,7 +26,7 @@ public class LED extends SubsystemBase {
     // Set the default command to turn the strip off, otherwise the last colors written by
     // the last command to run will continue to be displayed.
     // Note: Other default patterns could be used instead!
-    // setDefaultCommand(runPattern(LEDPattern.solid(Color.kRed)).withName("Off"));
+    setDefaultCommand(runPattern(LEDPattern.solid(Color.kRed)).withName("Red default"));
   }
 
   @Override
@@ -41,7 +41,7 @@ public class LED extends SubsystemBase {
    * @param pattern the LED pattern to run
    */
   public Command runPattern(LEDPattern pattern) {
-    return run(() -> pattern.applyTo(m_buffer));
+    return run(() -> pattern.applyTo(m_buffer)).ignoringDisable(true);
   }
 
   public Command thingy() {
