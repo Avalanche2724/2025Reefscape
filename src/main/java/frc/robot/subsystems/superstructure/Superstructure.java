@@ -94,7 +94,7 @@ public class Superstructure extends SubsystemBase {
     return run(() -> {
           elevator.setMotorDutyCycle(-0.04);
         })
-        .until(elevator.isStalling)
+        .until(elevator::isStalling)
         .andThen(() -> elevator.setMotorDutyCycle(0))
         .andThen(runOnce(elevator::zero));
   }
