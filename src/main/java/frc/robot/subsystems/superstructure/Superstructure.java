@@ -2,7 +2,6 @@ package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
 
 import com.ctre.phoenix6.Utils;
 import edu.wpi.first.wpilibj.Notifier;
@@ -13,12 +12,13 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Robot;
+import java.util.function.DoubleSupplier;
 
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
-    MIN_INTAKE_GROUND(0.165, 0),
-    STOW(0.165, 90),
+    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, 0),
+    STOW(Elevator.MIN_HEIGHT, 90),
     INTAKE_CORAL_STATION(0.625, 35),
     INTAKE_VERTICAL_CORAL(0.22, -15),
     // Straight outtake:
@@ -98,15 +98,13 @@ public class Superstructure extends SubsystemBase {
   }
 
   public Command zeroElevatorCommand() {
-    return run(() -> {
-          elevator.setMotorDutyCycle(-0.04);
-        })
+    return run(elevator::setMotorZeroing)
         .until(elevator::isStalling)
         .andThen(() -> elevator.setMotorDutyCycle(0))
         .andThen(runOnce(elevator::zero));
   }
 
-  public void setPositions(Position pos) {
+  private void setPositions(Position pos) {
     setPositions(pos.elevatorHeight, pos.wristAngle);
   }
 
@@ -114,16 +112,22 @@ public class Superstructure extends SubsystemBase {
     return runOnce(() -> setPositions(pos));
   }
 
-  public Command incrementElevator(double d) {
-    return run(() -> setPositions(currentElevatorTargetPosition + d, currentWristTargetPosition));
+  public Command getToPositionThenHold(Position pos) {
+    return run(() -> setPositions(pos)).finallyDo(() -> setPositions(Position.STOW));
   }
 
-  public Command incrementWrist(double d) {
-    return run(() -> setPositions(currentElevatorTargetPosition, currentWristTargetPosition + d));
+  public Command incrementElevator(DoubleSupplier d) {
+    return run(
+        () ->
+            setPositions(
+                currentElevatorTargetPosition + d.getAsDouble(), currentWristTargetPosition));
   }
 
-  public Command zeroWristCommand() {
-    return runOnce(wrist::resetFromAbsoluteEncoder);
+  public Command incrementWrist(DoubleSupplier d) {
+    return run(
+        () ->
+            setPositions(
+                currentElevatorTargetPosition, currentWristTargetPosition + d.getAsDouble()));
   }
 
   // Simulation

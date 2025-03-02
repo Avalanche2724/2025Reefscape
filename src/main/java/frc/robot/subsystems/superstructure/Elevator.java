@@ -7,6 +7,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -36,6 +37,8 @@ public class Elevator {
   private final TalonFX followerMotor = new TalonFX(ELEVATOR2_ID);
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
+  private final VelocityTorqueCurrentFOC zeroingControl =
+      new VelocityTorqueCurrentFOC(-0.4).withSlot(1);
 
   public Elevator() {
     var config = new TalonFXConfiguration();
@@ -47,6 +50,11 @@ public class Elevator {
     config.Slot0.kA = 0.17841;
     config.Slot0.kG = 0.26462;
 
+    // For zeroing sequence
+    config.Slot1.kP = 40;
+    config.TorqueCurrent.PeakForwardTorqueCurrent = -12;
+    config.TorqueCurrent.PeakReverseTorqueCurrent = -12;
+
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -54,9 +62,12 @@ public class Elevator {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 1.0; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.0; // meters per second
+    config.MotionMagic.MotionMagicAcceleration = 2; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.4; // meters per second
     motor.getConfigurator().apply(config);
+
+    motor.getClosedLoopError().setUpdateFrequency(50);
+    motor.getClosedLoopReference().setUpdateFrequency(50);
 
     var followerConfig = new TalonFXConfiguration();
     followerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -78,13 +89,16 @@ public class Elevator {
     motor.set(d);
   }
 
+  void setMotorZeroing() {
+    motor.setControl(zeroingControl);
+  }
+
   public double getElevatorHeight() {
     return motorPosition.refresh().getValueAsDouble();
   }
 
   public boolean isStalling() {
-    return motor.getTorqueCurrent().getValueAsDouble() < -15
-        // && Math.abs(motor.getAcceleration().getValueAsDouble()) < 0.1
+    return motor.getTorqueCurrent().getValueAsDouble() < -11
         && Math.abs(motor.getVelocity().getValueAsDouble()) < 0.1;
   }
 

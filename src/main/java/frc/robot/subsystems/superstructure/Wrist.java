@@ -35,7 +35,7 @@ public class Wrist {
   public static final double ARM_LEN = Meters.convertFrom(30, Inches);
   // Offset we need to subtract from motor to get the actual position (defined as 0=horizontal arm)
   // This is because 0 in motor should be max gravity but the center of gravity is off center
-  public static final double ARM_OFFSET_DEG = Degrees.convertFrom(-0.072131, Rotations);
+  public static final double ARM_OFFSET_DEG = Degrees.convertFrom(-0.049, Rotations);
   public static final double ARM_OFFSET = Rotations.convertFrom(ARM_OFFSET_DEG, Degrees);
   public static final double UP_LIMIT = Rotations.convertFrom(90 + ARM_OFFSET_DEG, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-90 + ARM_OFFSET_DEG, Degrees);
@@ -49,20 +49,26 @@ public class Wrist {
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
   public final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
 
+  double positionSwitchThreshold = 0.01;
+
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 50;
-    config.Slot0.kD = 20;
-    config.Slot0.kS = 0.038097;
-    config.Slot0.kV = 7.9144;
-    config.Slot0.kA = 0.10046;
-    config.Slot0.kG = 0.55565;
+    // config.Slot0.kP = 93.21;
+    // config.Slot0.kD = 11.515;
+    config.Slot0.kP = 75;
+    config.Slot0.kD = 10;
+    config.Slot0.kS = (0.48 - 0.37) / 2;
+    config.Slot0.kV = 7.9347;
+    config.Slot0.kA = 0.13794;
+    config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 40;
-    config.Slot1.kD = 20;
+    config.Slot1.kP = 22;
+    config.Slot1.kD = 18;
     config.Slot1.kS = config.Slot0.kS;
+    config.Slot1.kV = config.Slot0.kV;
+    config.Slot1.kA = config.Slot0.kA;
     config.Slot1.kG = config.Slot0.kG;
     config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
 
@@ -70,9 +76,9 @@ public class Wrist {
     config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT;
 
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -80,8 +86,15 @@ public class Wrist {
 
     motor.getConfigurator().apply(config);
 
+    // for phoenix tuner x tuning:
+    motor.getClosedLoopError().setUpdateFrequency(50);
+    motor.getClosedLoopReference().setUpdateFrequency(50);
+    motor.getClosedLoopDerivativeOutput().setUpdateFrequency(50);
+    motor.getClosedLoopOutput().setUpdateFrequency(50);
+    motor.getClosedLoopProportionalOutput().setUpdateFrequency(50);
+
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
-    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.2).inverted(false);
+    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.217).inverted(false);
     sparkMaxConfig.signals.absoluteEncoderPositionPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderPositionAlwaysOn(true);
     absoluteEncoderSparkMax.configure(
@@ -110,7 +123,9 @@ public class Wrist {
   }
 
   void resetFromAbsoluteEncoder() {
-    motorPositionSetter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
+    if (Robot.isReal()) {
+      motorPositionSetter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
+    }
   }
 
   private double lastPositionSet = 0;
@@ -119,7 +134,12 @@ public class Wrist {
   private void setMotorRotations(double pos) {
     setPosition = true;
     lastPositionSet = pos;
-    motor.setControl(positionControl.withPosition(pos));
+
+    if (Math.abs(motor.getPosition().getValueAsDouble() - pos) < positionSwitchThreshold) {
+      motor.setControl(positionControl.withPosition(lastPositionSet));
+    } else {
+      motor.setControl(motionMagicControl.withPosition(pos));
+    }
   }
 
   void setMotorDegreesOffset(double deg) {
@@ -217,8 +237,8 @@ public class Wrist {
   public SysIdRoutine sysIdRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(0.5).div(Second.one()),
-              Volts.of(3),
+              Volts.of(0.1).div(Second.one()),
+              Volts.of(1),
               null,
               (state) -> SignalLogger.writeString("arm_sysid", state.toString())),
           new SysIdRoutine.Mechanism(
@@ -228,7 +248,9 @@ public class Wrist {
 
   public void periodic() {
     // TODO add telemetry
-    if (setPosition && Math.abs(motor.getPosition().getValueAsDouble() - lastPositionSet) < 0.02) {
+    if (setPosition
+        && Math.abs(motor.getPosition().getValueAsDouble() - lastPositionSet)
+            < positionSwitchThreshold) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
     }
   }

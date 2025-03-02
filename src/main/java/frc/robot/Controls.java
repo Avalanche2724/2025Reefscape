@@ -69,31 +69,10 @@ public class Controls {
   }
 
   public void configureBindings() {
-    operator.a().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
-    operator.b().onTrue(superstructure.goToPosition(Superstructure.Position.MIN_INTAKE_GROUND));
-    operator.x().onTrue(superstructure.stop());
-
-    /*driver.a().whileTrue(intake.run(3));
-    driver.b().whileTrue(intake.run(-3));
-    driver.x().whileTrue(intake.run(12));
-    driver.y().whileTrue(intake.run(-12));*/
-    driver.leftBumper().whileTrue(intake.fullSend());
-    driver.rightBumper().whileTrue(intake.runIntake());
-    driver.rightTrigger(0.5).whileTrue(superstructure.zeroElevatorCommand());
-    driver.leftTrigger(0.5).whileTrue(superstructure.zeroWristCommand());
-    // driver.x().whileTrue(intake.run(2).withTimeout(0.2).andThen(intake.fullSend()));
-    // driver.y().whileTrue(intake.spinny());
-    configureSuperstructureTuningBindings();
-
-    // driver.a().
-
-    // Note that X is defined as forward according to WPILib convention,
-    // and Y is defined as to the left according to WPILib convention.
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
         drivetrain.applyRequest(
             () -> {
-              getLeftY();
               double y = -getLeftY();
               double x = getLeftX();
               // Apply radial deadband
@@ -111,12 +90,30 @@ public class Controls {
                   .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
             }));
     driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+    driver.back().whileTrue(superstructure.zeroElevatorCommand());
+
+    driver.leftBumper().whileTrue(intake.fullSend());
+    driver.rightBumper().whileTrue(intake.runIntake());
 
     configureSysidBindings();
-    /*driver.a().whileTrue(intake.runIntake());
-    driver.b().whileTrue(intake.ejectIntake());
-    driver.x().whileTrue(intake.semiSpinny());
-    driver.y().whileTrue(intake.spinny());*/
+
+    operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
+    operator
+        .rightStick()
+        .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+
+    operator
+        .a()
+        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.MIN_INTAKE_GROUND));
+    operator
+        .b()
+        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L2_LAUNCH));
+    operator
+        .x()
+        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L3_LAUNCH));
+    operator
+        .y()
+        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L4_LAUNCH));
   }
 
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
@@ -146,10 +143,10 @@ public class Controls {
   }
 
   private void configureSuperstructureTuningBindings() {
-    driver.a().whileTrue(superstructure.incrementElevator(0.005));
-    driver.b().whileTrue(superstructure.incrementElevator(-0.005));
-    driver.x().whileTrue(superstructure.incrementWrist(0.5));
-    driver.y().whileTrue(superstructure.incrementWrist(-0.5));
+    driver.a().whileTrue(superstructure.incrementElevator(() -> 0.005));
+    driver.b().whileTrue(superstructure.incrementElevator(() -> -0.005));
+    driver.x().whileTrue(superstructure.incrementWrist(() -> 0.5));
+    driver.y().whileTrue(superstructure.incrementWrist(() -> -0.5));
   }
 
   private void configureSysidBindings() {

@@ -175,27 +175,24 @@ public class Vision {
     }
   }
 
+  // note elevator at 8.5 / 28
   public Camera camera1 =
       new Camera(
-          "Arducam_OV9281_USB_Camera",
-          /*new Transform3d(
-          new Translation3d(Inches.of(9), Inches.of(12.5), Inches.of(8.5)),
-          new Rotation3d(0.0, Math.toRadians(-20), Math.toRadians(-15)))*/
-
+          "Arducam_OV9281_USB_Camera (1)",
           new Transform3d(
-              new Translation3d(Inches.of(5), Inches.of(12), Inches.of(12)),
+              new Translation3d(Inches.of(5), Inches.of(10.5), Inches.of(11.5)),
               new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(-15))));
 
-  public Camera camera2 =
-      new Camera(
-          "Arducam_OV9281_USB_Camera (1)",
-          /*new Transform3d(
-          new Translation3d(Inches.of(9), Inches.of(-12.5), Inches.of(8.5)),
-          new Rotation3d(0.0, Math.toRadians(-20), Math.toRadians(15)))*/
+  /*public Camera camera2 =
+  new Camera(
+      "Arducam_OV9281_USB_Camera (1)",
+      /*new Transform3d(
+      new Translation3d(Inches.of(9), Inches.of(-12.5), Inches.of(8.5)),
+      new Rotation3d(0.0, Math.toRadians(-20), Math.toRadians(15)))
 
-          new Transform3d(
-              new Translation3d(Inches.of(5), Inches.of(-12), Inches.of(12)),
-              new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(15))));
+      new Transform3d(
+          new Translation3d(Inches.of(7), Inches.of(-12), Inches.of(12)),
+          new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(15))));*/
 
   // ----- Simulation
 

@@ -35,8 +35,8 @@ import java.util.function.Supplier;
  * be used in command-based projects.
  */
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
-  // public Vision vision = new Vision();
-  public Vision vision;
+  public Vision vision = new Vision();
+  // public Vision vision;
 
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
   private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -132,7 +132,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     // Do vision
-    // correctFromVision(vision.camera1);
+    correctFromVision(vision.camera1);
     // correctFromVision(vision.camera2);
   }
 
