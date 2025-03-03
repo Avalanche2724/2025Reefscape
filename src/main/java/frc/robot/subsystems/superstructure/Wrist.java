@@ -13,6 +13,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -54,8 +55,6 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    // config.Slot0.kP = 93.21;
-    // config.Slot0.kD = 11.515;
     config.Slot0.kP = 75;
     config.Slot0.kD = 10;
     config.Slot0.kS = (0.48 - 0.37) / 2;
@@ -64,13 +63,14 @@ public class Wrist {
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 22;
+    config.Slot1.kP = 22; // todo: try retuning and lowering?
     config.Slot1.kD = 18;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
     config.Slot1.kG = config.Slot0.kG;
     config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
+    config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
     config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second
@@ -92,6 +92,7 @@ public class Wrist {
     motor.getClosedLoopDerivativeOutput().setUpdateFrequency(50);
     motor.getClosedLoopOutput().setUpdateFrequency(50);
     motor.getClosedLoopProportionalOutput().setUpdateFrequency(50);
+    motor.getClosedLoopFeedForward().setUpdateFrequency(50);
 
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.217).inverted(false);
@@ -102,30 +103,23 @@ public class Wrist {
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
 
-    Robot.instance.addPeriodic(this::resetFromAbsoluteEncoder, 0.002);
-  }
-
-  // this is probably a horrible idea and I apologize to anybody looking at this in the future
-  private final CursedTalonFXConfigurator motorPositionSetter =
-      new CursedTalonFXConfigurator(new DeviceIdentifier(51, "talon fx", ""));
-
-  public static class CursedTalonFXConfigurator extends TalonFXConfigurator {
-    public CursedTalonFXConfigurator(DeviceIdentifier id) {
-      super(id);
-    }
-
-    @Override
-    protected void reportIfFrequent() {}
+    Robot.instance.addPeriodic(absoluteEncoderResetter(), 0.002);
   }
 
   private double absoluteEncoderPosition() {
-    return absoluteEncoder.getPosition();
+    return Robot.isReal()
+        ? absoluteEncoder.getPosition()
+        : Rotations.convertFrom(armSim.getAngleRads(), Radians);
   }
 
-  void resetFromAbsoluteEncoder() {
-    if (Robot.isReal()) {
-      motorPositionSetter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
-    }
+  // this is probably a horrible idea and I apologize to anybody looking at this in the future
+  private Runnable absoluteEncoderResetter() {
+    var setter =
+        new TalonFXConfigurator(new DeviceIdentifier(WRIST_ID, "talon fx", "")) {
+          @Override
+          protected void reportIfFrequent() {}
+        };
+    return () -> setter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
   }
 
   private double lastPositionSet = 0;

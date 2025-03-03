@@ -51,7 +51,7 @@ public class Vision {
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   // The standard deviations of our vision estimated poses, which affect correction rate
-  // (Fake values. Experiment and determine estimation noise on an actual robot.)
+  // TODO Experiment and determine estimation noise on an actual robot.
   public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
   public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
 
@@ -184,16 +184,12 @@ public class Vision {
               new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(-15))));
 
   /*public Camera camera2 =
-  new Camera(
-      "Arducam_OV9281_USB_Camera (1)",
-      /*new Transform3d(
-      new Translation3d(Inches.of(9), Inches.of(-12.5), Inches.of(8.5)),
-      new Rotation3d(0.0, Math.toRadians(-20), Math.toRadians(15)))
-
-      new Transform3d(
-          new Translation3d(Inches.of(7), Inches.of(-12), Inches.of(12)),
-          new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(15))));*/
-
+      new Camera(
+          "Arducam_OV9281_USB_Camera",
+          new Transform3d(
+              new Translation3d(Inches.of(5), Inches.of(-10.5), Inches.of(11.5)),
+              new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(15))));
+*/
   // ----- Simulation
 
   public void simulationPeriodic(Pose2d robotSimPose) {
