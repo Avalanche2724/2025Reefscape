@@ -181,8 +181,8 @@ public class Vision {
       new Camera(
           "Arducam_OV9281_USB_Camera (1)",
           new Transform3d(
-              new Translation3d(Inches.of(5), Inches.of(10.5), Inches.of(11.5)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(-15))));
+              new Translation3d(Inches.of(7.5), Inches.of(10.5), Inches.of(11.5)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(-12))));
 
   /*public Camera camera2 =
         new Camera(
