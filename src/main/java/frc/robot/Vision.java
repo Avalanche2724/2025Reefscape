@@ -24,6 +24,7 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -181,15 +182,15 @@ public class Vision {
           "Arducam_OV9281_USB_Camera (1)",
           new Transform3d(
               new Translation3d(Inches.of(5), Inches.of(10.5), Inches.of(11.5)),
-              new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(-15))));
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(-15))));
 
   /*public Camera camera2 =
-      new Camera(
-          "Arducam_OV9281_USB_Camera",
-          new Transform3d(
-              new Translation3d(Inches.of(5), Inches.of(-10.5), Inches.of(11.5)),
-              new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(15))));
-*/
+        new Camera(
+            "Arducam_OV9281_USB_Camera",
+            new Transform3d(
+                new Translation3d(Inches.of(5), Inches.of(-10.5), Inches.of(11.5)),
+                new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(15))));
+  */
   // ----- Simulation
 
   public void simulationPeriodic(Pose2d robotSimPose) {

@@ -15,7 +15,7 @@ import frc.robot.subsystems.superstructure.Superstructure;
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
-  private static final double STICK_DEADBAND = 0.001;
+  private static final double STICK_DEADBAND = 0.0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
 
   private final RobotContainer bot;
@@ -41,54 +41,26 @@ public class Controls {
     climber = bot.climber;
   }
 
-  public static final boolean keyboardMappings =
-      Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac");
+  private SwerveRequest driveBasedOnJoystick() {
+    double y = -getLeftY();
+    double x = getLeftX();
+    // Apply radial deadband
+    double hypot = Math.hypot(x, y);
+    double angle = Math.atan2(y, x);
+    hypot = deadband(hypot);
+    x = hypot * Math.cos(angle);
+    y = hypot * Math.sin(angle);
 
-  public double getLeftY() {
-    if (keyboardMappings) {
-      return driver.getLeftY() * 0.5;
-    } else {
-      return driver.getLeftY();
-    }
-  }
+    double turnX = deadband(getRightX());
 
-  public double getLeftX() {
-    if (keyboardMappings) {
-      return driver.getLeftX() * 0.5;
-    } else {
-      return driver.getLeftX();
-    }
-  }
-
-  public double getRightX() {
-    if (keyboardMappings) {
-      return driver.getLeftTriggerAxis() * 0.5;
-    } else {
-      return driver.getRightX();
-    }
+    return drive
+        .withVelocityX(y * MAX_SPEED)
+        .withVelocityY(-x * MAX_SPEED)
+        .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
   }
 
   public void configureBindings() {
-    drivetrain.setDefaultCommand(
-        // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(
-            () -> {
-              double y = -getLeftY();
-              double x = getLeftX();
-              // Apply radial deadband
-              double hypot = Math.hypot(x, y);
-              double angle = Math.atan2(y, x);
-              hypot = deadband(hypot);
-              x = hypot * Math.cos(angle);
-              y = hypot * Math.sin(angle);
-
-              double turnX = deadband(getRightX());
-
-              return drive
-                  .withVelocityX(y * MAX_SPEED)
-                  .withVelocityY(-x * MAX_SPEED)
-                  .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
-            }));
+    drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
     driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
     driver.back().whileTrue(superstructure.zeroElevatorCommand());
 
@@ -162,5 +134,32 @@ public class Controls {
 
   private static double deadband(double val) {
     return MathUtil.applyDeadband(val, STICK_DEADBAND);
+  }
+
+  public static final boolean keyboardMappings =
+      Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac");
+
+  public double getLeftY() {
+    if (keyboardMappings) {
+      return driver.getLeftY() * 0.5;
+    } else {
+      return driver.getLeftY();
+    }
+  }
+
+  public double getLeftX() {
+    if (keyboardMappings) {
+      return driver.getLeftX() * 0.5;
+    } else {
+      return driver.getLeftX();
+    }
+  }
+
+  public double getRightX() {
+    if (keyboardMappings) {
+      return driver.getLeftTriggerAxis() * 0.5;
+    } else {
+      return driver.getRightX();
+    }
   }
 }

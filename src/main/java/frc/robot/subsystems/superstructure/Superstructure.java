@@ -20,7 +20,6 @@ public class Superstructure extends SubsystemBase {
     MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, 0),
     STOW(Elevator.MIN_HEIGHT, 90),
     INTAKE_CORAL_STATION(0.625, 35),
-    INTAKE_VERTICAL_CORAL(0.22, -15),
     // Straight outtake:
     OUTTAKE_L1(0.53, 0),
     OUTTAKE_L2(0.927, -35),
@@ -72,20 +71,46 @@ public class Superstructure extends SubsystemBase {
   @Override
   public void periodic() {
     updateMechanism2d();
-
+    if (!RobotModeTriggers.disabled().getAsBoolean()) {
+      // Crash prevention
+      double currentElevatorHeight = elevator.getElevatorHeight();
+      double currentWristAngle = wrist.getWristDegreesOffset();
+      // If we have negative wrist target but elevator isn't high enough yet
+      if (currentElevatorHeight < ELEVATOR_SAFETY_THRESHOLD && currentWristTargetPosition < 0) {
+        // Keep wrist at safe angle until elevator rises above threshold
+        wrist.setMotorDegreesOffset(0);
+        // Continue moving elevator to target
+        elevator.setMotorPosition(currentElevatorTargetPosition);
+      }
+      // If elevator is moving down while wrist is negative, ensure elevator doesn't go below threshold
+      else if (currentWristAngle < 0 && 
+              currentElevatorTargetPosition < ELEVATOR_SAFETY_THRESHOLD &&
+              currentElevatorHeight > currentElevatorTargetPosition) {
+        // Prevent elevator from going below safety threshold
+        elevator.setMotorPosition(ELEVATOR_SAFETY_THRESHOLD);
+      } else {
+        wrist.setMotorDegreesOffset(currentWristTargetPosition);
+        elevator.setMotorPosition(currentElevatorTargetPosition);
+      }
+    }
+    // Run normal periodic methods
     elevator.periodic();
     wrist.periodic();
   }
 
   double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
   double currentWristTargetPosition = 0;
+  
+  // Safety threshold for crash prevention
+  private static final double ELEVATOR_SAFETY_THRESHOLD = 0.45; // meters
 
   public void setPositions(double elevatorHeight, double wristAngle) {
+    boolean shouldStopWrist = elevatorHeight < ELEVATOR_SAFETY_THRESHOLD && wristAngle < 0;
     currentElevatorTargetPosition = elevatorHeight;
     currentWristTargetPosition = wristAngle;
 
     elevator.setMotorPosition(elevatorHeight);
-    wrist.setMotorDegreesOffset(wristAngle);
+    wrist.setMotorDegreesOffset(shouldStopWrist ? 0 : wristAngle);
   }
 
   private void stopMotors() {
