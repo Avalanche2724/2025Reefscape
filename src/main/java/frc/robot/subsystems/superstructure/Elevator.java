@@ -38,13 +38,13 @@ public class Elevator {
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
   private final VelocityTorqueCurrentFOC zeroingControl =
-      new VelocityTorqueCurrentFOC(-0.4).withSlot(1);
+      new VelocityTorqueCurrentFOC(-0.3).withSlot(1);
 
   public Elevator() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 244.15;
-    config.Slot0.kD = 19.404;
+    config.Slot0.kP = 190.41;
+    config.Slot0.kD = 14.148;
     config.Slot0.kS = 0.11697;
     config.Slot0.kV = 7.5487;
     config.Slot0.kA = 0.17841;
@@ -52,7 +52,7 @@ public class Elevator {
 
     // For zeroing sequence
     config.Slot1.kP = 40;
-    config.TorqueCurrent.PeakForwardTorqueCurrent = -12;
+    config.TorqueCurrent.PeakForwardTorqueCurrent = 12;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -12;
 
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
@@ -62,8 +62,9 @@ public class Elevator {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 2; // meters per second squared
+    config.MotionMagic.MotionMagicAcceleration = 3.5; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4; // meters per second
+    config.MotionMagic.MotionMagicJerk = 35; // meters per second cubed
     motor.getConfigurator().apply(config);
 
     motor.getClosedLoopError().setUpdateFrequency(50);

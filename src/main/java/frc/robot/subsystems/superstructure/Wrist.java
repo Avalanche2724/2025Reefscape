@@ -51,6 +51,8 @@ public class Wrist {
   public final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
 
   double positionSwitchThreshold = 0.01;
+  double rpmVelocityThreshold = 15;
+  double periodSecondsReset = 0.1;
 
   public Wrist() {
     var config = new TalonFXConfiguration();
@@ -62,9 +64,9 @@ public class Wrist {
     config.Slot0.kA = 0.13794;
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
-
-    config.Slot1.kP = 22; // todo: try retuning and lowering?
-    config.Slot1.kD = 18;
+    // 25/20; 22/18; 15/10
+    config.Slot1.kP = 5; // todo: try retuning and lowering?
+    config.Slot1.kD = 1;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
@@ -72,8 +74,9 @@ public class Wrist {
     config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
+    config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second; does it hit this?
     config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second
+    config.MotionMagic.MotionMagicJerk = 2; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -97,13 +100,14 @@ public class Wrist {
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.217).inverted(false);
     sparkMaxConfig.signals.absoluteEncoderPositionPeriodMs(1);
+    sparkMaxConfig.signals.absoluteEncoderVelocityPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderPositionAlwaysOn(true);
     absoluteEncoderSparkMax.configure(
         sparkMaxConfig,
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
 
-    Robot.instance.addPeriodic(absoluteEncoderResetter(), 0.002);
+    Robot.instance.addPeriodic(absoluteEncoderResetter(), periodSecondsReset);
   }
 
   private double absoluteEncoderPosition() {
@@ -119,7 +123,11 @@ public class Wrist {
           @Override
           protected void reportIfFrequent() {}
         };
-    return () -> setter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
+    return () -> {
+      if (Math.abs(absoluteEncoder.getVelocity()) < rpmVelocityThreshold) {
+        setter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
+      }
+    };
   }
 
   private double lastPositionSet = 0;

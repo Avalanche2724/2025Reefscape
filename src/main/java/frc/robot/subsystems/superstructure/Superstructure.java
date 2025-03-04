@@ -18,6 +18,8 @@ public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
     MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, 0),
+    ALG_INTAKE_GROUND(0.23, 0),
+
     STOW(Elevator.MIN_HEIGHT, 90),
     INTAKE_CORAL_STATION(0.625, 35),
     // Straight outtake:
@@ -30,12 +32,12 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L4_LAUNCH(1.2, 63),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
-    OUTTAKE_L4_VERT_P1(1.676, 60),
-    OUTTAKE_L4_VERT_P2(1.676, 0),
+    OUTTAKE_L4_VERT_P1(1.52, 60),
+    OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
     INTAKE_ALGAE_L2(0.88, 0),
     INTAKE_ALGAE_L3(1.25, 0),
-    OUTTAKE_NET(1.676, 60);
+    OUTTAKE_NET(1.52, 60);
 
     // Meters
     public final double elevatorHeight;
@@ -71,6 +73,7 @@ public class Superstructure extends SubsystemBase {
   @Override
   public void periodic() {
     updateMechanism2d();
+    /*
     if (!RobotModeTriggers.disabled().getAsBoolean()) {
       // Crash prevention
       double currentElevatorHeight = elevator.getElevatorHeight();
@@ -82,17 +85,21 @@ public class Superstructure extends SubsystemBase {
         // Continue moving elevator to target
         elevator.setMotorPosition(currentElevatorTargetPosition);
       }
-      // If elevator is moving down while wrist is negative, ensure elevator doesn't go below threshold
-      else if (currentWristAngle < 0 && 
-              currentElevatorTargetPosition < ELEVATOR_SAFETY_THRESHOLD &&
-              currentElevatorHeight > currentElevatorTargetPosition) {
+      // If elevator is moving down while wrist is negative, ensure elevator doesn't go below
+      // threshold
+      // This did not work in general; find a better solution later
+      // Tbh this is not going to happen anyways
+      /*
+      else if (currentWristAngle < 0
+          && currentElevatorTargetPosition < ELEVATOR_SAFETY_THRESHOLD
+          && currentElevatorHeight > currentElevatorTargetPosition) {
         // Prevent elevator from going below safety threshold
         elevator.setMotorPosition(ELEVATOR_SAFETY_THRESHOLD);
-      } else {
+      else {
         wrist.setMotorDegreesOffset(currentWristTargetPosition);
         elevator.setMotorPosition(currentElevatorTargetPosition);
       }
-    }
+    } */
     // Run normal periodic methods
     elevator.periodic();
     wrist.periodic();
@@ -100,12 +107,13 @@ public class Superstructure extends SubsystemBase {
 
   double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
   double currentWristTargetPosition = 0;
-  
+
   // Safety threshold for crash prevention
   private static final double ELEVATOR_SAFETY_THRESHOLD = 0.45; // meters
 
   public void setPositions(double elevatorHeight, double wristAngle) {
-    boolean shouldStopWrist = elevatorHeight < ELEVATOR_SAFETY_THRESHOLD && wristAngle < 0;
+    boolean shouldStopWrist =
+        false; // elevatorHeight < ELEVATOR_SAFETY_THRESHOLD && wristAngle < 0;
     currentElevatorTargetPosition = elevatorHeight;
     currentWristTargetPosition = wristAngle;
 

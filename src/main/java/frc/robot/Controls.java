@@ -76,7 +76,7 @@ public class Controls {
 
     operator
         .a()
-        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.MIN_INTAKE_GROUND));
+        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.ALG_INTAKE_GROUND));
     operator
         .b()
         .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L2_LAUNCH));
@@ -85,7 +85,7 @@ public class Controls {
         .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L3_LAUNCH));
     operator
         .y()
-        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L4_LAUNCH));
+        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_NET));
   }
 
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
