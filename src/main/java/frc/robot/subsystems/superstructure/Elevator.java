@@ -63,14 +63,15 @@ public class Elevator {
 
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT + 0.01;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 5; // meters per second squared
+    // TODO accel is slow right now because we need to implement wrist sequencing to avoid bumper
+    config.MotionMagic.MotionMagicAcceleration = 0.4; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4; // meters per second
-    config.MotionMagic.MotionMagicJerk = 30; // meters per second cubed
+    config.MotionMagic.MotionMagicJerk = 10; // meters per second cubed
     motor.getConfigurator().apply(config);
 
     motor.getClosedLoopError().setUpdateFrequency(50);

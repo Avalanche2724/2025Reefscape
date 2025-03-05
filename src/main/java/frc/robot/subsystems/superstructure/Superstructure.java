@@ -18,9 +18,9 @@ import java.util.function.DoubleSupplier;
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
-    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, 0),
+    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -2),
     ALG_INTAKE_GROUND(0.28, 0),
-    ALG_PROC(0.35, 0),
+    ALG_PROC(0.55, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
     INTAKE_CORAL_STATION(0.625, 35),
@@ -29,16 +29,16 @@ public class Superstructure extends SubsystemBase {
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(0.745, 0),
-    OUTTAKE_L3_LAUNCH(1.25, 0),
-    OUTTAKE_L4_LAUNCH(1.4, 63),
+    OUTTAKE_L2_LAUNCH(0.98, 0),
+    OUTTAKE_L3_LAUNCH(1.42, 0),
+    OUTTAKE_L4_LAUNCH(1.45, 63),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
     OUTTAKE_L4_VERT_P1(1.52, 60),
     OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
-    INTAKE_ALGAE_L2(0.88, 0),
-    INTAKE_ALGAE_L3(1.25, 0),
+    INTAKE_ALGAE_L2(1.2, 10),
+    INTAKE_ALGAE_L3(1.52, 10),
     OUTTAKE_NET(1.52, 60);
 
     // Meters
@@ -133,6 +133,10 @@ public class Superstructure extends SubsystemBase {
   public boolean atTargetPosition() {
     return atElevatorPosition(currentElevatorTargetPosition)
         && atWristPosition(currentWristTargetPosition);
+  }
+
+  public boolean atLeastElevatorPosition(double height) {
+    return elevator.getElevatorHeight() - height > 0;
   }
 
   public boolean atElevatorPosition(double height) {

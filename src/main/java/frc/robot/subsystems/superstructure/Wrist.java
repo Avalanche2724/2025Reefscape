@@ -74,7 +74,7 @@ public class Wrist {
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 1; // rotations per second squared
+    config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
     config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -122,6 +122,7 @@ public class Wrist {
           @Override
           protected void reportIfFrequent() {}
         };
+
     return () -> {
       double pos = absoluteEncoderPosition();
       double vel = absoluteEncoder.getVelocity();

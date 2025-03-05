@@ -1,8 +1,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.wpilibj2.command.Commands.parallel;
-import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -85,6 +84,7 @@ public class Controls {
 
     driver.leftBumper().whileTrue(intake.runIntake());
     driver.rightBumper().whileTrue(intake.fullSend());
+    driver.rightTrigger().whileTrue(intake.run(-1.5));
 
     configureSysidBindings();
 
@@ -92,6 +92,13 @@ public class Controls {
     operator
         .rightStick()
         .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+
+    operator
+        .back() // left squares
+        .onTrue(runOnce(() -> isOnCoralBindings = false));
+    operator
+        .start() // right lines
+        .onTrue(runOnce(() -> isOnCoralBindings = true));
 
     coralAlgaePresets(
         operator.rightBumper(), Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
@@ -109,9 +116,9 @@ public class Controls {
     return sequence(
         superstructure.setWristPositionCommand(60),
         parallel(superstructure.elevatorAlgaeLaunch(1.5), intake.run(-4))
-            .until(() -> superstructure.atElevatorPosition(1.3)),
-        intake.fullSend().withTimeout(0.5),
-        parallel(superstructure.elevatorAlgaeLaunch(-1.5), intake.fullSend()).withTimeout(1.0),
+            .until(() -> superstructure.atLeastElevatorPosition(1.3)),
+        intake.fullSend().withTimeout(0.15),
+        parallel(superstructure.elevatorAlgaeLaunch(-1.5), intake.fullSend()).withTimeout(0.5),
         intake.stopIntake(),
         superstructure.goToPosition(Position.STOW));
   }
