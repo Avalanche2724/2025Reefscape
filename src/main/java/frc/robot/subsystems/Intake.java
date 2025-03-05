@@ -35,7 +35,7 @@ public class Intake extends SubsystemBase {
     setDefaultCommand(stopIntake());
   }
 
-  public static final double intakeVolts = 6;
+  public static final double intakeVolts = 4;
 
   public Command runIntake() {
     return run(

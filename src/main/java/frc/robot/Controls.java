@@ -1,16 +1,22 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.parallel;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.Position;
 
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
@@ -59,13 +65,26 @@ public class Controls {
         .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
   }
 
+  public boolean isOnCoralBindings = true;
+
+  public Command coralAlgaeCommand(Command coral, Command algae) {
+    return Commands.either(coral, algae, () -> isOnCoralBindings);
+  }
+
+  public void coralAlgaePresets(Trigger button, Position coral, Position algae) {
+    button.whileTrue(
+        coralAlgaeCommand(
+            superstructure.getToPositionThenHold(coral),
+            superstructure.getToPositionThenHold(algae)));
+  }
+
   public void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
     driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
     driver.back().whileTrue(superstructure.zeroElevatorCommand());
 
-    driver.leftBumper().whileTrue(intake.fullSend());
-    driver.rightBumper().whileTrue(intake.runIntake());
+    driver.leftBumper().whileTrue(intake.runIntake());
+    driver.rightBumper().whileTrue(intake.fullSend());
 
     configureSysidBindings();
 
@@ -74,18 +93,28 @@ public class Controls {
         .rightStick()
         .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
 
-    operator
-        .a()
-        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.ALG_INTAKE_GROUND));
-    operator
-        .b()
-        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L2_LAUNCH));
-    operator
-        .x()
-        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_L3_LAUNCH));
-    operator
-        .y()
-        .whileTrue(superstructure.getToPositionThenHold(Superstructure.Position.OUTTAKE_NET));
+    coralAlgaePresets(
+        operator.rightBumper(), Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
+    coralAlgaePresets(operator.a(), Position.OUTTAKE_L1, Position.ALG_PROC);
+
+    coralAlgaePresets(operator.b(), Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
+    coralAlgaePresets(operator.x(), Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
+    coralAlgaePresets(operator.y(), Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
+
+    operator.rightTrigger().whileTrue(algaeLaunchSequence());
+  }
+
+  public Command algaeLaunchSequence() {
+    return sequence(
+        parallel(
+                superstructure.elevatorAlgaeLaunch(1.5),
+                intake.run(-4),
+                superstructure.setWristPositionCommand(60))
+            .until(() -> superstructure.atElevatorPosition(1.3)),
+        intake.fullSend().withTimeout(0.5),
+        parallel(superstructure.elevatorAlgaeLaunch(-1.5), intake.fullSend()).withTimeout(1.0),
+        intake.stopIntake(),
+        superstructure.goToPosition(Position.STOW));
   }
 
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();

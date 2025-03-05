@@ -64,7 +64,6 @@ public class Wrist {
     config.Slot0.kA = 0.13794;
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
-    // 25/20; 22/18; 15/10
     config.Slot1.kP = 5; // todo: try retuning and lowering?
     config.Slot1.kD = 1;
     config.Slot1.kS = config.Slot0.kS;
@@ -74,9 +73,9 @@ public class Wrist {
     config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 1; // rotations per second; does it hit this?
-    config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
-    config.MotionMagic.MotionMagicJerk = 2; // rotations per second cubed
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
+    config.MotionMagic.MotionMagicAcceleration = 1; // rotations per second squared
+    config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -124,8 +123,13 @@ public class Wrist {
           protected void reportIfFrequent() {}
         };
     return () -> {
-      if (Math.abs(absoluteEncoder.getVelocity()) < rpmVelocityThreshold) {
-        setter.setPosition(absoluteEncoderPosition() + ARM_OFFSET, 0);
+      double pos = absoluteEncoderPosition();
+      double vel = absoluteEncoder.getVelocity();
+      if (pos == 0 && vel == 0) {
+        // TODO fix me later and implement better alerting
+        System.err.println("Check absolute encoder reset");
+      } else if (Math.abs(vel) < rpmVelocityThreshold) {
+        setter.setPosition(pos + ARM_OFFSET, 0);
       }
     };
   }

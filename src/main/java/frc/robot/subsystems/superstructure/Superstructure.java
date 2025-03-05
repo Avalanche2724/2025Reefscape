@@ -1,16 +1,17 @@
 package frc.robot.subsystems.superstructure;
 
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.Utils;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
 
@@ -18,7 +19,8 @@ public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
     MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, 0),
-    ALG_INTAKE_GROUND(0.23, 0),
+    ALG_INTAKE_GROUND(0.28, 0),
+    ALG_PROC(0.35, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
     INTAKE_CORAL_STATION(0.625, 35),
@@ -27,7 +29,7 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(0.56, 35),
+    OUTTAKE_L2_LAUNCH(0.745, 35),
     OUTTAKE_L3_LAUNCH(1.25, 35),
     OUTTAKE_L4_LAUNCH(1.2, 63),
     // Vertical outtake:
@@ -60,6 +62,8 @@ public class Superstructure extends SubsystemBase {
   public Elevator elevator = new Elevator();
   public Wrist wrist = new Wrist();
 
+  public Trigger isStowed = new Trigger(() -> atPosition(Position.STOW) && atTargetPosition());
+
   public Superstructure() {
     createMechanism2d();
     if (Robot.isSimulation()) {
@@ -68,48 +72,73 @@ public class Superstructure extends SubsystemBase {
 
     stopMotors();
     RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
+
+    // Auto-zero elevator when stowed
+    isStowed.onTrue(zeroElevatorCommand());
   }
 
   @Override
   public void periodic() {
     updateMechanism2d();
+    // TODO: implement this correctly and prevent it from causing weird movements
     /*
-    if (!RobotModeTriggers.disabled().getAsBoolean()) {
-      // Crash prevention
-      double currentElevatorHeight = elevator.getElevatorHeight();
-      double currentWristAngle = wrist.getWristDegreesOffset();
-      // If we have negative wrist target but elevator isn't high enough yet
-      if (currentElevatorHeight < ELEVATOR_SAFETY_THRESHOLD && currentWristTargetPosition < 0) {
-        // Keep wrist at safe angle until elevator rises above threshold
-        wrist.setMotorDegreesOffset(0);
-        // Continue moving elevator to target
-        elevator.setMotorPosition(currentElevatorTargetPosition);
-      }
-      // If elevator is moving down while wrist is negative, ensure elevator doesn't go below
-      // threshold
-      // This did not work in general; find a better solution later
-      // Tbh this is not going to happen anyways
-      /*
-      else if (currentWristAngle < 0
-          && currentElevatorTargetPosition < ELEVATOR_SAFETY_THRESHOLD
-          && currentElevatorHeight > currentElevatorTargetPosition) {
-        // Prevent elevator from going below safety threshold
-        elevator.setMotorPosition(ELEVATOR_SAFETY_THRESHOLD);
-      else {
-        wrist.setMotorDegreesOffset(currentWristTargetPosition);
-        elevator.setMotorPosition(currentElevatorTargetPosition);
-      }
-    } */
+        // Safety threshold for crash prevention
+    // private static final double ELEVATOR_SAFETY_THRESHOLD = 0.45; // meters
+      if (!RobotModeTriggers.disabled().getAsBoolean()) {
+        // Crash prevention
+        double currentElevatorHeight = elevator.getElevatorHeight();
+        double currentWristAngle = wrist.getWristDegreesOffset();
+        // If we have negative wrist target but elevator isn't high enough yet
+        if (currentElevatorHeight < ELEVATOR_SAFETY_THRESHOLD && currentWristTargetPosition < 0) {
+          // Keep wrist at safe angle until elevator rises above threshold
+          wrist.setMotorDegreesOffset(0);
+          // Continue moving elevator to target
+          elevator.setMotorPosition(currentElevatorTargetPosition);
+        }
+        // If elevator is moving down while wrist is negative, ensure elevator doesn't go below
+        // threshold
+        // This did not work in general; find a better solution later
+        // Tbh this is not going to happen anyways
+        /*
+        else if (currentWristAngle < 0
+            && currentElevatorTargetPosition < ELEVATOR_SAFETY_THRESHOLD
+            && currentElevatorHeight > currentElevatorTargetPosition) {
+          // Prevent elevator from going below safety threshold
+          elevator.setMotorPosition(ELEVATOR_SAFETY_THRESHOLD);
+        else {
+          wrist.setMotorDegreesOffset(currentWristTargetPosition);
+          elevator.setMotorPosition(currentElevatorTargetPosition);
+        }
+      } */
     // Run normal periodic methods
     elevator.periodic();
     wrist.periodic();
   }
 
+  Position lastSetPosition = Position.STOW;
   double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
   double currentWristTargetPosition = 0;
 
-  // Safety threshold for crash prevention
-  private static final double ELEVATOR_SAFETY_THRESHOLD = 0.45; // meters
+  private static final double ELEV_THRESHOLD = Meters.convertFrom(0.5, Inch);
+  private static final double WRIST_THRESHOLD = Rotations.convertFrom(0.5, Degree);
+
+  public boolean atPosition(Position pos) {
+    return atElevatorPosition(currentElevatorTargetPosition)
+        && atWristPosition(currentWristTargetPosition);
+  }
+
+  public boolean atTargetPosition() {
+    return atElevatorPosition(currentElevatorTargetPosition)
+        && atWristPosition(currentWristTargetPosition);
+  }
+
+  public boolean atElevatorPosition(double height) {
+    return Math.abs(elevator.getElevatorHeight() - height) < ELEV_THRESHOLD;
+  }
+
+  public boolean atWristPosition(double angle) {
+    return Math.abs(wrist.getWristDegreesOffset() - angle) < WRIST_THRESHOLD;
+  }
 
   public void setPositions(double elevatorHeight, double wristAngle) {
     boolean shouldStopWrist =
@@ -119,6 +148,10 @@ public class Superstructure extends SubsystemBase {
 
     elevator.setMotorPosition(elevatorHeight);
     wrist.setMotorDegreesOffset(shouldStopWrist ? 0 : wristAngle);
+  }
+
+  public Command setWristPositionCommand(double angle) {
+    return runOnce(() -> wrist.setMotorDegreesOffset(angle));
   }
 
   private void stopMotors() {
@@ -132,9 +165,14 @@ public class Superstructure extends SubsystemBase {
 
   public Command zeroElevatorCommand() {
     return run(elevator::setMotorZeroing)
-        .until(elevator::isStalling)
+        .until(elevator.isStalling)
         .andThen(() -> elevator.setMotorDutyCycle(0))
+        .andThen(Commands.waitSeconds(0.3))
         .andThen(runOnce(elevator::zero));
+  }
+
+  public Command elevatorAlgaeLaunch(double v) {
+    return run(() -> elevator.setMotorAlgaeLaunchVelocity(v));
   }
 
   private void setPositions(Position pos) {
@@ -146,7 +184,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   public Command getToPositionThenHold(Position pos) {
-    return run(() -> setPositions(pos)).finallyDo(() -> setPositions(Position.STOW));
+    return goToPosition(pos).finallyDo(() -> setPositions(Position.STOW));
   }
 
   public Command incrementElevator(DoubleSupplier d) {

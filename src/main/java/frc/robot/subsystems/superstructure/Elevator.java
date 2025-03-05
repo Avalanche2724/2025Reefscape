@@ -5,18 +5,18 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Elevator {
@@ -24,11 +24,13 @@ public class Elevator {
   private static final int ELEVATOR_ID = 41;
   private static final int ELEVATOR2_ID = 42;
   private static final double GEAR_RATIO = 14.0;
-  private static final double MASS = Kilograms.convertFrom(30, Pounds); // estimate
+  private static final double MASS =
+      Kilograms.convertFrom(30, Pounds); // estimate; only for simulation
+  // extra factor of 2 because there are 2 sprockets pushing the elevator up? or something, idk:
   private static final double DRUM_RADIUS =
       Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 18.0))), Inches) * 2;
-  public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches); // 0.16m ish
-  public static final double MAX_HEIGHT = Meters.convertFrom(55, Inches); // 1.4m ish
+  public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches); // 0.1651m
+  public static final double MAX_HEIGHT = Meters.convertFrom(59.5, Inches); // 1.5113m
   private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
   private static final double METERS_PER_MOTOR_ROTATION = CIRCUMFERENCE / GEAR_RATIO;
 
@@ -37,8 +39,12 @@ public class Elevator {
   private final TalonFX followerMotor = new TalonFX(ELEVATOR2_ID);
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
+  private final StatusSignal<AngularVelocity> motorVelocity = motor.getVelocity();
+  private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
+
   private final VelocityTorqueCurrentFOC zeroingControl =
-      new VelocityTorqueCurrentFOC(-0.3).withSlot(1);
+      new VelocityTorqueCurrentFOC(-0.5).withSlot(1).withIgnoreHardwareLimits(true);
+  private final VelocityTorqueCurrentFOC algaeLaunchingControl = new VelocityTorqueCurrentFOC(1.5);
 
   public Elevator() {
     var config = new TalonFXConfiguration();
@@ -50,21 +56,21 @@ public class Elevator {
     config.Slot0.kA = 0.17841;
     config.Slot0.kG = 0.26462;
 
-    // For zeroing sequence
-    config.Slot1.kP = 40;
-    config.TorqueCurrent.PeakForwardTorqueCurrent = 12;
-    config.TorqueCurrent.PeakReverseTorqueCurrent = -12;
+    // For zeroing sequence and algae launching
+    config.Slot1.kP = 25;
+    config.TorqueCurrent.PeakForwardTorqueCurrent = 40;
+    config.TorqueCurrent.PeakReverseTorqueCurrent = -40;
 
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT + 0.01;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.MotionMagic.MotionMagicAcceleration = 3.5; // meters per second squared
+    config.MotionMagic.MotionMagicAcceleration = 5; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4; // meters per second
-    config.MotionMagic.MotionMagicJerk = 35; // meters per second cubed
+    config.MotionMagic.MotionMagicJerk = 30; // meters per second cubed
     motor.getConfigurator().apply(config);
 
     motor.getClosedLoopError().setUpdateFrequency(50);
@@ -90,17 +96,33 @@ public class Elevator {
     motor.set(d);
   }
 
+  void setMotorAlgaeLaunchVelocity(double v) {
+    motor.setControl(algaeLaunchingControl.withVelocity(v));
+  }
+
   void setMotorZeroing() {
     motor.setControl(zeroingControl);
   }
 
   public double getElevatorHeight() {
-    return motorPosition.refresh().getValueAsDouble();
+    return motorPosition.getValueAsDouble();
   }
 
-  public boolean isStalling() {
-    return motor.getTorqueCurrent().getValueAsDouble() < -11
-        && Math.abs(motor.getVelocity().getValueAsDouble()) < 0.1;
+  private static final double STALL_DETECT_TORQUE = -9.5;
+  private static final double VELOCITY_DETECT_THRESHOLD = 0.08;
+
+  private boolean isStalling() {
+    return motorTorqueCurrent.getValueAsDouble() < STALL_DETECT_TORQUE
+        && Math.abs(motorVelocity.getValueAsDouble()) < VELOCITY_DETECT_THRESHOLD;
+  }
+
+  public Trigger isStalling = new Trigger(this::isStalling).debounce(0.1);
+
+  public void periodic() {
+    // TODO add telemetry
+    motorPosition.refresh();
+    motorVelocity.refresh();
+    motorTorqueCurrent.refresh();
   }
 
   // Mechanism2d
@@ -157,8 +179,4 @@ public class Elevator {
               (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
               null,
               Superstructure.instance));
-
-  public void periodic() {
-    // TODO add telemetry
-  }
 }
