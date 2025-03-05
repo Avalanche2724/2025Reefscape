@@ -96,6 +96,7 @@ public class Controls {
     coralAlgaePresets(
         operator.rightBumper(), Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
     coralAlgaePresets(operator.a(), Position.OUTTAKE_L1, Position.ALG_PROC);
+    // operator.a().whileTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
 
     coralAlgaePresets(operator.b(), Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
     coralAlgaePresets(operator.x(), Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
@@ -106,10 +107,8 @@ public class Controls {
 
   public Command algaeLaunchSequence() {
     return sequence(
-        parallel(
-                superstructure.elevatorAlgaeLaunch(1.5),
-                intake.run(-4),
-                superstructure.setWristPositionCommand(60))
+        superstructure.setWristPositionCommand(60),
+        parallel(superstructure.elevatorAlgaeLaunch(1.5), intake.run(-4))
             .until(() -> superstructure.atElevatorPosition(1.3)),
         intake.fullSend().withTimeout(0.5),
         parallel(superstructure.elevatorAlgaeLaunch(-1.5), intake.fullSend()).withTimeout(1.0),

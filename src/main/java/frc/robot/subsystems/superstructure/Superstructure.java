@@ -26,12 +26,12 @@ public class Superstructure extends SubsystemBase {
     INTAKE_CORAL_STATION(0.625, 35),
     // Straight outtake:
     OUTTAKE_L1(0.53, 0),
-    OUTTAKE_L2(0.927, -35),
-    OUTTAKE_L3(1.3, -35),
+    /*OUTTAKE_L2(0.927, -35),
+    OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(0.745, 35),
-    OUTTAKE_L3_LAUNCH(1.25, 35),
-    OUTTAKE_L4_LAUNCH(1.2, 63),
+    OUTTAKE_L2_LAUNCH(0.745, 0),
+    OUTTAKE_L3_LAUNCH(1.25, 0),
+    OUTTAKE_L4_LAUNCH(1.4, 63),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
     OUTTAKE_L4_VERT_P1(1.52, 60),
@@ -74,7 +74,7 @@ public class Superstructure extends SubsystemBase {
     RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
 
     // Auto-zero elevator when stowed
-    isStowed.onTrue(zeroElevatorCommand());
+    // isStowed.onTrue(zeroElevatorCommand());
   }
 
   @Override
@@ -113,6 +113,9 @@ public class Superstructure extends SubsystemBase {
     // Run normal periodic methods
     elevator.periodic();
     wrist.periodic();
+    var c = getCurrentCommand();
+    if (c != null) SmartDashboard.putString("CURRENT SUP COMMAND", c.getName());
+    else SmartDashboard.putString("CURRENT SUP COMMAND", "null");
   }
 
   Position lastSetPosition = Position.STOW;
@@ -180,7 +183,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   public Command goToPosition(Position pos) {
-    return runOnce(() -> setPositions(pos));
+    return run(() -> setPositions(pos));
   }
 
   public Command getToPositionThenHold(Position pos) {
