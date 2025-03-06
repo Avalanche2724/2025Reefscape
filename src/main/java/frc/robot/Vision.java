@@ -203,10 +203,6 @@ public class Vision {
         }
       }
     }
-
-    public Matrix<N3, N1> getEstimationStdDevs() {
-      return curStdDevs;
-    }
   }
 
   // ----- Simulation
