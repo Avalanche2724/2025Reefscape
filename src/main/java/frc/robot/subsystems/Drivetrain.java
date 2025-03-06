@@ -145,6 +145,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         (est, standardDeviations) -> {
           if (est.isPresent()) {
             var estimation = est.get();
+            System.out.println("Adding vision measurement");
+            System.out.println(estimation.estimatedPose.toPose2d().toString());
             addVisionMeasurement(
                 estimation.estimatedPose.toPose2d(),
                 Utils.fpgaToCurrentTime(estimation.timestampSeconds),
