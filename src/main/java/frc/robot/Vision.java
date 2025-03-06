@@ -34,9 +34,12 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N8;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -44,37 +47,70 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
+import org.photonvision.simulation.VisionTargetSim;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
-  // The layout of the AprilTags on the field
+  // TODO: should be andymark; appears to have bug in sim (?)
   public static final AprilTagFieldLayout kTagLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
-  // The standard deviations of our vision estimated poses, which affect correction rate
-  // TODO Experiment and determine estimation noise on an actual robot.
-  public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-  public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
+  private VisionSystemSim visionSim;
 
+  {
+    if (Robot.isSimulation()) {
+      // Create the vision system simulation which handles cameras and targets on the field.
+      visionSim = new VisionSystemSim("main");
+      // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
+      visionSim.addAprilTags(kTagLayout);
+      // Remove all apriltags NOT on the blue reef
+      visionSim.removeVisionTargets(
+          visionSim.getVisionTargets().stream()
+              .filter(vt -> !(vt.fiducialID >= 17 && vt.fiducialID <= 22))
+              .toArray(VisionTargetSim[]::new));
+
+      System.out.println(visionSim.getVisionTargets());
+    }
+  }
+
+  public Camera camera1 =
+      new Camera(
+          "Arducam_OV9281_USB_Camera (1)",
+          new Transform3d(
+              new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.5)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(12))));
+
+  // public Camera camera2;
+
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
-    public final String cameraName;
-    public final Transform3d robotToCam;
+    // TODO Experiment and determine estimation noise on an actual robot.
+    public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
+
+    private String cameraName;
+    private final Transform3d robotToCam;
     private final PhotonCamera camera;
-    private PhotonCameraSim cameraSim;
+    private Optional<Matrix<N3, N3>> cameraMatrix;
+    private Optional<Matrix<N8, N1>> cameraDistortion;
+    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> enabledPnpParams =
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 100));
+    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> disabledPnpParams =
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1));
 
     private final PhotonPoseEstimator photonEstimator;
     private Matrix<N3, N1> curStdDevs;
 
     public Camera(String cameraName, Transform3d robotToCam) {
-
       this.cameraName = cameraName;
       this.robotToCam = robotToCam;
-      camera = new PhotonCamera(this.cameraName);
+      camera = new PhotonCamera(cameraName);
+      cameraMatrix = camera.getCameraMatrix();
+      cameraDistortion = camera.getDistCoeffs();
 
       photonEstimator =
-          new PhotonPoseEstimator(
-              kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, this.robotToCam);
-      photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+          new PhotonPoseEstimator(kTagLayout, PoseStrategy.CONSTRAINED_SOLVEPNP, this.robotToCam);
+      photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
 
       if (Robot.isSimulation()) {
         var cameraProp = new SimCameraProperties();
@@ -83,31 +119,48 @@ public class Vision {
         cameraProp.setFPS(20);
         cameraProp.setAvgLatencyMs(20);
         cameraProp.setLatencyStdDevMs(4);
-        cameraSim = new PhotonCameraSim(camera, cameraProp);
-        visionSim.addCamera(cameraSim, this.robotToCam);
 
+        var cameraSim = new PhotonCameraSim(camera, cameraProp);
+        visionSim.addCamera(cameraSim, this.robotToCam);
         cameraSim.enableDrawWireframe(true);
       }
     }
 
-    public Optional<EstimatedRobotPose> getEstimatedGlobalPose() {
-      Optional<EstimatedRobotPose> visionEst = Optional.empty();
+    // TODO: should we return multiple poses?
+    // TODO we need alerting and stuff for when the camera is not connected
+    public void getEstimatedGlobalPose(
+        double headingFpgaTimestamp,
+        Rotation2d heading,
+        BiConsumer<Optional<EstimatedRobotPose>, Matrix<N3, N1>> estimateConsumer) {
+      if (camera.isConnected()) {
+        if (cameraMatrix.isEmpty()) {
+          cameraMatrix = camera.getCameraMatrix();
+        }
+        if (cameraDistortion.isEmpty()) {
+          cameraDistortion = camera.getDistCoeffs();
+        }
+      }
+      photonEstimator.addHeadingData(headingFpgaTimestamp, heading);
+
       for (var change : camera.getAllUnreadResults()) {
-        visionEst = photonEstimator.update(change);
+        var visionEst =
+            photonEstimator.update(
+                change,
+                cameraMatrix,
+                cameraDistortion,
+                DriverStation.isDisabled() ? disabledPnpParams : enabledPnpParams);
         updateEstimationStdDevs(visionEst, change.getTargets());
+        estimateConsumer.accept(visionEst, curStdDevs);
 
         if (Robot.isSimulation()) {
           visionEst.ifPresentOrElse(
               est ->
                   getSimDebugField()
-                      .getObject("VisionEstimation")
+                      .getObject("VisionEstimation " + cameraName)
                       .setPose(est.estimatedPose.toPose2d()),
-              () -> {
-                getSimDebugField().getObject("VisionEstimation").setPoses();
-              });
+              () -> getSimDebugField().getObject("VisionEstimation " + cameraName).setPoses());
         }
       }
-      return visionEst;
     }
 
     private void updateEstimationStdDevs(
@@ -115,7 +168,6 @@ public class Vision {
       if (estimatedPose.isEmpty()) {
         // No pose input. Default to single-tag std devs
         curStdDevs = kSingleTagStdDevs;
-
       } else {
         // Pose present. Start running Heuristic
         var estStdDevs = kSingleTagStdDevs;
@@ -152,45 +204,11 @@ public class Vision {
       }
     }
 
-    /**
-     * Returns the latest standard deviations of the estimated pose from {@link
-     * #getEstimatedGlobalPose()}, for use with {@link
-     * edu.wpi.first.math.estimator.SwerveDrivePoseEstimator SwerveDrivePoseEstimator}. This should
-     * only be used when there are targets visible.
-     */
     public Matrix<N3, N1> getEstimationStdDevs() {
       return curStdDevs;
     }
   }
 
-  // Simulation
-  private VisionSystemSim visionSim;
-
-  {
-    // ----- Simulation
-    if (Robot.isSimulation()) {
-      // Create the vision system simulation which handles cameras and targets on the field.
-      visionSim = new VisionSystemSim("main");
-      // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
-      visionSim.addAprilTags(kTagLayout);
-    }
-  }
-
-  // note elevator at 8.5 / 28
-  public Camera camera1 =
-      new Camera(
-          "Arducam_OV9281_USB_Camera (1)",
-          new Transform3d(
-              new Translation3d(Inches.of(7.5), Inches.of(10.5), Inches.of(11.5)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(-12))));
-
-  /*public Camera camera2 =
-        new Camera(
-            "Arducam_OV9281_USB_Camera",
-            new Transform3d(
-                new Translation3d(Inches.of(5), Inches.of(-10.5), Inches.of(11.5)),
-                new Rotation3d(0.0, Math.toRadians(-15), Math.toRadians(15))));
-  */
   // ----- Simulation
 
   public void simulationPeriodic(Pose2d robotSimPose) {

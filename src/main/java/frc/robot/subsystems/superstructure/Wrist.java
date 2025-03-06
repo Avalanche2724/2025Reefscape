@@ -124,6 +124,7 @@ public class Wrist {
         };
 
     return () -> {
+      if (Robot.isSimulation()) return; // TODO it should work?
       double pos = absoluteEncoderPosition();
       double vel = absoluteEncoder.getVelocity();
       if (pos == 0 && vel == 0) {

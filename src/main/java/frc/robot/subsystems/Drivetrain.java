@@ -137,14 +137,19 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   public void correctFromVision(Vision.Camera camera) {
-    var visionEst = camera.getEstimatedGlobalPose();
-    visionEst.ifPresent(
-        est -> {
-          var estStdDevs = camera.getEstimationStdDevs();
-          addVisionMeasurement(
-              est.estimatedPose.toPose2d(),
-              Utils.fpgaToCurrentTime(est.timestampSeconds),
-              estStdDevs);
+    var state = getState();
+
+    camera.getEstimatedGlobalPose(
+        -Utils.fpgaToCurrentTime(-state.Timestamp),
+        getState().Pose.getRotation(),
+        (est, standardDeviations) -> {
+          if (est.isPresent()) {
+            var estimation = est.get();
+            addVisionMeasurement(
+                estimation.estimatedPose.toPose2d(),
+                Utils.fpgaToCurrentTime(estimation.timestampSeconds),
+                standardDeviations);
+          }
         });
   }
 
