@@ -63,7 +63,7 @@ public class Vision {
       visionSim = new VisionSystemSim("main");
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
       visionSim.addAprilTags(kTagLayout);
-      // Remove all apriltags NOT on the blue reef
+      // Remove all apriltags NOT on the blue reef for simulation
       visionSim.removeVisionTargets(
           visionSim.getVisionTargets().stream()
               .filter(vt -> !(vt.fiducialID >= 17 && vt.fiducialID <= 22))
@@ -89,6 +89,7 @@ public class Vision {
     public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
 
     private String cameraName;
+    private String visionEstimationKey;
     private final Transform3d robotToCam;
     private final PhotonCamera camera;
     private Optional<Matrix<N3, N3>> cameraMatrix;
@@ -103,6 +104,7 @@ public class Vision {
 
     public Camera(String cameraName, Transform3d robotToCam) {
       this.cameraName = cameraName;
+      this.visionEstimationKey = "Vision Estimation " + cameraName;
       this.robotToCam = robotToCam;
       camera = new PhotonCamera(cameraName);
       cameraMatrix = camera.getCameraMatrix();
@@ -156,9 +158,9 @@ public class Vision {
           visionEst.ifPresentOrElse(
               est ->
                   getSimDebugField()
-                      .getObject("VisionEstimation " + cameraName)
+                      .getObject(visionEstimationKey)
                       .setPose(est.estimatedPose.toPose2d()),
-              () -> getSimDebugField().getObject("VisionEstimation " + cameraName).setPoses());
+              () -> getSimDebugField().getObject(visionEstimationKey).setPoses());
         }
       }
     }
