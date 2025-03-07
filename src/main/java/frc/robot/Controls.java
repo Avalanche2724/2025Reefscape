@@ -6,16 +6,21 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.FieldConstants.ReefLevel;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Position;
+
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
@@ -86,6 +91,9 @@ public class Controls {
     driver.rightBumper().whileTrue(intake.fullSend());
     driver.rightTrigger().whileTrue(intake.run(-1.5));
 
+    // Add bind for auto-drive to nearest reef branch
+    driver.leftTrigger().whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1));
+
     configureSysidBindings();
 
     operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
@@ -110,6 +118,50 @@ public class Controls {
     coralAlgaePresets(operator.y(), Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
 
     operator.rightTrigger().whileTrue(algaeLaunchSequence());
+  }
+
+  /**
+   * Creates a command that drives to the nearest reef branch at the specified level.
+   * 
+   * @param level The reef level to target
+   * @return A command that drives to the nearest reef branch
+   */
+  public Command driveToNearestReefBranchCommand(ReefLevel level) {
+    return drivetrain.driveToPosition(findNearestReefBranch(level));
+  }
+
+  /**
+   * Creates a supplier that provides the Pose2d of the nearest reef branch at the specified level.
+   * 
+   * @param level The reef level to target
+   * @return A supplier that provides the nearest reef branch's Pose2d
+   */
+  private Supplier<Pose2d> findNearestReefBranch(ReefLevel level) {
+    return () -> {
+      Pose2d currentPose = drivetrain.getState().Pose;
+      Pose2d nearestBranch = null;
+      double minDistance = Double.MAX_VALUE;
+      
+      // Iterate through all branches and find the nearest one at the specified level
+      for (Map<ReefLevel, Pose2d> branchMap : FieldConstants.Reef.branchPositions2d) {
+        Pose2d branchPose = branchMap.get(level);
+        if (branchPose != null) {
+          // Calculate distance from current position to this branch
+          double distance = Math.hypot(
+              currentPose.getX() - branchPose.getX(),
+              currentPose.getY() - branchPose.getY());
+          
+          // Check if this branch is closer than the current closest
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestBranch = branchPose;
+          }
+        }
+      }
+      
+      // If we found a branch, return it; otherwise return the current pose
+      return (nearestBranch != null) ? nearestBranch : currentPose;
+    };
   }
 
   public Command algaeLaunchSequence() {
