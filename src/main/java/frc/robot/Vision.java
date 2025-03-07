@@ -95,7 +95,7 @@ public class Vision {
     private Optional<Matrix<N3, N3>> cameraMatrix;
     private Optional<Matrix<N8, N1>> cameraDistortion;
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> enabledPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 100));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1000));
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> disabledPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1));
 
