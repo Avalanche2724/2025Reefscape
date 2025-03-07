@@ -8,6 +8,9 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -43,12 +46,25 @@ public class Controls {
           .withRotationalDeadband(MAX_ANGLE_RATE * SWERVEAPI_DEADBAND)
           .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
 
+  // Publisher for debug visualization of nearest branch target position
+  private final StructPublisher<Pose2d> nearestBranchPose =
+      NetworkTableInstance.getDefault()
+          .getTable("SmartDashboard")
+          .getStructTopic("NearestBranch", Pose2d.struct)
+          .publish();
+  
+  // Reef level for debug visualization
+  private ReefLevel debugReefLevel = ReefLevel.L1;
+
   public Controls(RobotContainer robot) {
     bot = robot;
     drivetrain = bot.drivetrain;
     superstructure = bot.superstructure;
     intake = bot.intake;
     climber = bot.climber;
+    
+    // Add periodic debug function that runs at 50Hz
+    Robot.instance.addPeriodic(this::debugUpdateNearestBranch, 0.02);
   }
 
   private SwerveRequest driveBasedOnJoystick() {
@@ -132,9 +148,10 @@ public class Controls {
 
   /**
    * Creates a supplier that provides the Pose2d of the nearest reef branch at the specified level.
+   * The returned pose will be positioned 20 inches away from the branch and facing the branch.
    * 
    * @param level The reef level to target
-   * @return A supplier that provides the nearest reef branch's Pose2d
+   * @return A supplier that provides the proper robot pose for scoring at the nearest reef branch
    */
   private Supplier<Pose2d> findNearestReefBranch(ReefLevel level) {
     return () -> {
@@ -159,9 +176,34 @@ public class Controls {
         }
       }
       
-      // If we found a branch, return it; otherwise return the current pose
-      return (nearestBranch != null) ? nearestBranch : currentPose;
+      // If we found a branch, calculate the proper scoring position
+      if (nearestBranch != null) {
+        // The branch poses face outward, so we need to face the opposite direction to face the branch
+        Rotation2d branchRotation = nearestBranch.getRotation();
+        
+        // Calculate a position that is 20 inches (0.508 meters) away from the branch
+        // in the direction opposite to the branch's orientation
+        double scoringDistance = 0.508; // 20 inches in meters
+        double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
+        double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
+        
+        // Create the robot scoring position: offset from branch and facing toward the branch
+        return new Pose2d(
+            nearestBranch.getX() + offsetX, 
+            nearestBranch.getY() + offsetY, 
+            branchRotation.plus(Rotation2d.fromDegrees(180)) // Face toward the branch
+        );
+      }
+      
+      // If we didn't find a branch, return the current pose
+      return currentPose;
     };
+  }
+
+  // Debug method to periodically publish the nearest branch position to NetworkTables
+  private void debugUpdateNearestBranch() {
+    Pose2d targetPose = findNearestReefBranch(debugReefLevel).get();
+    nearestBranchPose.set(targetPose);
   }
 
   public Command algaeLaunchSequence() {
