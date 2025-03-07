@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -21,7 +20,6 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Position;
-
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -52,7 +50,7 @@ public class Controls {
           .getTable("SmartDashboard")
           .getStructTopic("NearestBranch", Pose2d.struct)
           .publish();
-  
+
   // Reef level for debug visualization
   private ReefLevel debugReefLevel = ReefLevel.L1;
 
@@ -62,7 +60,7 @@ public class Controls {
     superstructure = bot.superstructure;
     intake = bot.intake;
     climber = bot.climber;
-    
+
     // Add periodic debug function that runs at 50Hz
     Robot.instance.addPeriodic(this::debugUpdateNearestBranch, 0.02);
   }
@@ -105,10 +103,13 @@ public class Controls {
 
     driver.leftBumper().whileTrue(intake.runIntake());
     driver.rightBumper().whileTrue(intake.fullSend());
-    driver.rightTrigger().whileTrue(intake.run(-1.5));
 
-    // Add bind for auto-drive to nearest reef branch
-    driver.leftTrigger().whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1));
+    // Comment out the old right trigger binding
+    // driver.rightTrigger().whileTrue(intake.run(-1.5));
+
+    // Update bindings for auto-drive to nearest reef branches
+    driver.leftTrigger().whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1, true)); // Left side
+    driver.rightTrigger().whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1, false)); // Right side
 
     configureSysidBindings();
 
@@ -138,7 +139,7 @@ public class Controls {
 
   /**
    * Creates a command that drives to the nearest reef branch at the specified level.
-   * 
+   *
    * @param level The reef level to target
    * @return A command that drives to the nearest reef branch
    */
@@ -147,13 +148,36 @@ public class Controls {
   }
 
   /**
+   * Creates a command that drives to the nearest reef branch at the specified level and side.
+   *
+   * @param level The reef level to target
+   * @param leftSide True for left branches, False for right branches
+   * @return A command that drives to the nearest reef branch
+   */
+  public Command driveToNearestReefBranchCommand(ReefLevel level, boolean leftSide) {
+    return drivetrain.driveToPosition(findNearestReefBranch(level, leftSide));
+  }
+
+  /**
    * Creates a supplier that provides the Pose2d of the nearest reef branch at the specified level.
    * The returned pose will be positioned 20 inches away from the branch and facing the branch.
-   * 
+   *
    * @param level The reef level to target
    * @return A supplier that provides the proper robot pose for scoring at the nearest reef branch
    */
   private Supplier<Pose2d> findNearestReefBranch(ReefLevel level) {
+    return findNearestReefBranch(level, true); // Default to left side for backward compatibility
+  }
+
+  /**
+   * Creates a supplier that provides the Pose2d of the nearest reef branch at the specified level and side.
+   * The returned pose will be positioned 20 inches away from the branch and facing the branch.
+   *
+   * @param level The reef level to target
+   * @param leftSide True for left branches, False for right branches
+   * @return A supplier that provides the proper robot pose for scoring at the nearest reef branch
+   */
+  private Supplier<Pose2d> findNearestReefBranch(ReefLevel level, boolean leftSide) {
     return () -> {
       Pose2d currentPose = drivetrain.getState().Pose;
       Pose2d nearestBranch = null;
@@ -163,10 +187,17 @@ public class Controls {
       for (Map<ReefLevel, Pose2d> branchMap : FieldConstants.Reef.branchPositions2d) {
         Pose2d branchPose = branchMap.get(level);
         if (branchPose != null) {
+          // Filter by side (left/right) based on the X coordinate
+          // Left branches are on the negative X side, right branches on positive X
+          boolean isBranchOnLeftSide = branchPose.getX() < 0;
+          if (isBranchOnLeftSide != leftSide) {
+            continue; // Skip if this branch is not on the requested side
+          }
+          
           // Calculate distance from current position to this branch
-          double distance = Math.hypot(
-              currentPose.getX() - branchPose.getX(),
-              currentPose.getY() - branchPose.getY());
+          double distance =
+              Math.hypot(
+                  currentPose.getX() - branchPose.getX(), currentPose.getY() - branchPose.getY());
           
           // Check if this branch is closer than the current closest
           if (distance < minDistance) {
@@ -189,10 +220,10 @@ public class Controls {
         
         // Create the robot scoring position: offset from branch and facing toward the branch
         return new Pose2d(
-            nearestBranch.getX() + offsetX, 
-            nearestBranch.getY() + offsetY, 
+            nearestBranch.getX() + offsetX,
+            nearestBranch.getY() + offsetY,
             branchRotation.plus(Rotation2d.fromDegrees(180)) // Face toward the branch
-        );
+            );
       }
       
       // If we didn't find a branch, return the current pose
