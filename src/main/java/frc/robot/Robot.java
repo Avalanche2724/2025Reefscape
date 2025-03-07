@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.cscore.OpenCvLoader;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -16,6 +17,11 @@ public class Robot extends TimedRobot {
   public static Robot instance;
 
   public Robot() {
+    try {
+      OpenCvLoader.forceLoad();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     instance = this;
     robotContainer = new RobotContainer();
   }
