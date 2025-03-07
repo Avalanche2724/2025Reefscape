@@ -15,6 +15,8 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -136,6 +138,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     // correctFromVision(vision.camera2);
   }
 
+  public final StructPublisher<Pose2d> drivePose =
+      NetworkTableInstance.getDefault()
+          .getTable("SmartDashboard")
+          .getStructTopic("VisionPose", Pose2d.struct)
+          .publish();
+
   public void correctFromVision(Vision.Camera camera) {
     var state = getState();
 
@@ -145,8 +153,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         (est, standardDeviations) -> {
           if (est.isPresent()) {
             var estimation = est.get();
-            System.out.println("Adding vision measurement");
-            System.out.println(estimation.estimatedPose.toPose2d().toString());
+            // TODO cleanup
+            drivePose.set(estimation.estimatedPose.toPose2d());
+            // SmartDashboard.putData(estimation.estimatedPose.toPose2d());
+            // System.out.println("Adding vision measurement");
+            // System.out.println(estimation.estimatedPose.toPose2d().toString());
             addVisionMeasurement(
                 estimation.estimatedPose.toPose2d(),
                 Utils.fpgaToCurrentTime(estimation.timestampSeconds),
