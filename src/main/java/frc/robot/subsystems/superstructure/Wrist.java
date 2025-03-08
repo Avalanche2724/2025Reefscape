@@ -97,7 +97,7 @@ public class Wrist {
     motor.getClosedLoopFeedForward().setUpdateFrequency(50);
 
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
-    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.20).inverted(false);
+    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.206).inverted(false);
     sparkMaxConfig.signals.absoluteEncoderPositionPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderVelocityPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderPositionAlwaysOn(true);

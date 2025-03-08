@@ -71,9 +71,9 @@ public class Elevator {
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
     // TODO we need to implement wrist sequencing to avoid bumper
-    config.MotionMagic.MotionMagicAcceleration = 4; // meters per second squared
+    config.MotionMagic.MotionMagicAcceleration = 2.8; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4; // meters per second
-    config.MotionMagic.MotionMagicJerk = 20; // meters per second cubed
+    config.MotionMagic.MotionMagicJerk = 14; // meters per second cubed
     motor.getConfigurator().apply(config);
 
     motor.getClosedLoopError().setUpdateFrequency(50);
