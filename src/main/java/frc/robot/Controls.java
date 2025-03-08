@@ -115,7 +115,9 @@ public class Controls {
         .rightTrigger()
         .whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1, false)); // Right side
 
-    configureSysidBindings();
+    // Auto align bindings TODO
+    var wantingToAutoAlignRn = driver.leftTrigger().and(driver.rightTrigger());
+    // Trigger atTheThing = configureSysidBindings();
 
     operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
     /*

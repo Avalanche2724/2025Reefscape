@@ -11,11 +11,14 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Distance;
@@ -31,7 +34,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Vision;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import java.util.Optional;
 import java.util.function.Supplier;
+import org.photonvision.EstimatedRobotPose;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -62,6 +67,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     if (Utils.isSimulation()) {
       startSimThread();
     }
+
+    createVisionThread();
 
     // uncomment to set to coast
     // i don't know why I had this in the first place?
@@ -113,6 +120,19 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
   }
 
+  private static final double kVisionLoopPeriod = 0.01; // 10 ms
+  private Notifier visionNotifier = null;
+
+  public void createVisionThread() {
+    visionNotifier =
+        new Notifier(
+            () -> {
+              // Do vision
+              correctFromVision(vision.camera1);
+            });
+    visionNotifier.startPeriodic(kVisionLoopPeriod);
+  }
+
   @Override
   public void periodic() {
     /*
@@ -133,38 +153,33 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 hasAppliedOperatorPerspectiveYet = true;
               });
     }
-
-    // Do vision
-    correctFromVision(vision.camera1);
-    // correctFromVision(vision.camera2);
   }
 
-  public final StructPublisher<Pose2d> drivePose =
+  public final StructPublisher<Pose2d> drivePoseTelemetry =
       NetworkTableInstance.getDefault()
           .getTable("SmartDashboard")
           .getStructTopic("VisionPose", Pose2d.struct)
           .publish();
 
-  public void correctFromVision(Vision.Camera camera) {
+  public void integrateVisionCorrection(
+      Optional<EstimatedRobotPose> est, Matrix<N3, N1> standardDeviations) {
     var state = getState();
 
+    if (est.isPresent()) {
+      var estimation = est.get();
+      drivePoseTelemetry.set(estimation.estimatedPose.toPose2d());
+      addVisionMeasurement(
+          estimation.estimatedPose.toPose2d(),
+          Utils.fpgaToCurrentTime(estimation.timestampSeconds),
+          standardDeviations);
+    }
+  }
+
+  public void correctFromVision(Vision.Camera camera) {
     camera.getEstimatedGlobalPose(
-        -Utils.fpgaToCurrentTime(-state.Timestamp),
+        -Utils.fpgaToCurrentTime(-getState().Timestamp),
         getState().Pose.getRotation(),
-        (est, standardDeviations) -> {
-          if (est.isPresent()) {
-            var estimation = est.get();
-            // TODO cleanup
-            drivePose.set(estimation.estimatedPose.toPose2d());
-            // SmartDashboard.putData(estimation.estimatedPose.toPose2d());
-            // System.out.println("Adding vision measurement");
-            // System.out.println(estimation.estimatedPose.toPose2d().toString());
-            addVisionMeasurement(
-                estimation.estimatedPose.toPose2d(),
-                Utils.fpgaToCurrentTime(estimation.timestampSeconds),
-                standardDeviations);
-          }
-        });
+        this::integrateVisionCorrection);
   }
 
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
