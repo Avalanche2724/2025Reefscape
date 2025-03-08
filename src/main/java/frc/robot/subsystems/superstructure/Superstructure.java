@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 public class Superstructure extends SubsystemBase {
   public enum Position {
@@ -188,6 +189,10 @@ public class Superstructure extends SubsystemBase {
 
   public Command goToPosition(Position pos) {
     return run(() -> setPositions(pos));
+  }
+
+  public Command goToPosition(Supplier<Position> pos) {
+    return run(() -> setPositions(pos.get()));
   }
 
   public Command getToPositionThenHold(Position pos) {
