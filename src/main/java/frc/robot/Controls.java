@@ -108,8 +108,12 @@ public class Controls {
     // driver.rightTrigger().whileTrue(intake.run(-1.5));
 
     // Update bindings for auto-drive to nearest reef branches
-    driver.leftTrigger().whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1, true)); // Left side
-    driver.rightTrigger().whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1, false)); // Right side
+    driver
+        .leftTrigger()
+        .whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1, true)); // Left side
+    driver
+        .rightTrigger()
+        .whileTrue(driveToNearestReefBranchCommand(ReefLevel.L1, false)); // Right side
 
     configureSysidBindings();
 
@@ -138,16 +142,6 @@ public class Controls {
   }
 
   /**
-   * Creates a command that drives to the nearest reef branch at the specified level.
-   *
-   * @param level The reef level to target
-   * @return A command that drives to the nearest reef branch
-   */
-  public Command driveToNearestReefBranchCommand(ReefLevel level) {
-    return drivetrain.driveToPosition(findNearestReefBranch(level));
-  }
-
-  /**
    * Creates a command that drives to the nearest reef branch at the specified level and side.
    *
    * @param level The reef level to target
@@ -159,19 +153,9 @@ public class Controls {
   }
 
   /**
-   * Creates a supplier that provides the Pose2d of the nearest reef branch at the specified level.
-   * The returned pose will be positioned 20 inches away from the branch and facing the branch.
-   *
-   * @param level The reef level to target
-   * @return A supplier that provides the proper robot pose for scoring at the nearest reef branch
-   */
-  private Supplier<Pose2d> findNearestReefBranch(ReefLevel level) {
-    return findNearestReefBranch(level, true); // Default to left side for backward compatibility
-  }
-
-  /**
-   * Creates a supplier that provides the Pose2d of the nearest reef branch at the specified level and side.
-   * The returned pose will be positioned 20 inches away from the branch and facing the branch.
+   * Creates a supplier that provides the Pose2d of the nearest reef branch at the specified level
+   * and side. The returned pose will be positioned 20 inches away from the branch and facing the
+   * branch.
    *
    * @param level The reef level to target
    * @param leftSide True for left branches, False for right branches
@@ -182,7 +166,7 @@ public class Controls {
       Pose2d currentPose = drivetrain.getState().Pose;
       Pose2d nearestBranch = null;
       double minDistance = Double.MAX_VALUE;
-      
+
       // Iterate through all branches and find the nearest one at the specified level
       for (Map<ReefLevel, Pose2d> branchMap : FieldConstants.Reef.branchPositions2d) {
         Pose2d branchPose = branchMap.get(level);
@@ -193,12 +177,12 @@ public class Controls {
           if (isBranchOnLeftSide != leftSide) {
             continue; // Skip if this branch is not on the requested side
           }
-          
+
           // Calculate distance from current position to this branch
           double distance =
               Math.hypot(
                   currentPose.getX() - branchPose.getX(), currentPose.getY() - branchPose.getY());
-          
+
           // Check if this branch is closer than the current closest
           if (distance < minDistance) {
             minDistance = distance;
@@ -206,18 +190,19 @@ public class Controls {
           }
         }
       }
-      
+
       // If we found a branch, calculate the proper scoring position
       if (nearestBranch != null) {
-        // The branch poses face outward, so we need to face the opposite direction to face the branch
+        // The branch poses face outward, so we need to face the opposite direction to face the
+        // branch
         Rotation2d branchRotation = nearestBranch.getRotation();
-        
+
         // Calculate a position that is 20 inches (0.508 meters) away from the branch
         // in the direction opposite to the branch's orientation
         double scoringDistance = 0.508; // 20 inches in meters
         double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
         double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
-        
+
         // Create the robot scoring position: offset from branch and facing toward the branch
         return new Pose2d(
             nearestBranch.getX() + offsetX,
@@ -225,7 +210,7 @@ public class Controls {
             branchRotation.plus(Rotation2d.fromDegrees(180)) // Face toward the branch
             );
       }
-      
+
       // If we didn't find a branch, return the current pose
       return currentPose;
     };
@@ -233,7 +218,7 @@ public class Controls {
 
   // Debug method to periodically publish the nearest branch position to NetworkTables
   private void debugUpdateNearestBranch() {
-    Pose2d targetPose = findNearestReefBranch(debugReefLevel).get();
+    Pose2d targetPose = findNearestReefBranch(debugReefLevel, true).get();
     nearestBranchPose.set(targetPose);
   }
 
