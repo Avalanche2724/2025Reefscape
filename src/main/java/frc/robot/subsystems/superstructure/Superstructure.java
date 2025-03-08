@@ -14,30 +14,31 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
-    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -2),
+    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7.5),
     ALG_INTAKE_GROUND(0.28, 0),
     ALG_PROC(0.55, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
-    INTAKE_CORAL_STATION(0.625, 35),
+    INTAKE_CORAL_STATION(0.75, 35),
     // Straight outtake:
-    OUTTAKE_L1(0.53, 0),
+    OUTTAKE_L1(0.57, 0),
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
     OUTTAKE_L2_LAUNCH(0.98, 0),
     OUTTAKE_L3_LAUNCH(1.42, 0),
-    OUTTAKE_L4_LAUNCH(1.45, 63),
+    OUTTAKE_L4_LAUNCH(1.45, 80),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
     OUTTAKE_L4_VERT_P1(1.52, 60),
     OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
-    INTAKE_ALGAE_L2(1.2, 10),
+    INTAKE_ALGAE_L2(1.15, 10),
     INTAKE_ALGAE_L3(1.52, 10),
     OUTTAKE_NET(1.52, 60);
 
@@ -190,7 +191,15 @@ public class Superstructure extends SubsystemBase {
     return run(() -> setPositions(pos));
   }
 
+  public Command goToPosition(Supplier<Position> pos) {
+    return run(() -> setPositions(pos.get()));
+  }
+
   public Command getToPositionThenHold(Position pos) {
+    return goToPosition(pos).finallyDo(() -> setPositions(Position.STOW));
+  }
+
+  public Command getToPositionThenHold(Supplier<Position> pos) {
     return goToPosition(pos).finallyDo(() -> setPositions(Position.STOW));
   }
 

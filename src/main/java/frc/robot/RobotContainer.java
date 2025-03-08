@@ -29,7 +29,7 @@ public class RobotContainer {
 
   // Auto stuff
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final AutoRoutines autoRoutines = new AutoRoutines(autoFactory);
+  private final AutoRoutines autoRoutines = new AutoRoutines(autoFactory, this);
   private final AutoChooser autoChooser = new AutoChooser();
 
   public RobotContainer() {

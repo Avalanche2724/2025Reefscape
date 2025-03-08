@@ -44,7 +44,8 @@ public class Elevator {
 
   private final VelocityTorqueCurrentFOC zeroingControl =
       new VelocityTorqueCurrentFOC(-0.5).withSlot(1).withIgnoreHardwareLimits(true);
-  private final VelocityTorqueCurrentFOC algaeLaunchingControl = new VelocityTorqueCurrentFOC(1.5);
+  private final VelocityTorqueCurrentFOC algaeLaunchingControl =
+      new VelocityTorqueCurrentFOC(1.4).withSlot(1);
 
   public Elevator() {
     var config = new TalonFXConfiguration();
@@ -55,23 +56,25 @@ public class Elevator {
     config.Slot0.kV = 7.5487;
     config.Slot0.kA = 0.17841;
     config.Slot0.kG = 0.26462;
+    config.CurrentLimits.StatorCurrentLimit = 35;
 
     // For zeroing sequence and algae launching
-    config.Slot1.kP = 25;
-    config.TorqueCurrent.PeakForwardTorqueCurrent = 40;
-    config.TorqueCurrent.PeakReverseTorqueCurrent = -40;
+    config.Slot1.kP = 20;
+    config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
+    config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
 
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    // TODO get these to be accurate and work
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT + 0.01;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    // TODO accel is slow right now because we need to implement wrist sequencing to avoid bumper
-    config.MotionMagic.MotionMagicAcceleration = 0.4; // meters per second squared
+    // TODO we need to implement wrist sequencing to avoid bumper
+    config.MotionMagic.MotionMagicAcceleration = 2.8; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4; // meters per second
-    config.MotionMagic.MotionMagicJerk = 10; // meters per second cubed
+    config.MotionMagic.MotionMagicJerk = 14; // meters per second cubed
     motor.getConfigurator().apply(config);
 
     motor.getClosedLoopError().setUpdateFrequency(50);
@@ -79,6 +82,7 @@ public class Elevator {
 
     var followerConfig = new TalonFXConfiguration();
     followerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    followerConfig.CurrentLimits.StatorCurrentLimit = 35;
     followerMotor.getConfigurator().apply(followerConfig);
     followerMotor.setControl(new Follower(ELEVATOR_ID, false));
 
