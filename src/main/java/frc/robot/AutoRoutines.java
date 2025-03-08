@@ -24,4 +24,8 @@ public class AutoRoutines {
 
     return routine;
   }
+
+  public AutoRoutine simplePathAuto2() {
+    return null; // TODO
+  }
 }
