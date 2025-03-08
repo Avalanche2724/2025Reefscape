@@ -118,9 +118,13 @@ public class Controls {
     configureSysidBindings();
 
     operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
-    operator
-        .rightStick()
-        .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+    /*
+     * operator
+     * .rightStick()
+     * .whileTrue(
+     * superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+     */
+    operator.rightStick().whileTrue(climber.runVoltage(() -> 12 * operator.getRightX()));
 
     operator
         .back() // left squares
@@ -193,7 +197,8 @@ public class Controls {
 
       // If we found a branch, calculate the proper scoring position
       if (nearestBranch != null) {
-        // The branch poses face outward, so we need to face the opposite direction to face the
+        // The branch poses face outward, so we need to face the opposite direction to
+        // face the
         // branch
         Rotation2d branchRotation = nearestBranch.getRotation();
 
@@ -203,7 +208,8 @@ public class Controls {
         double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
         double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
 
-        // Create the robot scoring position: offset from branch and facing toward the branch
+        // Create the robot scoring position: offset from branch and facing toward the
+        // branch
         return new Pose2d(
             nearestBranch.getX() + offsetX,
             nearestBranch.getY() + offsetY,
@@ -216,7 +222,8 @@ public class Controls {
     };
   }
 
-  // Debug method to periodically publish the nearest branch position to NetworkTables
+  // Debug method to periodically publish the nearest branch position to
+  // NetworkTables
   private void debugUpdateNearestBranch() {
     Pose2d targetPose = findNearestReefBranch(debugReefLevel, true).get();
     nearestBranchPose.set(targetPose);

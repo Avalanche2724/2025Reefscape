@@ -6,16 +6,17 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.DoubleSupplier;
 
 public class Climber extends SubsystemBase {
 
-  private final TalonFX motor = new TalonFX(57);
+  private final TalonFX motor = new TalonFX(61);
 
   public Climber() {
     TalonFXConfiguration config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     motor.getConfigurator().apply(config);
-    setDefaultCommand(run(0));
+    setDefaultCommand(runVoltage(() -> 0));
     // the following lines of code were mentor written so I commented them out
     // import robot;
 
@@ -23,10 +24,10 @@ public class Climber extends SubsystemBase {
 
   private final VoltageOut control = new VoltageOut(0);
 
-  public Command run(double arg) {
+  public Command runVoltage(DoubleSupplier arg) {
     return run(
         () -> {
-          motor.setControl(control.withOutput(arg));
+          motor.setControl(control.withOutput(arg.getAsDouble()));
         });
   }
 }
