@@ -169,7 +169,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds();
-  
+
   // Add a distance PID controller
   private final PIDController m_pathDistanceController = new PIDController(5, 0, 0);
 
@@ -178,20 +178,20 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     var currentPose = getState().Pose;
-    
+
     // Calculate vector from current position to target using WPILib's math classes
     Translation2d currentTranslation = currentPose.getTranslation();
     Translation2d targetTranslation = target.getTranslation();
-    
+
     // Get the vector from current to target position
     Translation2d deltaTranslation = targetTranslation.minus(currentTranslation);
-    
+
     // Calculate distance to target
     double distance = deltaTranslation.getNorm();
-    
+
     // Use a single PID controller for distance
     double speedMagnitude = m_pathDistanceController.calculate(distance, 0);
-    
+
     // If we're close enough to the target, the direction vector could be zero
     Translation2d directionVector;
     if (distance > 0.01) {
@@ -200,17 +200,14 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     } else {
       directionVector = new Translation2d(); // Zero vector
     }
-    
+
     // Calculate the rotation rate using the theta controller
-    double rotationRate = m_pathThetaController.calculate(
-        currentPose.getRotation().getRadians(), 
-        target.getRotation().getRadians());
-    
+    double rotationRate =
+        m_pathThetaController.calculate(
+            currentPose.getRotation().getRadians(), target.getRotation().getRadians());
+
     // Create chassis speeds using the direction vector and rotation rate
-    var speeds = new ChassisSpeeds(
-        directionVector.getX(),
-        directionVector.getY(),
-        rotationRate);
+    var speeds = new ChassisSpeeds(directionVector.getX(), directionVector.getY(), rotationRate);
 
     setControl(pathPidToPoint.withSpeeds(speeds));
   }
