@@ -26,7 +26,7 @@ import java.util.Map;
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
-  private static final double STICK_DEADBAND = 0.0;
+  private static final double STICK_DEADBAND = 0.08;
   private static final double SWERVEAPI_DEADBAND = 0.0;
 
   private final RobotContainer bot;
@@ -98,8 +98,8 @@ public class Controls {
 
   public void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
-    driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-    driver.back().whileTrue(superstructure.zeroElevatorCommand());
+    // driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+    // driver.back().whileTrue(superstructure.zeroElevatorCommand());
 
     driver.leftBumper().whileTrue(intake.runIntake());
     driver.rightBumper().whileTrue(intake.fullSend());
@@ -278,7 +278,8 @@ public class Controls {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
 
-    final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
+    // final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
+    var routine = drivetrain.m_sysIdRoutineToApply;
     driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
     driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
     driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));

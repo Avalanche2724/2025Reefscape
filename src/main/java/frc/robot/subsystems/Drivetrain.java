@@ -322,7 +322,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
-              Volts.of(7), // Use dynamic voltage of 7 V
+              Volts.of(4), // Use dynamic voltage of 4 V
               null,
               state -> SignalLogger.writeString("SysIdSteer_State", state.toString())),
           new SysIdRoutine.Mechanism(
@@ -352,7 +352,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               this));
 
   /* The SysId routine to test */
-  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
+  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
 
   // Simulation:
   private static final double kSimLoopPeriod = 0.005; // 5 ms
