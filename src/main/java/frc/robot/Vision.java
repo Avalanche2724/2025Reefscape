@@ -47,13 +47,22 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
-import org.photonvision.simulation.VisionTargetSim;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   // TODO: should be andymark; appears to have bug in sim (?)
-  public static final AprilTagFieldLayout kTagLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+  public static final AprilTagFieldLayout kTagLayout;
+
+  static {
+    var layout1 = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    var list = layout1.getTags();
+    list.removeIf(
+        tag -> {
+          int tagId = tag.ID;
+          return !((tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22));
+        });
+    kTagLayout = new AprilTagFieldLayout(list, layout1.getFieldLength(), layout1.getFieldWidth());
+  }
 
   private VisionSystemSim visionSim;
 
@@ -63,13 +72,6 @@ public class Vision {
       visionSim = new VisionSystemSim("main");
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
       visionSim.addAprilTags(kTagLayout);
-      // Remove all apriltags NOT on the blue reef for simulation
-      visionSim.removeVisionTargets(
-          visionSim.getVisionTargets().stream()
-              .filter(vt -> !(vt.fiducialID >= 17 && vt.fiducialID <= 22))
-              .toArray(VisionTargetSim[]::new));
-
-      System.out.println(visionSim.getVisionTargets());
     }
   }
 
