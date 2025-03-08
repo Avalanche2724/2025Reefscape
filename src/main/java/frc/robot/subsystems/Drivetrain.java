@@ -14,6 +14,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
@@ -168,19 +169,48 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds();
+  
+  // Add a distance PID controller
+  private final PIDController m_pathDistanceController = new PIDController(5, 0, 0);
 
   /** Command to PID to a position; useful for auto-align */
   private void pidToPosition(Pose2d target) {
     m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
-    var pose = getState().Pose;
-
-    var speeds =
-        new ChassisSpeeds(
-            m_pathXController.calculate(pose.getX(), target.getX()),
-            m_pathYController.calculate(pose.getY(), target.getY()),
-            m_pathThetaController.calculate(
-                pose.getRotation().getRadians(), target.getRotation().getRadians()));
+    var currentPose = getState().Pose;
+    
+    // Calculate vector from current position to target using WPILib's math classes
+    Translation2d currentTranslation = currentPose.getTranslation();
+    Translation2d targetTranslation = target.getTranslation();
+    
+    // Get the vector from current to target position
+    Translation2d deltaTranslation = targetTranslation.minus(currentTranslation);
+    
+    // Calculate distance to target
+    double distance = deltaTranslation.getNorm();
+    
+    // Use a single PID controller for distance
+    double speedMagnitude = m_pathDistanceController.calculate(distance, 0);
+    
+    // If we're close enough to the target, the direction vector could be zero
+    Translation2d directionVector;
+    if (distance > 0.01) {
+      // Create a unit vector in the direction of the target, then scale by the speed magnitude
+      directionVector = deltaTranslation.times(speedMagnitude / distance);
+    } else {
+      directionVector = new Translation2d(); // Zero vector
+    }
+    
+    // Calculate the rotation rate using the theta controller
+    double rotationRate = m_pathThetaController.calculate(
+        currentPose.getRotation().getRadians(), 
+        target.getRotation().getRadians());
+    
+    // Create chassis speeds using the direction vector and rotation rate
+    var speeds = new ChassisSpeeds(
+        directionVector.getX(),
+        directionVector.getY(),
+        rotationRate);
 
     setControl(pathPidToPoint.withSpeeds(speeds));
   }

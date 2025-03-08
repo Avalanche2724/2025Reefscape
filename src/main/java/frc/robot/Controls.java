@@ -124,7 +124,7 @@ public class Controls {
      * .whileTrue(
      * superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
      */
-    operator.rightStick().whileTrue(climber.runVoltage(() -> 12 * operator.getRightX()));
+    operator.rightStick().whileTrue(climber.runVoltage(() -> 6 * operator.getRightX()));
 
     operator
         .back() // left squares
