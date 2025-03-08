@@ -52,7 +52,7 @@ public class Wrist {
 
   double positionSwitchThreshold = 0.01;
   double rpmVelocityThreshold = 15;
-  double periodSecondsReset = 0.1;
+  double periodSecondsReset = 0.01;
 
   public Wrist() {
     var config = new TalonFXConfiguration();
@@ -64,8 +64,8 @@ public class Wrist {
     config.Slot0.kA = 0.13794;
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
-    config.Slot1.kP = 5; // todo: try retuning and lowering?
-    config.Slot1.kD = 1;
+    config.Slot1.kP = 10; // todo: try retuning and lowering?
+    config.Slot1.kD = 2;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
@@ -97,7 +97,7 @@ public class Wrist {
     motor.getClosedLoopFeedForward().setUpdateFrequency(50);
 
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
-    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.217).inverted(false);
+    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.20).inverted(false);
     sparkMaxConfig.signals.absoluteEncoderPositionPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderVelocityPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderPositionAlwaysOn(true);
@@ -127,10 +127,12 @@ public class Wrist {
       if (Robot.isSimulation()) return; // TODO it should work?
       double pos = absoluteEncoderPosition();
       double vel = absoluteEncoder.getVelocity();
+      // System.out.println("ABS ENC POS" + pos);
       if (pos == 0 && vel == 0) {
         // TODO fix me later and implement better alerting
         System.err.println("Check absolute encoder reset");
-      } else if (Math.abs(vel) < rpmVelocityThreshold) {
+      } else // if (Math.abs(vel) < rpmVelocityThreshold) {
+      {
         setter.setPosition(pos + ARM_OFFSET, 0);
       }
     };

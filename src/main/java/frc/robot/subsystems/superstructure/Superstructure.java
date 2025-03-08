@@ -26,7 +26,7 @@ public class Superstructure extends SubsystemBase {
     STOW(Elevator.MIN_HEIGHT, 90),
     INTAKE_CORAL_STATION(0.75, 35),
     // Straight outtake:
-    OUTTAKE_L1(0.53, 0),
+    OUTTAKE_L1(0.57, 0),
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
