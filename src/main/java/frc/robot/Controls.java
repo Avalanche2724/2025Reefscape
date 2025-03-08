@@ -200,9 +200,9 @@ public class Controls {
       // The branch poses face outward, so we need to face the opposite direction to face the branch
       Rotation2d branchRotation = nearestBranch.getRotation();
 
-      // Calculate a position that is 20 inches (0.508 meters) away from the branch
+      // Calculate a position that is away from the branch
       // in the direction opposite to the branch's orientation
-      double scoringDistance = 0.508; // 20 inches in meters
+      double scoringDistance = Meters.convertFrom(35, Inches); 
       double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
       double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
 
