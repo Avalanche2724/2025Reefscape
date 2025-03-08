@@ -184,7 +184,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     Translation2d targetTranslation = target.getTranslation();
 
     // Get the vector from current to target position
-    Translation2d deltaTranslation = targetTranslation.minus(currentTranslation);
+    Translation2d deltaTranslation = currentTranslation.minus(targetTranslation);
 
     // Calculate distance to target
     double distance = deltaTranslation.getNorm();
