@@ -75,7 +75,7 @@ public class Superstructure extends SubsystemBase {
     RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
 
     // Auto-zero elevator when stowed
-    // isStowed.onTrue(zeroElevatorCommand());
+    isStowed.onTrue(zeroElevatorCommand());
   }
 
   @Override
