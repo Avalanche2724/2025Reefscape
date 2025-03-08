@@ -66,6 +66,7 @@ public class FieldConstants {
     public static final List<Map<ReefLevel, Pose3d>> branchPositions =
         new ArrayList<>(); // Starting at the right branch facing the driver station in clockwise
     public static final List<Map<ReefLevel, Pose2d>> branchPositions2d = new ArrayList<>();
+    public static final List<Map<ReefLevel, Pose2d>> redBranchPositions2d = new ArrayList<>();
 
     static {
       // Initialize faces
@@ -125,6 +126,15 @@ public class FieldConstants {
         branchPositions.add(fillLeft);
         branchPositions2d.add(fillRight2d);
         branchPositions2d.add(fillLeft2d);
+        // make hashmaps for red side, flipping the positions
+        Map<ReefLevel, Pose2d> fillRedRight2d = new HashMap<>();
+        Map<ReefLevel, Pose2d> fillRedLeft2d = new HashMap<>();
+        for (var level : ReefLevel.values()) {
+          fillRedRight2d.put(level, AllianceFlipUtil.flip(fillLeft2d.get(level)));
+          fillRedLeft2d.put(level, AllianceFlipUtil.flip(fillRight2d.get(level)));
+        }
+        redBranchPositions2d.add(fillRedRight2d);
+        redBranchPositions2d.add(fillRedLeft2d);
       }
     }
   }

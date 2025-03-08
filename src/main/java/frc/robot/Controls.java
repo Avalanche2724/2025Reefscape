@@ -20,6 +20,8 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Position;
+
+import java.util.List;
 import java.util.Map;
 
 public class Controls {
@@ -168,17 +170,20 @@ public class Controls {
     Pose2d nearestBranch = null;
     double minDistance = Double.MAX_VALUE;
 
+    List<Map<ReefLevel, Pose2d>> branchPositions2d =
+        AllianceFlipUtil.shouldFlip() ? FieldConstants.Reef.redBranchPositions2d 
+        : FieldConstants.Reef.branchPositions2d;
     // Based on FieldConstants.java, branches alternate right/left in the list:
     // Even indexes (0, 2, 4...) are right branches
     // Odd indexes (1, 3, 5...) are left branches
-    for (int i = 0; i < FieldConstants.Reef.branchPositions2d.size(); i++) {
+    for (int i = 0; i < branchPositions2d.size(); i++) {
       // Skip if this branch is not on the requested side
       boolean isBranchOnLeftSide = (i % 2 == 1); // Odd indexes are left branches
       if (isBranchOnLeftSide != leftSide) {
         continue;
       }
 
-      Map<ReefLevel, Pose2d> branchMap = FieldConstants.Reef.branchPositions2d.get(i);
+      Map<ReefLevel, Pose2d> branchMap = branchPositions2d.get(i);
       Pose2d branchPose = branchMap.get(level);
 
       if (branchPose != null) {
@@ -202,7 +207,7 @@ public class Controls {
 
       // Calculate a position that is away from the branch
       // in the direction opposite to the branch's orientation
-      double scoringDistance = Meters.convertFrom(35, Inches); 
+      double scoringDistance = Meters.convertFrom(35, Inches);
       double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
       double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
 
