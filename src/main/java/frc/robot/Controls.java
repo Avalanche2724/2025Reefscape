@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
-  private static final double STICK_DEADBAND = 0.08;
+  private static final double STICK_DEADBAND = 0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
 
   private final RobotContainer bot;
@@ -46,6 +46,7 @@ public class Controls {
           .withDeadband(MAX_SPEED * SWERVEAPI_DEADBAND)
           .withRotationalDeadband(MAX_ANGLE_RATE * SWERVEAPI_DEADBAND)
           .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
+  // .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo);
 
   // Publisher for debug visualization of nearest branch target position
   private final StructPublisher<Pose2d> nearestBranchPose =
@@ -151,6 +152,7 @@ public class Controls {
 
     driver.leftBumper().whileTrue(intake.runIntake());
     driver.rightBumper().whileTrue(intake.fullSend());
+    driver.povDown().whileTrue(intake.runVariable(() -> -3));
 
     // AUTO ALIGN
     driver
@@ -179,13 +181,12 @@ public class Controls {
         .whileTrue(intake.fullSend().withTimeout(1));
 
     operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
-    /*
-     * operator
-     * .rightStick()
-     * .whileTrue(
-     * superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
-     */
-    operator.rightStick().whileTrue(climber.runVoltage(() -> 6 * operator.getRightX()));
+
+    operator
+        .rightStick()
+        .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+
+    // operator.rightStick().whileTrue(climber.runVoltage(() -> 6 * operator.getRightX()));
 
     operator
         .back() // left squares
@@ -195,14 +196,19 @@ public class Controls {
         .onTrue(runOnce(() -> isOnCoralBindings = true));
 
     coralAlgaeActivePresets(
+        operator.leftBumper(), Position.INTAKE_CORAL_STATION, Position.INTAKE_CORAL_STATION);
+
+    coralAlgaeActivePresets(
         operator.rightBumper(), Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
-    coralAlgaeSettingPresets(operator.a(), Position.OUTTAKE_L1, Position.ALG_PROC);
+    coralAlgaeActivePresets(operator.a(), Position.OUTTAKE_L1, Position.ALG_PROC);
     // operator.a().whileTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
 
-    coralAlgaeSettingPresets(operator.b(), Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
-    coralAlgaeSettingPresets(operator.x(), Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
-    coralAlgaeSettingPresets(operator.y(), Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
-    operator.leftTrigger().whileTrue(superstructure.goToPosition(() -> nextTargetPosition));
+    coralAlgaeActivePresets(operator.b(), Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
+    coralAlgaeActivePresets(operator.x(), Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
+    coralAlgaeActivePresets(operator.y(), Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
+    operator
+        .leftTrigger()
+        .whileTrue(superstructure.getToPositionThenHold(() -> nextTargetPosition));
 
     operator.rightTrigger().whileTrue(algaeLaunchSequence());
   }

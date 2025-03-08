@@ -31,12 +31,12 @@ public class TunerConstants {
       .withKA(0) // NOTE kA should be unused since in position mode
       .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);*/
       new Slot0Configs()
-          .withKP(80) // alternate: 82.919/3.94 ;
+          .withKP(85) // alternate: 82.919/3.94 ;
           .withKI(0)
           .withKD(0.5)
-          .withKS(0.25)
+          .withKS(0.19)
           .withKV(0)
-          .withKA(0) // NOTE kA should be unused since in position mode
+          .withKA(0) // NOTE kA should be unused when in position mode
           .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
   // When using closed-loop control, the drive motor uses the control
   // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
