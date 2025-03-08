@@ -171,7 +171,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
       new SwerveRequest.ApplyFieldSpeeds();
 
   // Add a distance PID controller
-  private final PIDController m_pathDistanceController = new PIDController(5, 0, 0);
+  private final PIDController m_pathDistanceController = new PIDController(27, 0, 0.24);
 
   /** Command to PID to a position; useful for auto-align */
   private void pidToPosition(Pose2d target) {
