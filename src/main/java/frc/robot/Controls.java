@@ -20,7 +20,6 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Position;
-
 import java.util.List;
 import java.util.Map;
 
@@ -171,8 +170,9 @@ public class Controls {
     double minDistance = Double.MAX_VALUE;
 
     List<Map<ReefLevel, Pose2d>> branchPositions2d =
-        AllianceFlipUtil.shouldFlip() ? FieldConstants.Reef.redBranchPositions2d 
-        : FieldConstants.Reef.branchPositions2d;
+        AllianceFlipUtil.shouldFlip()
+            ? FieldConstants.Reef.redBranchPositions2d
+            : FieldConstants.Reef.branchPositions2d;
     // Based on FieldConstants.java, branches alternate right/left in the list:
     // Even indexes (0, 2, 4...) are right branches
     // Odd indexes (1, 3, 5...) are left branches

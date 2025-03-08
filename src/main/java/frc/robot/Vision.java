@@ -77,7 +77,7 @@ public class Vision {
       new Camera(
           "Arducam_OV9281_USB_Camera (1)",
           new Transform3d(
-              new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.06)),
+              new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
               new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
 
   // public Camera camera2;
@@ -95,9 +95,9 @@ public class Vision {
     private Optional<Matrix<N3, N3>> cameraMatrix;
     private Optional<Matrix<N8, N1>> cameraDistortion;
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> enabledPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e5));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e8));
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> disabledPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 100));
 
     private final PhotonPoseEstimator photonEstimator;
     private Matrix<N3, N1> curStdDevs;
