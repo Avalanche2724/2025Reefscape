@@ -2,37 +2,53 @@ package frc.robot;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
+import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Commands;
 
 public class AutoRoutines {
   private final AutoFactory m_factory;
-  private final RobotContainer container;
 
-  public AutoRoutines(AutoFactory factory, RobotContainer container) {
+  public AutoRoutines(AutoFactory factory) {
     m_factory = factory;
-    this.container = container;
   }
 
   public AutoRoutine simplePathAuto() {
-    var routine = m_factory.newRoutine("test auto");
-    var simplePath = routine.trajectory("New Path");
+    final AutoRoutine routine = m_factory.newRoutine("test auto");
+    final AutoTrajectory simplePath = routine.trajectory("New Path");
 
     routine
         .active()
         .onTrue(
-            Commands.print("RUNNING AUTO ROUTINE")
+            Commands.print("RUNNING AUTO ROUTINE") 
                 .andThen(simplePath.resetOdometry().andThen(simplePath.cmd())));
 
     return routine;
+
+
   }
 
-  public AutoRoutine simplePathAuto2() {
-    var routine = m_factory.newRoutine("test auto");
-    var _base_l2score = routine.trajectory("_base_l2score");
+  public AutoRoutine StartToHumanStation() {
+    final AutoRoutine routine = m_factory.newRoutine("StartLeftEdgetoHumanPlayer");
+    final AutoTrajectory Start_to_reef = routine.trajectory("Start to reef");
+    final AutoTrajectory reef_to_lollipop = routine.trajectory("reef to lollipop");
+    final AutoTrajectory lollipop_to_reef = routine.trajectory("lollipop to reef");   
+    final AutoTrajectory reef_to_human_player_station = routine.trajectory("reef to human player station");
 
-    routine.active().onTrue(_base_l2score.cmd());
-    // _base_l2score.done().onTrue(container.superstructure.goToPosition());
+    routine.active().onTrue(
+          Commands.sequence(
+            Start_to_reef.resetOdometry(),
+            Start_to_reef.cmd()
+            
+        )
+      );
+    
 
-    return null; // TODO
+
+
+
+
+    
+    
+    return routine;
   }
 }
