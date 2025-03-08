@@ -56,6 +56,7 @@ public class Elevator {
     config.Slot0.kV = 7.5487;
     config.Slot0.kA = 0.17841;
     config.Slot0.kG = 0.26462;
+    config.CurrentLimits.StatorCurrentLimit = 35;
 
     // For zeroing sequence and algae launching
     config.Slot1.kP = 20;
@@ -81,6 +82,7 @@ public class Elevator {
 
     var followerConfig = new TalonFXConfiguration();
     followerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    followerConfig.CurrentLimits.StatorCurrentLimit = 35;
     followerMotor.getConfigurator().apply(followerConfig);
     followerMotor.setControl(new Follower(ELEVATOR_ID, false));
 

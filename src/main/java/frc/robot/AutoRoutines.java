@@ -6,9 +6,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 
 public class AutoRoutines {
   private final AutoFactory m_factory;
+  private final RobotContainer container;
 
-  public AutoRoutines(AutoFactory factory) {
+  public AutoRoutines(AutoFactory factory, RobotContainer container) {
     m_factory = factory;
+    this.container = container;
   }
 
   public AutoRoutine simplePathAuto() {
@@ -28,9 +30,8 @@ public class AutoRoutines {
     var routine = m_factory.newRoutine("test auto");
     var _base_l2score = routine.trajectory("_base_l2score");
 
-    // routine.active().onTrue(
-    //  _base_l2score.cmd()
-    // )
+    routine.active().onTrue(_base_l2score.cmd());
+    // _base_l2score.done().onTrue(container.superstructure.goToPosition());
 
     return null; // TODO
   }
