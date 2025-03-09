@@ -4,11 +4,12 @@
 // https://github.com/Mechanical-Advantage/RobotCode2025Public/blob/main/LICENSE
 // https://github.com/Mechanical-Advantage/RobotCode2025Public/blob/main/src/main/java/org/littletonrobotics/frc2025/FieldConstants.java
 
-package frc.robot;
+package frc.robot.util;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Vision;
 import java.util.*;
 
 /**
