@@ -66,8 +66,8 @@ public class AutoRoutines {
     final AutoTrajectory Start_to_reef = routine.trajectory("Start to reef");
     final AutoTrajectory reef_to_lollipop = routine.trajectory("reef to lollipop");
     final AutoTrajectory lollipop_to_reef = routine.trajectory("lollipop to reef");
-    final AutoTrajectory reef_to_human_player_station = routine.trajectory("reef to human player station");
-
+    final AutoTrajectory reef_to_human_player_station =
+        routine.trajectory("reef to human player station");
 
     routine.active().onTrue(Commands.sequence(Start_to_reef.resetOdometry(), Start_to_reef.cmd()));
 

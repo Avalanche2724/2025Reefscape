@@ -33,15 +33,21 @@ public class TunerConstants {
       new Slot0Configs()
           .withKP(85) // alternate: 82.919/3.94 ;
           .withKI(0)
-          .withKD(0.5)
-          .withKS(0.19)
+          .withKD(0.7)
+          .withKS(0.15)
           .withKV(0)
           .withKA(0) // NOTE kA should be unused when in position mode
           .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
   // When using closed-loop control, the drive motor uses the control
   // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
   private static final Slot0Configs driveGains =
-      new Slot0Configs().withKP(0.1).withKI(0).withKD(0).withKS(0).withKV(0.124);
+      new Slot0Configs()
+          .withKP(4)
+          .withKI(0)
+          .withKD(0)
+          .withKS(0.25891)
+          .withKV(0.11284)
+          .withKA(0.016062);
 
   // The closed-loop output type to use for the steer motors;
   // This affects the PID/FF gains for the steer motors
@@ -63,7 +69,7 @@ public class TunerConstants {
 
   // The stator current at which the wheels start to slip;
   // This needs to be tuned to your individual robot
-  private static final Current kSlipCurrent = Amps.of(120.0);
+  private static final Current kSlipCurrent = Amps.of(60);
 
   // Initial configs for the drive and steer motors and the azimuth encoder; these cannot be null.
   // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
@@ -85,17 +91,22 @@ public class TunerConstants {
   // All swerve devices must share the same CAN bus
   public static final CANBus kCANBus = new CANBus("CANivore", "./logs/example.hoot");
 
-  // Theoretical free speed (m/s) at 12 V applied output;
-  // This needs to be tuned to your individual robot
-  public static final LinearVelocity kSpeedAt12Volts = MetersPerSecond.of(5.14);
-
   // Every 1 rotation of the azimuth results in kCoupleRatio drive motor turns;
   // This may need to be tuned to your individual robot
   private static final double kCoupleRatio = 3.125;
 
   private static final double kDriveGearRatio = 5.902777777777778;
   private static final double kSteerGearRatio = 18.75;
-  public static final Distance kWheelRadius = Inches.of(1.9);
+  public static final Distance kWheelRadius = Inches.of(1.94);
+
+  // Theoretical free speed (m/s) at 12 V applied output;
+  // This needs to be tuned to your individual robot
+  public static final LinearVelocity kSpeedAt12Volts = // 5800 rpm
+      kWheelRadius
+          .times(2 * Math.PI)
+          .div(Second.one())
+          .times(
+              Rotations.of(5800).div(Seconds.of(60)).div(kDriveGearRatio).in(RotationsPerSecond));
 
   private static final boolean kInvertLeftSide = false;
   private static final boolean kInvertRightSide = true;

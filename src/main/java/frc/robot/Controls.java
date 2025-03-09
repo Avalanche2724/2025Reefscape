@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
-  private static final double STICK_DEADBAND = 0;
+  private static final double STICK_DEADBAND = 0.0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
 
   private final RobotContainer bot;
@@ -152,7 +152,15 @@ public class Controls {
 
     driver.leftBumper().whileTrue(intake.runIntake());
     driver.rightBumper().whileTrue(intake.fullSend());
-    driver.povDown().whileTrue(intake.runVariable(() -> -3));
+    /*
+        driver.povDown().whileTrue(intake.runVariable(() -> -3));
+
+        driver.povUp().whileTrue(drivetrain.wheelCharacterization());
+    */
+
+    configureDriveTuningBindings();
+
+    configureSysidBindings();
 
     // AUTO ALIGN
     driver
@@ -168,18 +176,18 @@ public class Controls {
     var wantingToAutoAlignRn = driver.leftTrigger().and(driver.rightTrigger());
     var atTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.01, () -> 1));
     var nearTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.5, () -> 5));
+    /*
+        // When we are kinda near the target position while auto aligning, set superstructure position
+        wantingToAutoAlignRn
+            .and(nearTargetPositionTrigger)
+            .whileTrue(superstructure.goToPosition(() -> nextTargetPosition));
 
-    // When we are kinda near the target position while auto aligning, set superstructure position
-    wantingToAutoAlignRn
-        .and(nearTargetPositionTrigger)
-        .whileTrue(superstructure.goToPosition(() -> nextTargetPosition));
-
-    // When we reach the target position while auto-aligning, eject intake
-    wantingToAutoAlignRn
-        .and(atTargetPositionTrigger)
-        .and(superstructure::atTargetPosition)
-        .whileTrue(intake.fullSend().withTimeout(1));
-
+        // When we reach the target position while auto-aligning, eject intake
+        wantingToAutoAlignRn
+            .and(atTargetPositionTrigger)
+            .and(superstructure::atTargetPosition)
+            .whileTrue(intake.fullSend().withTimeout(1));
+    */
     operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 
     operator
@@ -318,11 +326,11 @@ public class Controls {
     driver
         .pov(0)
         .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(0.5).withVelocityY(0)));
+            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(1).withVelocityY(0)));
     driver
         .pov(180)
         .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-0.5).withVelocityY(0)));
+            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-1).withVelocityY(0)));
 
     driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
     driver

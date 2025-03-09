@@ -323,7 +323,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SysIdRoutine m_sysIdRoutineTranslation =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null,
+              Volts.of(0.5).div(Seconds.one()),
               Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
               null,
               state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
@@ -365,7 +365,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               this));
 
   /* The SysId routine to test */
-  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
+  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
   // Simulation:
   private static final double kSimLoopPeriod = 0.005; // 5 ms

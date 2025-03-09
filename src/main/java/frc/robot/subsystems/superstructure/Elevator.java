@@ -21,6 +21,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Elevator {
   // Constants
+  // TODO fix periodic when u change the ids back
+
   private static final int ELEVATOR_ID = 43;
   private static final int ELEVATOR2_ID = 44;
   private static final double GEAR_RATIO = 14.0;
@@ -125,9 +127,13 @@ public class Elevator {
 
   public void periodic() {
     // TODO add telemetry
+    /*
+
     motorPosition.refresh();
     motorVelocity.refresh();
     motorTorqueCurrent.refresh();
+
+    */
   }
 
   // Mechanism2d
