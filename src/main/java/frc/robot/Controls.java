@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 public class Controls {
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
-  private static final double STICK_DEADBAND = 0.0;
+  private static final double STICK_DEADBAND = 0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
 
   private final RobotContainer bot;
@@ -250,6 +250,7 @@ public class Controls {
     // Based on FieldConstants.java, branches alternate right/left in the list:
     // Even indexes (0, 2, 4...) are right branches
     // Odd indexes (1, 3, 5...) are left branches
+    leftSide = AllianceFlipUtil.shouldFlip() ^ leftSide;
     for (int i = 0; i < branchPositions2d.size(); i++) {
       // Skip if this branch is not on the requested side
       boolean isBranchOnLeftSide = (i % 2 == 1); // Odd indexes are left branches
@@ -280,7 +281,7 @@ public class Controls {
       Rotation2d branchRotation = nearestBranch.getRotation();
       // Calculate a position that is away from the branch
       // in the direction opposite to the branch's orientation
-      double scoringDistance = Meters.convertFrom(35, Inches);
+      double scoringDistance = Meters.convertFrom(38, Inches);
       if (level == ReefLevel.L4) {
         scoringDistance = Meters.convertFrom(25, Inches);
       }

@@ -82,8 +82,13 @@ public class Vision {
               new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
               new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
 
-  // public Camera camera2;
-
+  /*public Camera camera2 =
+        new Camera(
+            "Arducam_OV9281_USB_Camera",
+            new Transform3d(
+                new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
+                new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
+  */
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
     // TODO Experiment and determine estimation noise on an actual robot.

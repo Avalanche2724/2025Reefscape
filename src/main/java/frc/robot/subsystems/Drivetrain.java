@@ -100,7 +100,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
   private final PIDController m_pathXController = new PIDController(10, 0, 0);
   private final PIDController m_pathYController = new PIDController(10, 0, 0);
-  private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
   public void followPath(SwerveSample sample) {
     m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
@@ -181,10 +180,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
-      new SwerveRequest.ApplyFieldSpeeds();
+      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
 
-  // Add a distance PID controller
-  private final PIDController m_pathDistanceController = new PIDController(10, 0, 0.24);
+  /** ks 0.21125 kv 0.017291 ka 0.0015881 kp kd 12.248 0.14954 */
+  private final PIDController m_pathThetaController = new PIDController(8, 0, 0);
+
+  private final PIDController m_pathDistanceController = new PIDController(8, 0, 0);
 
   /** Command to PID to a position; useful for auto-align */
   private void pidToPosition(Pose2d target) {
@@ -218,6 +219,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     double rotationRate =
         m_pathThetaController.calculate(
             currentPose.getRotation().getRadians(), target.getRotation().getRadians());
+    if (rotationRate < 0.1) {
+      rotationRate = 0;
+    }
 
     // Create chassis speeds using the direction vector and rotation rate
     var speeds = new ChassisSpeeds(directionVector.getX(), directionVector.getY(), rotationRate);
@@ -365,7 +369,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               this));
 
   /* The SysId routine to test */
-  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineRotation;
 
   // Simulation:
   private static final double kSimLoopPeriod = 0.005; // 5 ms
