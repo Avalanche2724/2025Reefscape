@@ -190,11 +190,11 @@ public class Controls {
     */
     operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 
-    operator
-        .rightStick()
-        .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
-
-    // operator.rightStick().whileTrue(climber.runVoltage(() -> 6 * operator.getRightX()));
+    /*operator
+            .rightStick()
+            .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+    */
+    operator.rightStick().whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
 
     operator
         .back() // left squares
@@ -320,18 +320,17 @@ public class Controls {
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
   private final SwerveRequest.RobotCentric forwardStraight =
-      new SwerveRequest.RobotCentric()
-          .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
+      new SwerveRequest.RobotCentric().withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
 
   private void configureDriveTuningBindings() {
     driver
         .pov(0)
         .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(1).withVelocityY(0)));
+            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(2).withVelocityY(0)));
     driver
         .pov(180)
         .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-1).withVelocityY(0)));
+            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-2).withVelocityY(0)));
 
     driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
     driver
@@ -357,9 +356,9 @@ public class Controls {
     // final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
     var routine = drivetrain.m_sysIdRoutineToApply;
     driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
-    driver.back().and(driver.x()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
+    driver.back().and(driver.a()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
     driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
-    driver.start().and(driver.x()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
+    driver.start().and(driver.a()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
   }
 
   private static double deadband(double val) {

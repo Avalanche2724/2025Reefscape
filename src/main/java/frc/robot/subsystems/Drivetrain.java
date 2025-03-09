@@ -183,9 +183,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
 
   /** ks 0.21125 kv 0.017291 ka 0.0015881 kp kd 12.248 0.14954 */
-  private final PIDController m_pathThetaController = new PIDController(8, 0, 0);
+  private final PIDController m_pathThetaController = new PIDController(7, 0, 0.05);
 
-  private final PIDController m_pathDistanceController = new PIDController(8, 0, 0);
+  private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.05);
 
   /** Command to PID to a position; useful for auto-align */
   private void pidToPosition(Pose2d target) {
@@ -205,10 +205,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     // Use a single PID controller for distance
     double speedMagnitude = m_pathDistanceController.calculate(distance, 0);
+    SmartDashboard.putNumber("autoalign speed ", speedMagnitude);
 
     // If we're close enough to the target, the direction vector could be zero
     Translation2d directionVector;
-    if (distance > 0.01) {
+    if (distance > 0.05) {
       // Create a unit vector in the direction of the target, then scale by the speed magnitude
       directionVector = deltaTranslation.times(speedMagnitude / distance);
     } else {
@@ -219,7 +220,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     double rotationRate =
         m_pathThetaController.calculate(
             currentPose.getRotation().getRadians(), target.getRotation().getRadians());
-    if (rotationRate < 0.1) {
+    SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
+
+    if (Math.abs(rotationRate) < 0.08) {
       rotationRate = 0;
     }
 
@@ -328,7 +331,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
       new SysIdRoutine(
           new SysIdRoutine.Config(
               Volts.of(0.5).div(Seconds.one()),
-              Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
+              Volts.of(1), // Reduce dynamic step voltage to 1 V to prevent brownout
               null,
               state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
           new SysIdRoutine.Mechanism(
@@ -369,7 +372,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               this));
 
   /* The SysId routine to test */
-  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineRotation;
+  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
   // Simulation:
   private static final double kSimLoopPeriod = 0.005; // 5 ms

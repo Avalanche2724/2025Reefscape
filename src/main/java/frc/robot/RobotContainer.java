@@ -35,6 +35,7 @@ public class RobotContainer {
   public RobotContainer() {
     // Register autos
     autoChooser.addRoutine("SimplePath", autoRoutines::simplePathAuto);
+    autoChooser.addRoutine("NOT SIMPLE PATH", autoRoutines::simplePathAuto2);
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     // Set up drivetrain telemetry

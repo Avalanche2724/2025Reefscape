@@ -104,7 +104,7 @@ public class Vision {
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> enabledPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e8));
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> disabledPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 100));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1));
 
     private final PhotonPoseEstimator photonEstimator;
     private Matrix<N3, N1> curStdDevs;
