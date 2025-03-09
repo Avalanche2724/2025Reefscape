@@ -7,6 +7,7 @@ import choreo.auto.AutoFactory;
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -96,7 +97,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds =
-      new SwerveRequest.ApplyFieldSpeeds();
+      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
 
   private final PIDController m_pathXController = new PIDController(10, 0, 0);
   private final PIDController m_pathYController = new PIDController(10, 0, 0);
@@ -182,10 +183,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
 
-  /** ks 0.21125 kv 0.017291 ka 0.0015881 kp kd 12.248 0.14954 */
+
+
   private final PIDController m_pathThetaController = new PIDController(7, 0, 0.05);
 
-  private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.05);
+  private final PIDController m_pathDistanceController = new PIDController(7.5, 0, 0.06);
 
   /** Command to PID to a position; useful for auto-align */
   private void pidToPosition(Pose2d target) {
