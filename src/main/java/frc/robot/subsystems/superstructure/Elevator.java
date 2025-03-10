@@ -21,8 +21,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Elevator {
   // Constants
-  private static final int ELEVATOR_ID = 41;
-  private static final int ELEVATOR2_ID = 42;
+  private static final int ELEVATOR_ID = 43;
+  private static final int ELEVATOR2_ID = 44;
   private static final double GEAR_RATIO = 14.0;
   private static final double MASS =
       Kilograms.convertFrom(30, Pounds); // estimate; only for simulation

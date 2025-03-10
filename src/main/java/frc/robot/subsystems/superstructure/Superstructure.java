@@ -63,7 +63,7 @@ public class Superstructure extends SubsystemBase {
   public Elevator elevator = new Elevator();
   public Wrist wrist = new Wrist();
 
-  public Trigger isStowed = new Trigger(() -> atPosition(Position.STOW) && atTargetPosition());
+  public Trigger isStowed;
 
   public Superstructure() {
     createMechanism2d();
@@ -74,8 +74,12 @@ public class Superstructure extends SubsystemBase {
     stopMotors();
     RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
 
+    /*isStowed =
+        new Trigger(
+            () -> lastSetPosition == Position.STOW && atWristPosition(currentWristTargetPosition));
+
     // Auto-zero elevator when stowed
-    isStowed.onTrue(zeroElevatorCommand());
+    isStowed.onTrue(zeroElevatorCommand());*/
   }
 
   @Override
@@ -123,8 +127,8 @@ public class Superstructure extends SubsystemBase {
   double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
   double currentWristTargetPosition = 0;
 
-  private static final double ELEV_THRESHOLD = Meters.convertFrom(0.5, Inch);
-  private static final double WRIST_THRESHOLD = Rotations.convertFrom(0.5, Degree);
+  private static final double ELEV_THRESHOLD = Meters.convertFrom(1, Inch);
+  private static final double WRIST_THRESHOLD = Rotations.convertFrom(3, Degree);
 
   public boolean atPosition(Position pos) {
     return atElevatorPosition(currentElevatorTargetPosition)
