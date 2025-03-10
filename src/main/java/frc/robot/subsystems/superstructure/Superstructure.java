@@ -1,8 +1,7 @@
 package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.wpilibj2.command.Commands.parallel;
-import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import com.ctre.phoenix6.Utils;
 import edu.wpi.first.wpilibj.Notifier;
@@ -115,6 +114,7 @@ public class Superstructure extends SubsystemBase {
     else SmartDashboard.putString("CURRENT SUP COMMAND", "null");
   }
 
+  // Inputs
   public boolean atPosition(Position pos) {
     return atElevatorPosition(currentElevatorTargetPosition)
         && atWristPosition(currentWristTargetPosition);
@@ -141,6 +141,7 @@ public class Superstructure extends SubsystemBase {
     return Math.abs(wrist.getWristDegreesOffset() - angle) < WRIST_THRESHOLD;
   }
 
+  // Controls
   public void setPositions(double elevatorHeight, double wristAngle) {
     boolean shouldStopWrist =
         false; // elevatorHeight < ELEVATOR_SAFETY_THRESHOLD && wristAngle < 0;
@@ -151,13 +152,18 @@ public class Superstructure extends SubsystemBase {
     wrist.setMotorDegreesOffset(shouldStopWrist ? 0 : wristAngle);
   }
 
-  public Command setWristPositionCommand(double angle) {
-    return runOnce(() -> wrist.setMotorDegreesOffset(angle));
+  private void setPositions(Position pos) {
+    setPositions(pos.elevatorHeight, pos.wristAngle);
   }
 
   private void stopMotors() {
     elevator.stopMotor();
     wrist.stopMotor();
+  }
+
+  // Commands
+  public Command setWristPositionCommand(double angle) {
+    return runOnce(() -> wrist.setMotorDegreesOffset(angle));
   }
 
   public Command stop() {
@@ -172,12 +178,17 @@ public class Superstructure extends SubsystemBase {
   }
 
   public Command elevatorAlgaeLaunchSetup() {
-    return parallel(setWristPositionCommand(70), run(elevator::setMotorLaunchingVelocityUp))
-        .until(() -> atLeastElevatorPosition(1.3));
+    return sequence(
+        setWristPositionCommand(70),
+        runOnce(elevator::setMotorLaunchingVelocityUp),
+        waitUntil(() -> atLeastElevatorPosition(1.3)));
   }
 
-  private void setPositions(Position pos) {
-    setPositions(pos.elevatorHeight, pos.wristAngle);
+  public Command elevatorAlgaeLaunchPostscript() {
+    return sequence(
+        runOnce(elevator::setMotorLaunchingVelocityDown),
+        waitSeconds(0.5),
+        runOnce(() -> setPositions(Position.STOW)));
   }
 
   public Command goToPosition(Position pos) {

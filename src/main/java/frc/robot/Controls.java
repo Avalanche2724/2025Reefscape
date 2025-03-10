@@ -29,40 +29,42 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class Controls {
-  public static final boolean keyboardMappings =
-      Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac");
+  // Constants and stuff
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
+  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1.5).in(RadiansPerSecond);
   private static final double STICK_DEADBAND = 0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
+  // Subsystems and things
   private final RobotContainer bot;
   private final Drivetrain drivetrain;
   private final Superstructure superstructure;
   private final Intake intake;
   private final Climber climber;
+  // Controllers
   private final CommandXboxController driver = new CommandXboxController(0);
   private final CommandXboxController operator = new CommandXboxController(1);
-  // .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo);
+  // Swerve requests
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
           .withDeadband(MAX_SPEED * SWERVEAPI_DEADBAND)
           .withRotationalDeadband(MAX_ANGLE_RATE * SWERVEAPI_DEADBAND)
           .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
-  // Publisher for debug visualization of nearest branch target position
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+  private final SwerveRequest.RobotCentric forwardStraight =
+      new SwerveRequest.RobotCentric().withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
+
+  // Publisher for debug visualization of nearest branch target position and other auto align stuff
   private final StructPublisher<Pose2d> nearestBranchPose =
       NetworkTableInstance.getDefault()
           .getTable("SmartDashboard")
           .getStructTopic("NearestBranch", Pose2d.struct)
           .publish();
-  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-  private final SwerveRequest.RobotCentric forwardStraight =
-      new SwerveRequest.RobotCentric().withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
+  public boolean currentlyAutoAligning = false;
+  // Internal state for controls
   public boolean isOnCoralBindings = true;
   public Position nextTargetPosition = Position.OUTTAKE_L1;
-  boolean currentlyAutoAligning = true;
-  // Reef level for debug visualization
-  private ReefLevel debugReefLevel = ReefLevel.L1;
+  public Pose2d lastPoseForAutoAlign = null;
 
   public Controls(RobotContainer robot) {
     bot = robot;
@@ -71,95 +73,7 @@ public class Controls {
     intake = bot.intake;
     climber = bot.climber;
 
-    // Add periodic debug function that runs at 50Hz
     Robot.instance.addPeriodic(this::debugUpdateNearestBranch, 0.02);
-  }
-
-  private static double deadband(double val) {
-    return MathUtil.applyDeadband(val, STICK_DEADBAND);
-  }
-
-  private SwerveRequest driveBasedOnJoystick() {
-    double y = -getLeftY();
-    double x = getLeftX();
-    // Apply radial deadband
-    double hypot = Math.hypot(x, y);
-    double angle = Math.atan2(y, x);
-    hypot = deadband(hypot);
-    x = hypot * Math.cos(angle);
-    y = hypot * Math.sin(angle);
-
-    double turnX = deadband(getRightX());
-
-    return drive
-        .withVelocityX(y * MAX_SPEED)
-        .withVelocityY(-x * MAX_SPEED)
-        .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
-  }
-
-  public Command coralAlgaeCommand(Command coral, Command algae) {
-    return Commands.either(coral, algae, () -> isOnCoralBindings);
-  }
-
-  public void coralAlgaeActivePresets(Trigger button, Position coral, Position algae) {
-    button.whileTrue(
-        coralAlgaeCommand(
-            superstructure.getToPositionThenHold(coral),
-            superstructure.getToPositionThenHold(algae)));
-  }
-
-  public void coralAlgaeSettingPresets(Trigger button, Position coral, Position algae) {
-    button.whileTrue(
-        coralAlgaeCommand(
-            runOnce(() -> nextTargetPosition = coral), runOnce(() -> nextTargetPosition = algae)));
-  }
-
-  public BooleanSupplier createAtTargetPositionSupplier(
-      DoubleSupplier meters, DoubleSupplier degrees) {
-    return () -> {
-      // Get current pose and expected target pose
-      Pose2d currentPose = drivetrain.getState().Pose;
-      Pose2d targetPose = findNearestReefBranch(ReefLevel.L1, true); // Default to left side
-
-      // Check if we're close enough to target position and properly aligned
-      double positionTolerance = meters.getAsDouble();
-      double angleTolerance = degrees.getAsDouble();
-
-      var diff = currentPose.minus(targetPose);
-      boolean isAtPosition = diff.getTranslation().getNorm() < positionTolerance;
-      boolean isAligned = Math.abs(diff.getRotation().getDegrees()) < angleTolerance;
-
-      return isAtPosition && isAligned;
-
-      // return false;
-    };
-  }
-
-  public ReefLevel positionToReefLevel() {
-    return switch (nextTargetPosition) {
-      case OUTTAKE_L1 -> ReefLevel.L1;
-      case OUTTAKE_L2_LAUNCH, INTAKE_ALGAE_L2 -> ReefLevel.L2;
-      case OUTTAKE_L3_LAUNCH, INTAKE_ALGAE_L3 -> ReefLevel.L3;
-      case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
-      default -> null;
-    };
-  }
-
-  // TODO reintroduce
-  /*
-  public Command algaeLaunchSequence() {
-    return sequence(
-        superstructure.setWristPositionCommand(60),
-        parallel(superstructure.elevatorAlgaeLaunch(1.5), intake.run(-4))
-            .until(() -> superstructure.atLeastElevatorPosition(1.3)),
-        intake.fullSend().withTimeout(0.15),
-        parallel(superstructure.elevatorAlgaeLaunch(-1.5), intake.fullSend()).withTimeout(0.5),
-        intake.stopIntake(),
-        superstructure.goToPosition(Position.STOW));
-  }*/
-
-  public boolean enableAutoAlign() {
-    return positionToReefLevel() != null;
   }
 
   public void configureBindings() {
@@ -235,7 +149,116 @@ public class Controls {
         .leftTrigger()
         .whileTrue(superstructure.getToPositionThenHold(() -> nextTargetPosition));
 
-    // operator.rightTrigger().whileTrue(algaeLaunchSequence());
+    operator.rightTrigger().whileTrue(algaeLaunchSequence());
+  }
+
+  private SwerveRequest driveBasedOnJoystick() {
+    double y = -driver.getLeftY();
+    double x = driver.getLeftX();
+    // Apply radial deadband
+    double hypot = Math.hypot(x, y);
+    double angle = Math.atan2(y, x);
+    hypot = deadband(hypot);
+    x = hypot * Math.cos(angle);
+    y = hypot * Math.sin(angle);
+
+    double turnX = deadband(driver.getRightX());
+
+    return drive
+        .withVelocityX(y * MAX_SPEED)
+        .withVelocityY(-x * MAX_SPEED)
+        .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
+  }
+
+  private void configureDriveTuningBindings() {
+    driver
+        .pov(0)
+        .whileTrue(
+            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(2).withVelocityY(0)));
+    driver
+        .pov(180)
+        .whileTrue(
+            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-2).withVelocityY(0)));
+
+    driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    driver
+        .b()
+        .whileTrue(
+            drivetrain.applyRequest(
+                () ->
+                    point.withModuleDirection(
+                        new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
+  }
+
+  private void configureSysidBindings() {
+    // Run SysId routines when holding back/start and X/Y.
+    // Note that each routine should be run exactly once in a single log.
+
+    // final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
+    var routine = drivetrain.m_sysIdRoutineToApply;
+    driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
+    driver.back().and(driver.a()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
+    driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
+    driver.start().and(driver.a()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
+  }
+
+  public void coralAlgaeActivePresets(Trigger button, Position coral, Position algae) {
+    button.whileTrue(
+        coralAlgaeCommand(
+            superstructure.getToPositionThenHold(coral),
+            superstructure.getToPositionThenHold(algae)));
+  }
+
+  public void coralAlgaeSettingPresets(Trigger button, Position coral, Position algae) {
+    button.whileTrue(
+        coralAlgaeCommand(
+            runOnce(() -> nextTargetPosition = coral), runOnce(() -> nextTargetPosition = algae)));
+  }
+
+  // Commands
+
+  public Command coralAlgaeCommand(Command coral, Command algae) {
+    return Commands.either(coral, algae, () -> isOnCoralBindings);
+  }
+
+  public Command algaeLaunchSequence() {
+    return sequence(
+        superstructure.elevatorAlgaeLaunchSetup().alongWith(intake.holdIntake()),
+        intake.fullSend().withTimeout(0.15),
+        superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend()));
+  }
+
+  public BooleanSupplier createAtTargetPositionSupplier(
+      DoubleSupplier meters, DoubleSupplier degrees) {
+    return () -> {
+      // Get current pose and expected target pose
+      Pose2d currentPose = drivetrain.getState().Pose;
+      Pose2d targetPose = lastPoseForAutoAlign;
+
+      // Check if we're close enough to target position and properly aligned
+      double positionTolerance = meters.getAsDouble();
+      double angleTolerance = degrees.getAsDouble();
+
+      var diff = currentPose.minus(targetPose);
+      boolean isAtPosition = diff.getTranslation().getNorm() < positionTolerance;
+      boolean isAligned = Math.abs(diff.getRotation().getDegrees()) < angleTolerance;
+
+      return isAtPosition && isAligned;
+    };
+  }
+
+  public ReefLevel positionToReefLevel() {
+    return switch (nextTargetPosition) {
+      case OUTTAKE_L1 -> ReefLevel.L1;
+      case OUTTAKE_L2_LAUNCH, INTAKE_ALGAE_L2 -> ReefLevel.L2;
+      case OUTTAKE_L3_LAUNCH, INTAKE_ALGAE_L3 -> ReefLevel.L3;
+      case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
+      default -> null;
+    };
+  }
+
+  public boolean enableAutoAlign() {
+    return positionToReefLevel() != null;
   }
 
   /**
@@ -246,7 +269,8 @@ public class Controls {
    * @return A command that drives to the nearest reef branch
    */
   public Command driveToNearestReefBranchCommand(Supplier<ReefLevel> level, boolean leftSide) {
-    return drivetrain.driveToPosition(() -> findNearestReefBranch(level.get(), leftSide));
+    return drivetrain.driveToPosition(
+        () -> lastPoseForAutoAlign = findNearestReefBranch(level.get(), leftSide));
   }
 
   /**
@@ -319,70 +343,11 @@ public class Controls {
 
   // Debug method to periodically publish the nearest branch position to NetworkTables
   private void debugUpdateNearestBranch() {
-    Pose2d targetPose = findNearestReefBranch(debugReefLevel, true);
+    Pose2d targetPose = findNearestReefBranch(ReefLevel.L1, true);
     nearestBranchPose.set(targetPose);
   }
 
-  private void configureDriveTuningBindings() {
-    driver
-        .pov(0)
-        .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(2).withVelocityY(0)));
-    driver
-        .pov(180)
-        .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-2).withVelocityY(0)));
-
-    driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    driver
-        .b()
-        .whileTrue(
-            drivetrain.applyRequest(
-                () ->
-                    point.withModuleDirection(
-                        new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
-  }
-
-  private void configureSuperstructureTuningBindings() {
-    driver.a().whileTrue(superstructure.incrementElevator(() -> 0.005));
-    driver.b().whileTrue(superstructure.incrementElevator(() -> -0.005));
-    driver.x().whileTrue(superstructure.incrementWrist(() -> 0.5));
-    driver.y().whileTrue(superstructure.incrementWrist(() -> -0.5));
-  }
-
-  private void configureSysidBindings() {
-    // Run SysId routines when holding back/start and X/Y.
-    // Note that each routine should be run exactly once in a single log.
-
-    // final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
-    var routine = drivetrain.m_sysIdRoutineToApply;
-    driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
-    driver.back().and(driver.a()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
-    driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
-    driver.start().and(driver.a()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
-  }
-
-  public double getLeftY() {
-    if (keyboardMappings) {
-      return driver.getLeftY() * 0.5;
-    } else {
-      return driver.getLeftY();
-    }
-  }
-
-  public double getLeftX() {
-    if (keyboardMappings) {
-      return driver.getLeftX() * 0.5;
-    } else {
-      return driver.getLeftX();
-    }
-  }
-
-  public double getRightX() {
-    if (keyboardMappings) {
-      return driver.getLeftTriggerAxis() * 0.5;
-    } else {
-      return driver.getRightX();
-    }
+  private double deadband(double val) {
+    return MathUtil.applyDeadband(val, STICK_DEADBAND);
   }
 }

@@ -11,10 +11,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 
 public class Intake extends SubsystemBase {
+  public static final double intakeVolts = 4;
   private final TalonFX leftMotor = new TalonFX(55);
   private final TalonFX rightMotor = new TalonFX(56);
-
   private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(true);
+  DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
   public Intake() {
     var config = new TalonFXConfiguration();
@@ -35,8 +36,6 @@ public class Intake extends SubsystemBase {
     setDefaultCommand(stopIntake());
   }
 
-  public static final double intakeVolts = 4;
-
   public Command runIntake() {
     return run(
         () -> {
@@ -53,7 +52,9 @@ public class Intake extends SubsystemBase {
         });
   }
 
-  DutyCycleOut fullSend = new DutyCycleOut(-1.0);
+  public Command holdIntake() {
+    return run(-1);
+  }
 
   public Command fullSend2() {
     return run(
