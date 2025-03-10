@@ -76,12 +76,11 @@ public class Vision {
           new Transform3d(
               new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
               new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
-  private VisionSystemSim visionSim;
+
+  private VisionSystemSim visionSim = Robot.isSimulation() ? new VisionSystemSim("main") : null;
 
   {
     if (Robot.isSimulation()) {
-      // Create the vision system simulation which handles cameras and targets on the field.
-      visionSim = new VisionSystemSim("main");
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
       visionSim.addAprilTags(kTagLayout);
     }
