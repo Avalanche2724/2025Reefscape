@@ -4,31 +4,33 @@
 
 package frc.robot;
 
-import edu.wpi.first.cscore.OpenCvLoader;
+import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import org.photonvision.estimation.OpenCVHelp;
 
 public class Robot extends TimedRobot {
+  public static Robot instance;
+  private final RobotContainer robotContainer;
   private Command autonomousCommand;
 
-  private final RobotContainer robotContainer;
-
-  public static Robot instance;
-
   public Robot() {
-    try {
-      OpenCvLoader.forceLoad();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    OpenCVHelp.forceLoadOpenCV();
     instance = this;
     robotContainer = new RobotContainer();
   }
 
   @Override
   public void robotPeriodic() {
+    double time = Timer.getFPGATimestamp();
+    Threads.setCurrentThreadPriority(true, 2);
     CommandScheduler.getInstance().run();
+    Threads.setCurrentThreadPriority(false, 10);
+    double loopTime = Timer.getFPGATimestamp() - time;
+    SmartDashboard.putNumber("Loop Time", loopTime);
   }
 
   @Override

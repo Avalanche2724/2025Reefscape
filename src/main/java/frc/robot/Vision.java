@@ -64,6 +64,18 @@ public class Vision {
     kTagLayout = new AprilTagFieldLayout(list, layout1.getFieldLength(), layout1.getFieldWidth());
   }
 
+  public Camera camera1 =
+      new Camera(
+          "Arducam_OV9281_USB_Camera (1)",
+          new Transform3d(
+              new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
+  public Camera camera2 =
+      new Camera(
+          "Arducam_OV9281_USB_Camera",
+          new Transform3d(
+              new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
   private VisionSystemSim visionSim;
 
   {
@@ -75,38 +87,39 @@ public class Vision {
     }
   }
 
-  public Camera camera1 =
-      new Camera(
-          "Arducam_OV9281_USB_Camera (1)",
-          new Transform3d(
-              new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
+  public void simulationPeriodic(Pose2d robotSimPose) {
+    visionSim.update(robotSimPose);
+  }
 
-  /*public Camera camera2 =
-        new Camera(
-            "Arducam_OV9281_USB_Camera",
-            new Transform3d(
-                new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
-                new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
-  */
+  // ----- Simulation
+
+  /** Reset pose history of the robot in the vision system simulation. */
+  public void resetSimPose(Pose2d pose) {
+    if (Robot.isSimulation()) visionSim.resetRobotPose(pose);
+  }
+
+  /** A Field2d for visualizing our robot and objects on the field. */
+  public Field2d getSimDebugField() {
+    if (!Robot.isSimulation()) return null;
+    return visionSim.getDebugField();
+  }
+
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
     // TODO Experiment and determine estimation noise on an actual robot.
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
     public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
-
-    private String cameraName;
-    private String visionEstimationKey;
     private final Transform3d robotToCam;
     private final PhotonCamera camera;
-    private Optional<Matrix<N3, N3>> cameraMatrix;
-    private Optional<Matrix<N8, N1>> cameraDistortion;
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> enabledPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e8));
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> disabledPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1));
-
     private final PhotonPoseEstimator photonEstimator;
+    private String cameraName;
+    private String visionEstimationKey;
+    private Optional<Matrix<N3, N3>> cameraMatrix;
+    private Optional<Matrix<N8, N1>> cameraDistortion;
     private Matrix<N3, N1> curStdDevs;
 
     public Camera(String cameraName, Transform3d robotToCam) {
@@ -212,22 +225,5 @@ public class Vision {
         }
       }
     }
-  }
-
-  // ----- Simulation
-
-  public void simulationPeriodic(Pose2d robotSimPose) {
-    visionSim.update(robotSimPose);
-  }
-
-  /** Reset pose history of the robot in the vision system simulation. */
-  public void resetSimPose(Pose2d pose) {
-    if (Robot.isSimulation()) visionSim.resetRobotPose(pose);
-  }
-
-  /** A Field2d for visualizing our robot and objects on the field. */
-  public Field2d getSimDebugField() {
-    if (!Robot.isSimulation()) return null;
-    return visionSim.getDebugField();
   }
 }
