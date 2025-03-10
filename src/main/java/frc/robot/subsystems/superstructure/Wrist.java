@@ -3,6 +3,7 @@ package frc.robot.subsystems.superstructure;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -20,8 +21,14 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -29,30 +36,74 @@ import frc.robot.Robot;
 
 public class Wrist {
   // Constants
-  private static final int WRIST_ID = 51;
-  private static final int WRIST_ENCODER_ID = 52;
+  public static final int WRIST_ID = 51;
+  public static final int WRIST_ENCODER_ID = 52;
   public static final double GEAR_RATIO = 64;
-  public static final double MASS = Kilograms.convertFrom(15, Pounds);
-  public static final double ARM_LEN = Meters.convertFrom(30, Inches);
-  // Offset we need to subtract from motor to get the actual position (defined as 0=horizontal arm)
-  // This is because 0 in motor should be max gravity but the center of gravity is off center
-  public static final double ARM_OFFSET_DEG = Degrees.convertFrom(-0.049, Rotations);
-  public static final double ARM_OFFSET = Rotations.convertFrom(ARM_OFFSET_DEG, Degrees);
-  public static final double UP_LIMIT = Rotations.convertFrom(90 + ARM_OFFSET_DEG, Degrees);
-  public static final double DOWN_LIMIT = Rotations.convertFrom(-90 + ARM_OFFSET_DEG, Degrees);
 
+  /*
+  A brief explanation of wrist positioning:
+  There is the value the absolute encoder gets (from 0-1); the spark max subtracts 0.5 (making it -0.5 to 0.5)
+  and then applies the zero offset, wrapping around, where zero is "arm plate horizontal".
+  Then we add ARM_OFFSET before sending the position to the talonfx motor, because it needs to apply the correct
+  kG value to counteract gravity, and the arm center of gravity is off-center from the arm horizontal position.
+  (Which probably results in a difference of 0.13 volts at most; it should be slightly impactful)
+   */
+  public static final double ZERO_OFFSET = 0.206; // rotations
+  public static final double ARM_OFFSET = -0.049;
+  public static final double ARM_OFFSET_DEG = Degrees.convertFrom(ARM_OFFSET, Rotations);
+  public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees) + ARM_OFFSET;
+  public static final double DOWN_LIMIT = Rotations.convertFrom(-90, Degrees) + ARM_OFFSET;
+
+  private static final double positionSwitchThreshold = 0.01;
+  private static final double ABSOLUTE_ENCODER_POSITION_RESET = 0.005;
+  // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
+  // Signals
+  private final StatusSignal<Angle> motorPosition = motor.getPosition();
+  private final StatusSignal<AngularVelocity> motorVelocity = motor.getVelocity();
+  private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
+  private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
 
+  // Controls
   private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
   private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(1);
-
-  public final SparkMax absoluteEncoderSparkMax =
+  // Absolute encoder reading
+  private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
-  public final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
+  private final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
 
-  double positionSwitchThreshold = 0.01;
-  double rpmVelocityThreshold = 15;
-  double periodSecondsReset = 0.01;
+  // Simulation
+  private final SingleJointedArmSim armSim =
+      new SingleJointedArmSim(
+          DCMotor.getKrakenX60Foc(1),
+          GEAR_RATIO, // Following arm length/mass are estimates for simulation
+          SingleJointedArmSim.estimateMOI(
+              Meters.convertFrom(30, Inches), Kilograms.convertFrom(15, Pounds)),
+          Kilograms.convertFrom(15, Pounds),
+          Radians.convertFrom(DOWN_LIMIT, Rotations),
+          Radians.convertFrom(UP_LIMIT, Rotations),
+          true,
+          Radians.convertFrom(ARM_OFFSET, Rotations));
+  // SysId
+  public VoltageOut sysIdControl = new VoltageOut(0);
+
+  @SuppressWarnings("unused")
+  public SysIdRoutine sysIdRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              Volts.of(0.1).div(Second.one()),
+              Volts.of(4),
+              null,
+              (state) -> SignalLogger.writeString("Arm_SysId_State", state.toString())),
+          new SysIdRoutine.Mechanism(
+              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
+              null,
+              Superstructure.instance));
+
+  // Mechanism2d:
+  private MechanismLigament2d wristRotatePart;
+  private double lastPositionSet = 0;
+  private boolean setPosition = false;
 
   public Wrist() {
     var config = new TalonFXConfiguration();
@@ -64,8 +115,9 @@ public class Wrist {
     config.Slot0.kA = 0.13794;
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
-    config.Slot1.kP = 10; // todo: try retuning and lowering?
-    config.Slot1.kD = 2;
+
+    config.Slot1.kP = 35; // todo: try retuning and lowering?
+    config.Slot1.kD = 5;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
@@ -73,8 +125,8 @@ public class Wrist {
     config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // rotations per second; maximum?
+    config.MotionMagic.MotionMagicAcceleration = 1; // rotations per second squared
     config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -97,7 +149,7 @@ public class Wrist {
     motor.getClosedLoopFeedForward().setUpdateFrequency(50);
 
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
-    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(0.206).inverted(false);
+    sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(ZERO_OFFSET).inverted(false);
     sparkMaxConfig.signals.absoluteEncoderPositionPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderVelocityPeriodMs(1);
     sparkMaxConfig.signals.absoluteEncoderPositionAlwaysOn(true);
@@ -106,59 +158,11 @@ public class Wrist {
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
 
-    Robot.instance.addPeriodic(absoluteEncoderResetter(), periodSecondsReset);
+    Robot.instance.addPeriodic(absoluteEncoderResetter(), ABSOLUTE_ENCODER_POSITION_RESET);
   }
 
-  private double absoluteEncoderPosition() {
-    return Robot.isReal()
-        ? absoluteEncoder.getPosition()
-        : Rotations.convertFrom(armSim.getAngleRads(), Radians);
-  }
-
-  // this is probably a horrible idea and I apologize to anybody looking at this in the future
-  private Runnable absoluteEncoderResetter() {
-    var setter =
-        new TalonFXConfigurator(new DeviceIdentifier(WRIST_ID, "talon fx", "")) {
-          @Override
-          protected void reportIfFrequent() {}
-        };
-
-    return () -> {
-      if (Robot.isSimulation()) return; // TODO it should work?
-      double pos = absoluteEncoderPosition();
-      double vel = absoluteEncoder.getVelocity();
-      // System.out.println("ABS ENC POS" + pos);
-      if (pos == 0 && vel == 0) {
-        // TODO fix me later and implement better alerting
-        System.err.println("Check absolute encoder reset");
-      } else // if (Math.abs(vel) < rpmVelocityThreshold) {
-      {
-        setter.setPosition(pos + ARM_OFFSET, 0);
-      }
-    };
-  }
-
-  private double lastPositionSet = 0;
-  private boolean setPosition = false;
-
-  private void setMotorRotations(double pos) {
-    setPosition = true;
-    lastPositionSet = pos;
-
-    if (Math.abs(motor.getPosition().getValueAsDouble() - pos) < positionSwitchThreshold) {
-      motor.setControl(positionControl.withPosition(lastPositionSet));
-    } else {
-      motor.setControl(motionMagicControl.withPosition(pos));
-    }
-  }
-
-  void setMotorDegreesOffset(double deg) {
-    setMotorRotations(Rotations.convertFrom(deg + ARM_OFFSET_DEG, Degrees));
-  }
-
-  void setMotorDutyCycle(double d) {
-    setPosition = false;
-    motor.set(d);
+  public double getAbsoluteEncoderPosition() {
+    return absoluteEncoder.getPosition();
   }
 
   public double getWristRotations() {
@@ -173,9 +177,58 @@ public class Wrist {
     return getWristDegrees() - ARM_OFFSET_DEG;
   }
 
-  // Mechanism2d:
-  MechanismLigament2d wristRotatePart;
-  MechanismLigament2d wristEnd;
+  public double getVelocity() {
+    return motorVelocity.getValueAsDouble();
+  }
+
+  public double getTorqueCurrent() {
+    return motorTorqueCurrent.getValueAsDouble();
+  }
+
+  public double getVoltage() {
+    return motorVoltage.getValueAsDouble();
+  }
+
+  // this is probably a horrible idea and I apologize to anybody looking at this in the future
+  private Runnable absoluteEncoderResetter() {
+    var setter =
+        new TalonFXConfigurator(new DeviceIdentifier(WRIST_ID, "talon fx", "")) {
+          @Override
+          protected void reportIfFrequent() {}
+        };
+
+    return () -> {
+      if (Robot.isSimulation()) return; // Conflicts with simulationPeriodic setRawRotorPosition
+      double pos = getAbsoluteEncoderPosition();
+      double vel = absoluteEncoder.getVelocity();
+      if (pos == 0 && vel == 0) {
+        // TODO fix me later and implement better alerting
+        DriverStation.reportError("Check absolute encoder reset", false);
+      } else {
+        setter.setPosition(pos + ARM_OFFSET, 0);
+      }
+    };
+  }
+
+  private void setMotorRotations(double pos) {
+    setPosition = true;
+    lastPositionSet = pos;
+
+    if (Math.abs(motor.getPosition().getValueAsDouble() - pos) < 0.01) { // TODO constant
+      motor.setControl(positionControl.withPosition(lastPositionSet));
+    } else {
+      motor.setControl(motionMagicControl.withPosition(pos));
+    }
+  }
+
+  void setMotorDegreesOffset(double deg) {
+    setMotorRotations(Rotations.convertFrom(deg + ARM_OFFSET_DEG, Degrees));
+  }
+
+  void setMotorDutyCycle(double d) {
+    setPosition = false;
+    motor.set(d);
+  }
 
   public MechanismLigament2d createMechanism2d() {
     var wristMechanism =
@@ -201,32 +254,19 @@ public class Wrist {
                 90,
                 Centimeters.convertFrom(1, Inch),
                 new Color8Bit(Color.kPurple)));
-    wristEnd =
-        wristRotatePart2.append(
-            new MechanismLigament2d(
-                "wrist_end_part_4",
-                Meters.convertFrom(13, Inches),
-                -90,
-                Centimeters.convertFrom(4, Inches),
-                new Color8Bit(Color.kBlue)));
+    wristRotatePart2.append(
+        new MechanismLigament2d(
+            "wrist_end_part_4",
+            Meters.convertFrom(13, Inches),
+            -90,
+            Centimeters.convertFrom(4, Inches),
+            new Color8Bit(Color.kBlue)));
     return wristMechanism;
   }
 
   public void updateMechanism2d() {
     wristRotatePart.setAngle(getWristDegreesOffset());
   }
-
-  // Simulation
-  private final SingleJointedArmSim armSim =
-      new SingleJointedArmSim(
-          DCMotor.getKrakenX60Foc(1),
-          GEAR_RATIO,
-          SingleJointedArmSim.estimateMOI(ARM_LEN, MASS),
-          ARM_LEN,
-          Radians.convertFrom(DOWN_LIMIT, Rotations),
-          Radians.convertFrom(UP_LIMIT, Rotations),
-          true,
-          Radians.convertFrom(ARM_OFFSET, Rotations));
 
   public void simulationPeriodic(double deltaTime) {
     var motorSim = motor.getSimState();
@@ -241,23 +281,18 @@ public class Wrist {
         Rotations.convertFrom(armSim.getAngleRads(), Radians) * GEAR_RATIO);
   }
 
-  // SysId
-  public VoltageOut sysIdControl = new VoltageOut(0);
-
-  public SysIdRoutine sysIdRoutine =
-      new SysIdRoutine(
-          new SysIdRoutine.Config(
-              Volts.of(0.1).div(Second.one()),
-              Volts.of(1),
-              null,
-              (state) -> SignalLogger.writeString("arm_sysid", state.toString())),
-          new SysIdRoutine.Mechanism(
-              (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
-              null,
-              Superstructure.instance));
-
   public void periodic() {
-    // TODO add telemetry
+    motorPosition.refresh();
+    motorVelocity.refresh();
+    motorTorqueCurrent.refresh();
+    motorVoltage.refresh();
+    // Log to NetworkTables
+    SmartDashboard.putNumber("Wrist Absolute Encoder Pos", getAbsoluteEncoderPosition());
+    SmartDashboard.putNumber("Wrist Degrees (with offset)", getWristDegreesOffset());
+    SmartDashboard.putNumber("Wrist Velocity", getVelocity());
+    SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
+    SmartDashboard.putNumber("Wrist Voltage", getVoltage());
+
     if (setPosition
         && Math.abs(motor.getPosition().getValueAsDouble() - lastPositionSet)
             < positionSwitchThreshold) {

@@ -75,7 +75,7 @@ public class Elevator {
               Volts.of(0.5).div(Seconds.one()),
               Volts.of(4),
               null,
-              (state) -> SignalLogger.writeString("elevator_sysid", state.toString())),
+              (state) -> SignalLogger.writeString("Elevator_SysId_State", state.toString())),
           new SysIdRoutine.Mechanism(
               (volts) -> motor.setControl(sysIdControl.withOutput(volts.in(Volts))),
               null,

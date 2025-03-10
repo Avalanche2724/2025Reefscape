@@ -52,6 +52,7 @@ public class Superstructure extends SubsystemBase {
       this.wristAngle = wristAngle;
     }
   }
+
   private static final double ELEV_THRESHOLD = Meters.convertFrom(1, Inch);
   private static final double WRIST_THRESHOLD = Rotations.convertFrom(3, Degree);
   // Simulation
