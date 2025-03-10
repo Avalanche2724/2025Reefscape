@@ -52,10 +52,10 @@ public class Wrist {
   public static final double ARM_OFFSET = -0.049;
   public static final double ARM_OFFSET_DEG = Degrees.convertFrom(ARM_OFFSET, Rotations);
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees) + ARM_OFFSET;
-  public static final double DOWN_LIMIT = Rotations.convertFrom(-90, Degrees) + ARM_OFFSET;
+  public static final double DOWN_LIMIT = Rotations.convertFrom(-45, Degrees) + ARM_OFFSET;
 
-  private static final double positionSwitchThreshold = 0.01;
-  private static final double ABSOLUTE_ENCODER_POSITION_RESET = 0.005;
+  private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.02;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -63,7 +63,6 @@ public class Wrist {
   private final StatusSignal<AngularVelocity> motorVelocity = motor.getVelocity();
   private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
-
   // Controls
   private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
   private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(1);
@@ -71,7 +70,6 @@ public class Wrist {
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
   private final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
-
   // Simulation
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
@@ -116,7 +114,7 @@ public class Wrist {
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 35; // todo: try retuning and lowering?
+    config.Slot1.kP = 30; // todo: try retuning and lowering?
     config.Slot1.kD = 5;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
@@ -158,8 +156,29 @@ public class Wrist {
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
 
-    Robot.instance.addPeriodic(absoluteEncoderResetter(), ABSOLUTE_ENCODER_POSITION_RESET);
+    Robot.instance.addPeriodic(absoluteEncoderResetter(), ENCODER_POSITION_RESET_SEC);
   }
+
+  public void periodic() {
+    motorPosition.refresh();
+    motorVelocity.refresh();
+    motorTorqueCurrent.refresh();
+    motorVoltage.refresh();
+    // Log to NetworkTables
+    SmartDashboard.putNumber("Wrist Absolute Encoder Pos", getAbsoluteEncoderPosition());
+    SmartDashboard.putNumber("Wrist Degrees (with offset)", getWristDegreesOffset());
+    SmartDashboard.putNumber("Wrist Velocity", getVelocity());
+    SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
+    SmartDashboard.putNumber("Wrist Voltage", getVoltage());
+
+    if (setPosition
+        && Math.abs(motor.getPosition().getValueAsDouble() - lastPositionSet)
+            < THRESHOLD_SWITCHING_PID_GAINS) {
+      motor.setControl(positionControl.withPosition(lastPositionSet));
+    }
+  }
+
+  // Signals
 
   public double getAbsoluteEncoderPosition() {
     return absoluteEncoder.getPosition();
@@ -210,11 +229,13 @@ public class Wrist {
     };
   }
 
+  // Controls and stuff
+
   private void setMotorRotations(double pos) {
     setPosition = true;
     lastPositionSet = pos;
 
-    if (Math.abs(motor.getPosition().getValueAsDouble() - pos) < 0.01) { // TODO constant
+    if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
     } else {
       motor.setControl(motionMagicControl.withPosition(pos));
@@ -225,11 +246,12 @@ public class Wrist {
     setMotorRotations(Rotations.convertFrom(deg + ARM_OFFSET_DEG, Degrees));
   }
 
-  void setMotorDutyCycle(double d) {
+  void stopMotor() {
     setPosition = false;
-    motor.set(d);
+    motor.set(0);
   }
 
+  // Mechanism + simulation
   public MechanismLigament2d createMechanism2d() {
     var wristMechanism =
         new MechanismLigament2d(
@@ -279,24 +301,5 @@ public class Wrist {
 
     motorSim.setRawRotorPosition(
         Rotations.convertFrom(armSim.getAngleRads(), Radians) * GEAR_RATIO);
-  }
-
-  public void periodic() {
-    motorPosition.refresh();
-    motorVelocity.refresh();
-    motorTorqueCurrent.refresh();
-    motorVoltage.refresh();
-    // Log to NetworkTables
-    SmartDashboard.putNumber("Wrist Absolute Encoder Pos", getAbsoluteEncoderPosition());
-    SmartDashboard.putNumber("Wrist Degrees (with offset)", getWristDegreesOffset());
-    SmartDashboard.putNumber("Wrist Velocity", getVelocity());
-    SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
-    SmartDashboard.putNumber("Wrist Voltage", getVoltage());
-
-    if (setPosition
-        && Math.abs(motor.getPosition().getValueAsDouble() - lastPositionSet)
-            < positionSwitchThreshold) {
-      motor.setControl(positionControl.withPosition(lastPositionSet));
-    }
   }
 }

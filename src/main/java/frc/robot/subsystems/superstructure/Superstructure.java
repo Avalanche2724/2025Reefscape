@@ -1,13 +1,14 @@
 package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.parallel;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 
 import com.ctre.phoenix6.Utils;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -16,6 +17,7 @@ import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+@SuppressWarnings("FieldCanBeLocal") // Stop intellij complaints
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
@@ -53,18 +55,26 @@ public class Superstructure extends SubsystemBase {
     }
   }
 
-  private static final double ELEV_THRESHOLD = Meters.convertFrom(1, Inch);
+  private static final double ELEVATOR_AT_POSITION_THRESHOLD = Meters.convertFrom(1, Inch);
   private static final double WRIST_THRESHOLD = Rotations.convertFrom(3, Degree);
   // Simulation
   private static final double SIM_LOOP_PERIOD = 0.005;
+
   // Use for command dependencies:
   static Subsystem instance;
-  public Elevator elevator;
-  public Wrist wrist;
-  public Trigger isStowed;
+  // Contained subsystems:
+  public final Elevator elevator;
+  public final Wrist wrist;
+
+  // Logic for triggers
+  public final Trigger isStowed;
+
+  // State and things
   Position lastSetPosition = Position.STOW;
   double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
   double currentWristTargetPosition = 0;
+
+  // Simulation stuff
   private Notifier simNotifier = null;
   private double m_lastSimTime;
 
@@ -82,12 +92,15 @@ public class Superstructure extends SubsystemBase {
     RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
 
     // TODO
-    /*isStowed =
+    isStowed =
         new Trigger(
-            () -> lastSetPosition == Position.STOW && atWristPosition(currentWristTargetPosition));
+            () ->
+                lastSetPosition == Position.STOW
+                    && atWristPosition(currentWristTargetPosition)
+                    && atMostElevatorPosition(0.3));
 
     // Auto-zero elevator when stowed
-    isStowed.onTrue(zeroElevatorCommand());*/
+    isStowed.onTrue(zeroElevatorCommand());
   }
 
   @Override
@@ -116,8 +129,12 @@ public class Superstructure extends SubsystemBase {
     return elevator.getElevatorHeight() - height > 0;
   }
 
+  public boolean atMostElevatorPosition(double height) {
+    return elevator.getElevatorHeight() - height < 0;
+  }
+
   public boolean atElevatorPosition(double height) {
-    return Math.abs(elevator.getElevatorHeight() - height) < ELEV_THRESHOLD;
+    return Math.abs(elevator.getElevatorHeight() - height) < ELEVATOR_AT_POSITION_THRESHOLD;
   }
 
   public boolean atWristPosition(double angle) {
@@ -140,7 +157,7 @@ public class Superstructure extends SubsystemBase {
 
   private void stopMotors() {
     elevator.stopMotor();
-    wrist.setMotorDutyCycle(0);
+    wrist.stopMotor();
   }
 
   public Command stop() {
@@ -148,18 +165,17 @@ public class Superstructure extends SubsystemBase {
   }
 
   public Command zeroElevatorCommand() {
-    return run(elevator::setMotorZeroingVelocity)
-        .until(elevator::isStalling)
-        .andThen(() -> elevator.stopMotor())
-        .andThen(Commands.waitSeconds(0.3))
-        .andThen(runOnce(elevator::zeroElevatorPosition));
+    return sequence(
+        run(elevator::setMotorZeroingVelocity).until(elevator::isStalling),
+        run(elevator::stopMotor).withTimeout(0.3),
+        runOnce(elevator::zeroElevatorPosition));
   }
 
-  /*
-    public Command elevatorAlgaeLaunch(double v) {
-      return run(() -> elevator.setMotorVelocity(v));
-    }
-  */
+  public Command elevatorAlgaeLaunchSetup() {
+    return parallel(setWristPositionCommand(70), run(elevator::setMotorLaunchingVelocityUp))
+        .until(() -> atLeastElevatorPosition(1.3));
+  }
+
   private void setPositions(Position pos) {
     setPositions(pos.elevatorHeight, pos.wristAngle);
   }
@@ -194,23 +210,7 @@ public class Superstructure extends SubsystemBase {
                 currentElevatorTargetPosition, currentWristTargetPosition + d.getAsDouble()));
   }
 
-  public void createSimulationThread() {
-    m_lastSimTime = Utils.getCurrentTimeSeconds();
-
-    /* Run simulation at a faster rate so PID gains behave more reasonably */
-    simNotifier =
-        new Notifier(
-            () -> {
-              final double currentTime = Utils.getCurrentTimeSeconds();
-              double deltaTime = currentTime - m_lastSimTime;
-              m_lastSimTime = currentTime;
-              elevator.simulationPeriodic(deltaTime);
-              wrist.simulationPeriodic(deltaTime);
-            });
-    simNotifier.startPeriodic(SIM_LOOP_PERIOD);
-  }
-
-  // Mechanism2d
+  // Mechanism + simulation stuff
   public void createMechanism2d() {
     // the main mechanism object
     var mech = new Mechanism2d(Meters.convertFrom(28, Inches), 4);
@@ -225,5 +225,21 @@ public class Superstructure extends SubsystemBase {
   public void updateMechanism2d() {
     elevator.updateMechanism2d();
     wrist.updateMechanism2d();
+  }
+
+  public void createSimulationThread() {
+    m_lastSimTime = Utils.getCurrentTimeSeconds();
+
+    /* Run simulation at a faster rate so PID gains behave more reasonably */
+    simNotifier =
+        new Notifier(
+            () -> {
+              final double currentTime = Utils.getCurrentTimeSeconds();
+              double deltaTime = currentTime - m_lastSimTime;
+              m_lastSimTime = currentTime;
+              elevator.simulationPeriodic(deltaTime);
+              wrist.simulationPeriodic(deltaTime);
+            });
+    simNotifier.startPeriodic(SIM_LOOP_PERIOD);
   }
 }

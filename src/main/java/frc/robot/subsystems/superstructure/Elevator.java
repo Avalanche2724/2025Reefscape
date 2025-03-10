@@ -195,6 +195,7 @@ public class Elevator {
   }
 
   // Mechanism visualization and simulation stuff
+
   public MechanismLigament2d createMechanism2d() {
     return elevatorMechanism =
         new MechanismLigament2d(
