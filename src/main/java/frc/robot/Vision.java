@@ -64,6 +64,8 @@ public class Vision {
     kTagLayout = new AprilTagFieldLayout(list, layout1.getFieldLength(), layout1.getFieldWidth());
   }
 
+  public VisionSystemSim visionSim = Robot.isSimulation() ? new VisionSystemSim("main") : null;
+
   public Camera camera1 =
       new Camera(
           "Arducam_OV9281_USB_Camera (1)",
@@ -76,8 +78,6 @@ public class Vision {
           new Transform3d(
               new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
               new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
-
-  private VisionSystemSim visionSim = Robot.isSimulation() ? new VisionSystemSim("main") : null;
 
   {
     if (Robot.isSimulation()) {
