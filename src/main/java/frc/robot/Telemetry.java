@@ -15,6 +15,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -23,14 +25,8 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.generated.TunerConstants;
 
 public class Telemetry {
-  /** Construct a telemetry object */
-  public Telemetry() {
-    SignalLogger.start();
-  }
-
   /* What to publish over networktables for telemetry */
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
-
   /* Robot swerve drive state */
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
   private final StructPublisher<Pose2d> drivePose =
@@ -47,12 +43,10 @@ public class Telemetry {
       driveStateTable.getDoubleTopic("Timestamp").publish();
   private final DoublePublisher driveOdometryFrequency =
       driveStateTable.getDoubleTopic("OdometryFrequency").publish();
-
   /* Robot pose for field positioning */
   private final NetworkTable table = inst.getTable("Pose");
   private final DoubleArrayPublisher fieldPub = table.getDoubleArrayTopic("robotPose").publish();
   private final StringPublisher fieldTypePub = table.getStringTopic(".type").publish();
-
   /* Mechanisms to represent the swerve module states */
   private final Mechanism2d[] m_moduleMechanisms =
       new Mechanism2d[] {
@@ -90,10 +84,17 @@ public class Telemetry {
             .getRoot("RootDirection", 0.5, 0.5)
             .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
       };
-
   private final double[] m_poseArray = new double[3];
   private final double[] m_moduleStatesArray = new double[8];
   private final double[] m_moduleTargetsArray = new double[8];
+
+  /** Construct a telemetry object */
+  public Telemetry() {
+    SignalLogger.start();
+    // Use WPILib data logger as well
+    DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
+  }
 
   /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
   public void telemeterize(SwerveDriveState state) {
@@ -111,9 +112,9 @@ public class Telemetry {
     m_poseArray[1] = state.Pose.getY();
     m_poseArray[2] = state.Pose.getRotation().getDegrees();
     for (int i = 0; i < 4; ++i) {
-      m_moduleStatesArray[i * 2 + 0] = state.ModuleStates[i].angle.getRadians();
+      m_moduleStatesArray[i * 2] = state.ModuleStates[i].angle.getRadians();
       m_moduleStatesArray[i * 2 + 1] = state.ModuleStates[i].speedMetersPerSecond;
-      m_moduleTargetsArray[i * 2 + 0] = state.ModuleTargets[i].angle.getRadians();
+      m_moduleTargetsArray[i * 2] = state.ModuleTargets[i].angle.getRadians();
       m_moduleTargetsArray[i * 2 + 1] = state.ModuleTargets[i].speedMetersPerSecond;
     }
 

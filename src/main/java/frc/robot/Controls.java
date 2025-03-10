@@ -29,34 +29,38 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class Controls {
+  public static final boolean keyboardMappings =
+      Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac");
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1).in(RadiansPerSecond);
   private static final double STICK_DEADBAND = 0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
-
   private final RobotContainer bot;
   private final Drivetrain drivetrain;
   private final Superstructure superstructure;
   private final Intake intake;
   private final Climber climber;
-
   private final CommandXboxController driver = new CommandXboxController(0);
   private final CommandXboxController operator = new CommandXboxController(1);
-
+  // .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo);
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
           .withDeadband(MAX_SPEED * SWERVEAPI_DEADBAND)
           .withRotationalDeadband(MAX_ANGLE_RATE * SWERVEAPI_DEADBAND)
           .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
-  // .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo);
-
   // Publisher for debug visualization of nearest branch target position
   private final StructPublisher<Pose2d> nearestBranchPose =
       NetworkTableInstance.getDefault()
           .getTable("SmartDashboard")
           .getStructTopic("NearestBranch", Pose2d.struct)
           .publish();
-
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+  private final SwerveRequest.RobotCentric forwardStraight =
+      new SwerveRequest.RobotCentric().withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
+  public boolean isOnCoralBindings = true;
+  public Position nextTargetPosition = Position.OUTTAKE_L1;
+  boolean currentlyAutoAligning = true;
   // Reef level for debug visualization
   private ReefLevel debugReefLevel = ReefLevel.L1;
 
@@ -69,6 +73,10 @@ public class Controls {
 
     // Add periodic debug function that runs at 50Hz
     Robot.instance.addPeriodic(this::debugUpdateNearestBranch, 0.02);
+  }
+
+  private static double deadband(double val) {
+    return MathUtil.applyDeadband(val, STICK_DEADBAND);
   }
 
   private SwerveRequest driveBasedOnJoystick() {
@@ -89,8 +97,6 @@ public class Controls {
         .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
   }
 
-  public boolean isOnCoralBindings = true;
-
   public Command coralAlgaeCommand(Command coral, Command algae) {
     return Commands.either(coral, algae, () -> isOnCoralBindings);
   }
@@ -102,15 +108,11 @@ public class Controls {
             superstructure.getToPositionThenHold(algae)));
   }
 
-  public Position nextTargetPosition = Position.OUTTAKE_L1;
-
   public void coralAlgaeSettingPresets(Trigger button, Position coral, Position algae) {
     button.whileTrue(
         coralAlgaeCommand(
             runOnce(() -> nextTargetPosition = coral), runOnce(() -> nextTargetPosition = algae)));
   }
-
-  boolean currentlyAutoAligning = true;
 
   public BooleanSupplier createAtTargetPositionSupplier(
       DoubleSupplier meters, DoubleSupplier degrees) {
@@ -142,6 +144,19 @@ public class Controls {
       default -> null;
     };
   }
+
+  // TODO reintroduce
+  /*
+  public Command algaeLaunchSequence() {
+    return sequence(
+        superstructure.setWristPositionCommand(60),
+        parallel(superstructure.elevatorAlgaeLaunch(1.5), intake.run(-4))
+            .until(() -> superstructure.atLeastElevatorPosition(1.3)),
+        intake.fullSend().withTimeout(0.15),
+        parallel(superstructure.elevatorAlgaeLaunch(-1.5), intake.fullSend()).withTimeout(0.5),
+        intake.stopIntake(),
+        superstructure.goToPosition(Position.STOW));
+  }*/
 
   public boolean enableAutoAlign() {
     return positionToReefLevel() != null;
@@ -220,7 +235,7 @@ public class Controls {
         .leftTrigger()
         .whileTrue(superstructure.getToPositionThenHold(() -> nextTargetPosition));
 
-    operator.rightTrigger().whileTrue(algaeLaunchSequence());
+    // operator.rightTrigger().whileTrue(algaeLaunchSequence());
   }
 
   /**
@@ -308,22 +323,6 @@ public class Controls {
     nearestBranchPose.set(targetPose);
   }
 
-  public Command algaeLaunchSequence() {
-    return sequence(
-        superstructure.setWristPositionCommand(60),
-        parallel(superstructure.elevatorAlgaeLaunch(1.5), intake.run(-4))
-            .until(() -> superstructure.atLeastElevatorPosition(1.3)),
-        intake.fullSend().withTimeout(0.15),
-        parallel(superstructure.elevatorAlgaeLaunch(-1.5), intake.fullSend()).withTimeout(0.5),
-        intake.stopIntake(),
-        superstructure.goToPosition(Position.STOW));
-  }
-
-  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-  private final SwerveRequest.RobotCentric forwardStraight =
-      new SwerveRequest.RobotCentric().withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
-
   private void configureDriveTuningBindings() {
     driver
         .pov(0)
@@ -362,13 +361,6 @@ public class Controls {
     driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
     driver.start().and(driver.a()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
   }
-
-  private static double deadband(double val) {
-    return MathUtil.applyDeadband(val, STICK_DEADBAND);
-  }
-
-  public static final boolean keyboardMappings =
-      Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac");
 
   public double getLeftY() {
     if (keyboardMappings) {

@@ -52,20 +52,26 @@ public class Superstructure extends SubsystemBase {
       this.wristAngle = wristAngle;
     }
   }
-
+  private static final double ELEV_THRESHOLD = Meters.convertFrom(1, Inch);
+  private static final double WRIST_THRESHOLD = Rotations.convertFrom(3, Degree);
+  // Simulation
+  private static final double SIM_LOOP_PERIOD = 0.005;
   // Use for command dependencies:
   static Subsystem instance;
-
-  {
-    instance = this;
-  }
-
-  public Elevator elevator = new Elevator();
-  public Wrist wrist = new Wrist();
-
+  public Elevator elevator;
+  public Wrist wrist;
   public Trigger isStowed;
+  Position lastSetPosition = Position.STOW;
+  double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
+  double currentWristTargetPosition = 0;
+  private Notifier simNotifier = null;
+  private double m_lastSimTime;
 
   public Superstructure() {
+    instance = this;
+    elevator = new Elevator();
+    wrist = new Wrist();
+
     createMechanism2d();
     if (Robot.isSimulation()) {
       createSimulationThread();
@@ -74,6 +80,7 @@ public class Superstructure extends SubsystemBase {
     stopMotors();
     RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
 
+    // TODO
     /*isStowed =
         new Trigger(
             () -> lastSetPosition == Position.STOW && atWristPosition(currentWristTargetPosition));
@@ -85,36 +92,7 @@ public class Superstructure extends SubsystemBase {
   @Override
   public void periodic() {
     updateMechanism2d();
-    // TODO: implement this correctly and prevent it from causing weird movements
-    /*
-        // Safety threshold for crash prevention
-    // private static final double ELEVATOR_SAFETY_THRESHOLD = 0.45; // meters
-      if (!RobotModeTriggers.disabled().getAsBoolean()) {
-        // Crash prevention
-        double currentElevatorHeight = elevator.getElevatorHeight();
-        double currentWristAngle = wrist.getWristDegreesOffset();
-        // If we have negative wrist target but elevator isn't high enough yet
-        if (currentElevatorHeight < ELEVATOR_SAFETY_THRESHOLD && currentWristTargetPosition < 0) {
-          // Keep wrist at safe angle until elevator rises above threshold
-          wrist.setMotorDegreesOffset(0);
-          // Continue moving elevator to target
-          elevator.setMotorPosition(currentElevatorTargetPosition);
-        }
-        // If elevator is moving down while wrist is negative, ensure elevator doesn't go below
-        // threshold
-        // This did not work in general; find a better solution later
-        // Tbh this is not going to happen anyways
-        /*
-        else if (currentWristAngle < 0
-            && currentElevatorTargetPosition < ELEVATOR_SAFETY_THRESHOLD
-            && currentElevatorHeight > currentElevatorTargetPosition) {
-          // Prevent elevator from going below safety threshold
-          elevator.setMotorPosition(ELEVATOR_SAFETY_THRESHOLD);
-        else {
-          wrist.setMotorDegreesOffset(currentWristTargetPosition);
-          elevator.setMotorPosition(currentElevatorTargetPosition);
-        }
-      } */
+
     // Run normal periodic methods
     elevator.periodic();
     wrist.periodic();
@@ -122,13 +100,6 @@ public class Superstructure extends SubsystemBase {
     if (c != null) SmartDashboard.putString("CURRENT SUP COMMAND", c.getName());
     else SmartDashboard.putString("CURRENT SUP COMMAND", "null");
   }
-
-  Position lastSetPosition = Position.STOW;
-  double currentElevatorTargetPosition = Elevator.MIN_HEIGHT;
-  double currentWristTargetPosition = 0;
-
-  private static final double ELEV_THRESHOLD = Meters.convertFrom(1, Inch);
-  private static final double WRIST_THRESHOLD = Rotations.convertFrom(3, Degree);
 
   public boolean atPosition(Position pos) {
     return atElevatorPosition(currentElevatorTargetPosition)
@@ -167,7 +138,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void stopMotors() {
-    elevator.setMotorDutyCycle(0);
+    elevator.stopMotor();
     wrist.setMotorDutyCycle(0);
   }
 
@@ -176,17 +147,18 @@ public class Superstructure extends SubsystemBase {
   }
 
   public Command zeroElevatorCommand() {
-    return run(elevator::setMotorZeroing)
-        .until(elevator.isStalling)
-        .andThen(() -> elevator.setMotorDutyCycle(0))
+    return run(elevator::setMotorZeroingVelocity)
+        .until(elevator::isStalling)
+        .andThen(() -> elevator.stopMotor())
         .andThen(Commands.waitSeconds(0.3))
-        .andThen(runOnce(elevator::zero));
+        .andThen(runOnce(elevator::zeroElevatorPosition));
   }
 
-  public Command elevatorAlgaeLaunch(double v) {
-    return run(() -> elevator.setMotorAlgaeLaunchVelocity(v));
-  }
-
+  /*
+    public Command elevatorAlgaeLaunch(double v) {
+      return run(() -> elevator.setMotorVelocity(v));
+    }
+  */
   private void setPositions(Position pos) {
     setPositions(pos.elevatorHeight, pos.wristAngle);
   }
@@ -220,11 +192,6 @@ public class Superstructure extends SubsystemBase {
             setPositions(
                 currentElevatorTargetPosition, currentWristTargetPosition + d.getAsDouble()));
   }
-
-  // Simulation
-  private static final double SIM_LOOP_PERIOD = 0.005;
-  private Notifier simNotifier = null;
-  private double m_lastSimTime;
 
   public void createSimulationThread() {
     m_lastSimTime = Utils.getCurrentTimeSeconds();
