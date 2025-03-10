@@ -63,68 +63,65 @@ public class AutoRoutines {
   public AutoRoutine StartToHumanStation() {
     var routine = m_factory.newRoutine("test auto");
     if (routine == null) {
-      throw new RuntimeException("Routine creation failed!");
+        throw new RuntimeException("Routine creation failed!");
     }
-
+    
     var Start_to_reef = routine.trajectory("Start to reef");
     var reef_to_lollipop = routine.trajectory("reef to lollipop");
     var lollipop_to_reef = routine.trajectory("lollipop to reef");
     var reef_to_human_player_station = routine.trajectory("reef to human player station");
-
-    if (Start_to_reef == null
-        || reef_to_lollipop == null
-        || lollipop_to_reef == null
-        || reef_to_human_player_station == null) {
-      throw new RuntimeException("One or more trajectories are missing!");
+    
+    if (Start_to_reef == null || reef_to_lollipop == null || lollipop_to_reef == null || reef_to_human_player_station == null) {
+        throw new RuntimeException("One or more trajectories are missing!");
     }
-
+    
     routine.active().onTrue(Start_to_reef.cmd());
-    Start_to_reef.done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Reef"),
-                superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH),
-                waitUntil(
-                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
-                intake.ejectIntake().withTimeout(0.5),
-                Commands.print("Ejecting Intake"),
-                reef_to_lollipop.spawnCmd()));
-
+    Start_to_reef.done().onTrue(
+        sequence(
+            Commands.print("Reached Reef"),
+            superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH),
+            waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
+            intake.ejectIntake().withTimeout(0.5),
+            Commands.print("Ejecting Intake"),
+            reef_to_lollipop.spawnCmd()
+        )
+    );
+    
     routine.active().onTrue(reef_to_lollipop.cmd());
-    reef_to_lollipop
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Lollipop"),
-                superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1),
-                waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L1)),
-                intake.runIntake().withTimeout(0.5),
-                Commands.print("Running Intake"),
-                lollipop_to_reef.spawnCmd()));
-
+    reef_to_lollipop.done().onTrue(
+        sequence(
+            Commands.print("Reached Lollipop"),
+            superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1),
+            waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L1)),
+            intake.runIntake().withTimeout(0.5),
+            Commands.print("Running Intake"),
+            lollipop_to_reef.spawnCmd()
+        )
+    );
+    
     routine.active().onTrue(lollipop_to_reef.cmd());
-    lollipop_to_reef
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Returning to Reef"),
-                superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH),
-                waitUntil(
-                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
-                intake.ejectIntake().withTimeout(0.5),
-                Commands.print("Ejecting Again"),
-                reef_to_human_player_station.spawnCmd()));
-
+    lollipop_to_reef.done().onTrue(
+        sequence(
+            Commands.print("Returning to Reef"),
+            superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH),
+            waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
+            intake.ejectIntake().withTimeout(0.5),
+            Commands.print("Ejecting Again"),
+            reef_to_human_player_station.spawnCmd()
+        )
+    );
+    
     routine.active().onTrue(reef_to_human_player_station.cmd());
-    reef_to_human_player_station
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Heading to Human Player Station"),
-                superstructure.goToPosition(Superstructure.Position.STOW),
-                waitUntil(() -> superstructure.atPosition(Superstructure.Position.STOW)),
-                Commands.print("Auto Routine Complete")));
-
+    reef_to_human_player_station.done().onTrue(
+        sequence(
+            Commands.print("Heading to Human Player Station"),
+            superstructure.goToPosition(Superstructure.Position.STOW),
+            waitUntil(() -> superstructure.atPosition(Superstructure.Position.STOW)),
+            Commands.print("Auto Routine Complete")
+        )
+    );
+    
     return routine;
-  }
+}
+
 }
