@@ -75,8 +75,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SysIdRoutine m_sysIdRoutineTranslation =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(0.5).div(Seconds.one()),
-              Volts.of(1), // Reduce dynamic step voltage to 1 V to prevent brownout
+              null,
+              Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
               null,
               state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
           new SysIdRoutine.Mechanism(

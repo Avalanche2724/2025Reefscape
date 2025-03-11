@@ -21,13 +21,14 @@ public class Robot extends TimedRobot {
     OpenCVHelp.forceLoadOpenCV();
     instance = this;
     robotContainer = new RobotContainer();
-    Threads.setCurrentThreadPriority(true, 2);
   }
 
   @Override
   public void robotPeriodic() {
     double time = Timer.getFPGATimestamp();
+    Threads.setCurrentThreadPriority(true, 2);
     CommandScheduler.getInstance().run();
+    Threads.setCurrentThreadPriority(false, 0);
     double loopTime = Timer.getFPGATimestamp() - time;
     SmartDashboard.putNumber("Loop Time ms", loopTime * 1000);
   }
