@@ -172,8 +172,7 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
 
     if (setPosition
-        && Math.abs(motor.getPosition().getValueAsDouble() - lastPositionSet)
-            < THRESHOLD_SWITCHING_PID_GAINS) {
+        && Math.abs(getWristRotations() - lastPositionSet) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
     }
   }
@@ -185,7 +184,7 @@ public class Wrist {
   }
 
   public double getWristRotations() {
-    return motor.getPosition().getValueAsDouble();
+    return motorPosition.getValueAsDouble();
   }
 
   public double getWristDegrees() {

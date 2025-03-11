@@ -23,9 +23,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 @SuppressWarnings("FieldCanBeLocal") // Stop intellij complaints
 public class Elevator {
   // Constants
-  // TODO fix periodic when change id
-  public static final int ELEVATOR_ID = 43;
-  public static final int ELEVATOR2_ID = 44;
+  public static final int ELEVATOR_ID = 41;
+  public static final int ELEVATOR2_ID = 42;
   public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches); // 0.1651m
   public static final double MAX_HEIGHT = Meters.convertFrom(59.06, Inches); // 1.5 m
   private static final double GEAR_RATIO = 14.0;
@@ -132,10 +131,10 @@ public class Elevator {
   }
 
   public void periodic() {
-    /*motorPosition.refresh();
+    motorPosition.refresh();
     motorVelocity.refresh();
     motorTorqueCurrent.refresh();
-    motorVoltage.refresh();*/
+    motorVoltage.refresh();
     // Log to NetworkTables
     SmartDashboard.putNumber("Elevator Height", getElevatorHeight());
     SmartDashboard.putNumber("Elevator Velocity", getVelocity());
