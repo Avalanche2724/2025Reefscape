@@ -28,7 +28,7 @@ deploy {
                 // getTargetTypeClass is a shortcut to get the class type using a string
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
                     // Enable VisualVM for profiling
-                    // from https://github.com/team2393/FRC2023?tab=readme-ov-file#profiling
+                    // from https://docs.wpilib.org/en/stable/docs/software/advanced-gradlerio/profiling-with-visualvm.html
                     jvmArgs.add("-Dcom.sun.management.jmxremote=true")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
