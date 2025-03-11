@@ -195,6 +195,10 @@ public class Superstructure extends SubsystemBase {
     return run(() -> setPositions(pos));
   }
 
+  public Command goToPositionOnce(Position pos) {
+    return runOnce(() -> setPositions(pos));
+  }
+
   public Command goToPosition(Supplier<Position> pos) {
     return run(() -> setPositions(pos.get()));
   }
