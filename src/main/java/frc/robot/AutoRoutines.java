@@ -1,17 +1,16 @@
 package frc.robot;
 
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
+
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
-import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Position;
-
-import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
 
 public class AutoRoutines {
   private final AutoFactory m_factory;
@@ -31,8 +30,8 @@ public class AutoRoutines {
   }
 
   public AutoRoutine simplePathAuto() {
-    var routine = m_factory.newRoutine("test auto");
-    var simplePath = routine.trajectory("New Path");
+    var routine = m_factory.newRoutine("forward going auto");
+    var simplePath = routine.trajectory("Go Forward");
 
     routine
         .active()
@@ -43,8 +42,24 @@ public class AutoRoutines {
     return routine;
   }
 
+  public AutoRoutine yesPathAuto() {
+    var routine = m_factory.newRoutine("yes auto");
+    var simplePath = routine.trajectory("!Start to reef");
+    var nextPath = routine.trajectory("!reef to hp");
+
+    routine
+        .active()
+        .onTrue(
+            Commands.print("RUNNING AUTO ROUTINE")
+                .andThen(simplePath.resetOdometry().andThen(simplePath.cmd())));
+
+    simplePath.done().onTrue(nextPath.cmd());
+
+    return routine;
+  }
+
   public AutoRoutine simplePathAuto2() {
-    var routine = m_factory.newRoutine("test auto");
+    var routine = m_factory.newRoutine("simple path auto");
     var _base_l2score = routine.trajectory("_base_l2score");
 
     routine.active().onTrue(_base_l2score.cmd());
