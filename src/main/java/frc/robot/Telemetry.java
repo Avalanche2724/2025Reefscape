@@ -93,7 +93,7 @@ public class Telemetry {
     SignalLogger.start();
     // Use WPILib data logger as well
     DataLogManager.start();
-    DriverStation.startDataLog(DataLogManager.getLog());
+    //DriverStation.startDataLog(DataLogManager.getLog());
   }
 
   /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
