@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -18,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 @SuppressWarnings("FieldCanBeLocal") // Stop intellij complaints
@@ -93,8 +95,9 @@ public class Elevator {
     config.Slot0.kG = 0.26462;
 
     // For zeroing sequence and algae launching
-    config.Slot1.kP = 20;
+    config.Slot1.kP = 25;
     config.Slot1.kS = 4.5; // Estimated from voltage kS
+    config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
     config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
@@ -109,7 +112,8 @@ public class Elevator {
     // Forward/reverse limits
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+    // does this fix things?
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
     motor.getConfigurator().apply(config);
@@ -148,9 +152,11 @@ public class Elevator {
   }
 
   boolean isStalling() {
-    return motorTorqueCurrent.getValueAsDouble() < STALL_DETECT_TORQUE
-        && Math.abs(motorVelocity.getValueAsDouble()) < VELOCITY_DETECT_THRESHOLD;
+    return getTorqueCurrent() < STALL_DETECT_TORQUE
+        && Math.abs(getVelocity()) < VELOCITY_DETECT_THRESHOLD;
   }
+
+  Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.15);
 
   public double getVelocity() {
     return motorVelocity.getValueAsDouble();

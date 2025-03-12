@@ -120,10 +120,11 @@ public class Controls {
     driver.leftBumper.whileTrue(intake.runIntake());
     driver.rightBumper.whileTrue(intake.fullSend());
 
-    driver.y.whileTrue(intake.run(1.5));
+    driver.y.whileTrue(intake.run(-3.3));
+    driver.a.whileTrue(intake.leftMajority());
     coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
-    driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
+    // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();
 
     // configureSysidBindings();
@@ -265,7 +266,7 @@ public class Controls {
   public Command algaeLaunchSequence() {
     return sequence(
         superstructure.elevatorAlgaeLaunchSetup().alongWith(intake.holdIntake()),
-        intake.fullSend().withTimeout(0.15),
+        intake.fullSend().withTimeout(0.2),
         superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend()));
   }
 

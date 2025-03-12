@@ -22,11 +22,11 @@ public class Intake extends SubsystemBase {
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     config.CurrentLimits.StatorCurrentLimit = 150;
-    config.CurrentLimits.SupplyCurrentLimit = 90;
+    config.CurrentLimits.SupplyCurrentLimit = 70;
 
     config.CurrentLimits.StatorCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.SupplyCurrentLowerTime = 5;
+    config.CurrentLimits.SupplyCurrentLowerTime = 4;
     config.CurrentLimits.SupplyCurrentLowerLimit = 40;
     leftMotor.getConfigurator().apply(config);
 
@@ -53,7 +53,7 @@ public class Intake extends SubsystemBase {
   }
 
   public Command holdIntake() {
-    return run(-1);
+    return run(1);
   }
 
   public Command fullSend2() {
@@ -115,7 +115,7 @@ public class Intake extends SubsystemBase {
   public Command leftMajority() {
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(10));
+          leftMotor.setControl(voltageOut.withOutput(8));
           rightMotor.setControl(voltageOut.withOutput(4));
         });
   }
