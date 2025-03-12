@@ -12,7 +12,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.TunerConstants;
@@ -22,6 +21,7 @@ import frc.robot.subsystems.superstructure.Superstructure.Position;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.FieldConstants;
 import frc.robot.util.FieldConstants.ReefLevel;
+import frc.robot.util.GenericGamepad;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
@@ -41,8 +41,8 @@ public class Controls {
   private final Intake intake;
   private final Climber climber;
   // Controllers
-  private final CommandXboxController driver = new CommandXboxController(0);
-  private final CommandXboxController operator = new CommandXboxController(1);
+  private final GenericGamepad driver = GenericGamepad.from(0);
+  private final GenericGamepad operator = GenericGamepad.from(1);
   // Swerve requests
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
@@ -114,34 +114,34 @@ public class Controls {
 
   public void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
-    driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-    driver.back().whileTrue(superstructure.zeroElevatorCommand());
+    driver.rightMiddle.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+    driver.leftMiddle.whileTrue(superstructure.zeroElevatorCommand());
 
-    driver.leftBumper().whileTrue(intake.runIntake());
-    driver.rightBumper().whileTrue(intake.fullSend());
+    driver.leftBumper.whileTrue(intake.runIntake());
+    driver.rightBumper.whileTrue(intake.fullSend());
     /*
         driver.povDown().whileTrue(intake.runVariable(() -> -3));
 
         driver.povUp().whileTrue(drivetrain.wheelCharacterization());
     */
 
-    driver.povLeft().whileTrue(tuneDrivetrainStaticFriction());
+    driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     configureDriveTuningBindings();
 
     // configureSysidBindings();
 
     // AUTO ALIGN
     driver
-        .leftTrigger()
+        .leftTriggerB
         .and(this::enableAutoAlign)
         .whileTrue(driveToNearestReefBranchCommand(this::positionToReefLevel, true)); // Left side
     driver
-        .rightTrigger()
+        .rightTriggerB
         .and(this::enableAutoAlign)
         .whileTrue(driveToNearestReefBranchCommand(this::positionToReefLevel, false)); // Right side
 
     // Auto align bindings with automatic ejection when aligned
-    var wantingToAutoAlignRn = driver.leftTrigger().and(driver.rightTrigger());
+    var wantingToAutoAlignRn = driver.leftTriggerB.and(driver.rightTriggerB);
     var atTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.01, () -> 1));
     var nearTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.5, () -> 5));
     /*
@@ -156,37 +156,34 @@ public class Controls {
             .and(superstructure::atTargetPosition)
             .whileTrue(intake.fullSend().withTimeout(1));
     */
-    operator.leftStick().whileTrue(superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
+    operator.leftJoystickPushed.whileTrue(
+        superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 
     /*operator
             .rightStick()
             .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
     */
-    operator.rightStick().whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
+    operator.rightJoystickPushed.whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
 
-    operator
-        .back() // left squares
+    operator.leftMiddle // left squares
         .onTrue(runOnce(() -> isOnCoralBindings = false));
-    operator
-        .start() // right lines
+    operator.rightMiddle // right lines
         .onTrue(runOnce(() -> isOnCoralBindings = true));
 
     coralAlgaeActivePresets(
-        operator.leftBumper(), Position.INTAKE_CORAL_STATION, Position.INTAKE_CORAL_STATION);
+        operator.leftBumper, Position.INTAKE_CORAL_STATION, Position.INTAKE_CORAL_STATION);
 
     coralAlgaeActivePresets(
-        operator.rightBumper(), Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
-    coralAlgaeActivePresets(operator.a(), Position.OUTTAKE_L1, Position.ALG_PROC);
+        operator.rightBumper, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
+    coralAlgaeActivePresets(operator.a, Position.OUTTAKE_L1, Position.ALG_PROC);
     // operator.a().whileTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
 
-    coralAlgaeActivePresets(operator.b(), Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
-    coralAlgaeActivePresets(operator.x(), Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
-    coralAlgaeActivePresets(operator.y(), Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
-    operator
-        .leftTrigger()
-        .whileTrue(superstructure.getToPositionThenHold(() -> nextTargetPosition));
+    coralAlgaeActivePresets(operator.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
+    coralAlgaeActivePresets(operator.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
+    coralAlgaeActivePresets(operator.y, Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
+    operator.leftTriggerB.whileTrue(superstructure.getToPositionThenHold(() -> nextTargetPosition));
 
-    operator.rightTrigger().whileTrue(algaeLaunchSequence());
+    operator.rightTriggerB.whileTrue(algaeLaunchSequence());
   }
 
   private SwerveRequest driveBasedOnJoystick() {
@@ -208,23 +205,16 @@ public class Controls {
   }
 
   private void configureDriveTuningBindings() {
-    driver
-        .pov(0)
-        .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(2).withVelocityY(0)));
-    driver
-        .pov(180)
-        .whileTrue(
-            drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-2).withVelocityY(0)));
+    driver.povUp.whileTrue(
+        drivetrain.applyRequest(() -> forwardStraight.withVelocityX(2).withVelocityY(0)));
+    driver.povDown.whileTrue(
+        drivetrain.applyRequest(() -> forwardStraight.withVelocityX(-2).withVelocityY(0)));
 
-    driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    driver
-        .b()
-        .whileTrue(
-            drivetrain.applyRequest(
-                () ->
-                    point.withModuleDirection(
-                        new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
+    driver.a.whileTrue(drivetrain.applyRequest(() -> brake));
+    driver.b.whileTrue(
+        drivetrain.applyRequest(
+            () ->
+                point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
   }
 
   private void xconfigureSysidBindings() {
@@ -233,10 +223,16 @@ public class Controls {
 
     // final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
     var routine = drivetrain.m_sysIdRoutineToApply;
-    driver.back().and(driver.y()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
-    driver.back().and(driver.a()).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
-    driver.start().and(driver.y()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
-    driver.start().and(driver.a()).whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
+    driver.leftMiddle.and(driver.y).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
+    driver.leftMiddle.and(driver.a).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
+    driver
+        .rightMiddle
+        .and(driver.y)
+        .whileTrue(routine.quasistatic(SysIdRoutine.Direction.kForward));
+    driver
+        .rightMiddle
+        .and(driver.a)
+        .whileTrue(routine.quasistatic(SysIdRoutine.Direction.kReverse));
   }
 
   public void coralAlgaeActivePresets(Trigger button, Position coral, Position algae) {

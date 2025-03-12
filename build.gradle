@@ -34,7 +34,7 @@ deploy {
                     jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
                     jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
-                    jvmArgs.add("-Djava.rmi.server.hostname=10.27.24.2")     
+                    jvmArgs.add("-Djava.rmi.server.hostname=10.27.24.2")
 
 
                     // Taken from advantagekit template:

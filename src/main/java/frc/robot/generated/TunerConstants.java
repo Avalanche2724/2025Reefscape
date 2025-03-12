@@ -41,7 +41,7 @@ public class TunerConstants {
           .withKP(0.5) // past gains: kP 0.25 kS 0.034
           .withKI(0)
           .withKD(0)
-          .withKS(0.19)
+          .withKS(0.18)
           .withKV(0.124)
           .withKA(0); // 0.042154
   // The closed-loop output type to use for the steer motors;
@@ -100,7 +100,7 @@ public class TunerConstants {
           .withPigeon2Configs(pigeonConfigs);
   // These are only used for simulation
   private static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.01);
-  private static final MomentOfInertia kDriveInertia = KilogramSquareMeters.of(0.1);
+  private static final MomentOfInertia kDriveInertia = KilogramSquareMeters.of(0.01);
   // Simulated voltage necessary to overcome friction
   private static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
   private static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
