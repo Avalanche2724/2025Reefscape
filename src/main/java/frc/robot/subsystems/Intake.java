@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 
 public class Intake extends SubsystemBase {
-  public static final double intakeVolts = 4;
+  public static final double intakeVolts = 7;
   private final TalonFX leftMotor = new TalonFX(55);
   private final TalonFX rightMotor = new TalonFX(56);
   private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(true);

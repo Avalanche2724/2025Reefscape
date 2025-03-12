@@ -51,8 +51,8 @@ public class Wrist {
   public static final double ZERO_OFFSET = 0.206; // rotations
   public static final double ARM_OFFSET = -0.049;
   public static final double ARM_OFFSET_DEG = Degrees.convertFrom(ARM_OFFSET, Rotations);
-  public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees) + ARM_OFFSET;
-  public static final double DOWN_LIMIT = Rotations.convertFrom(-45, Degrees) + ARM_OFFSET;
+  public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
+  public static final double DOWN_LIMIT = Rotations.convertFrom(-45, Degrees);
 
   private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
   private static final double ENCODER_POSITION_RESET_SEC = 0.02;
@@ -76,12 +76,12 @@ public class Wrist {
           DCMotor.getKrakenX60Foc(1),
           GEAR_RATIO, // Following arm length/mass are estimates for simulation
           SingleJointedArmSim.estimateMOI(
-              Meters.convertFrom(30, Inches), Kilograms.convertFrom(15, Pounds)),
+              Meters.convertFrom(25, Inches), Kilograms.convertFrom(15, Pounds)),
           Kilograms.convertFrom(15, Pounds),
           Radians.convertFrom(DOWN_LIMIT, Rotations),
           Radians.convertFrom(UP_LIMIT, Rotations),
           true,
-          Radians.convertFrom(ARM_OFFSET, Rotations));
+          0);
   // SysId
   public VoltageOut sysIdControl = new VoltageOut(0);
 
@@ -106,16 +106,16 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 75;
-    config.Slot0.kD = 10;
+    config.Slot0.kP = Robot.isSimulation() ? 200 : 90;
+    config.Slot0.kD = 8;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.9347;
     config.Slot0.kA = 0.13794;
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 30; // todo: try retuning and lowering?
-    config.Slot1.kD = 5;
+    config.Slot1.kP = 25; // todo: try retuning and lowering?
+    config.Slot1.kD = 10;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
@@ -129,9 +129,9 @@ public class Wrist {
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT;
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT + ARM_OFFSET;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT + ARM_OFFSET;
 
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -157,6 +157,9 @@ public class Wrist {
         SparkBase.PersistMode.kPersistParameters);
 
     Robot.instance.addPeriodic(absoluteEncoderResetter(), ENCODER_POSITION_RESET_SEC);
+    if (Robot.isSimulation()) {
+      motor.setPosition(ARM_OFFSET);
+    }
   }
 
   public void periodic() {
@@ -291,14 +294,15 @@ public class Wrist {
 
   public void simulationPeriodic(double deltaTime) {
     var motorSim = motor.getSimState();
-    armSim.setInput(motorSim.getMotorVoltage());
+
+    armSim.setInput(-motorSim.getMotorVoltage());
     armSim.update(deltaTime);
 
     motorSim.setRotorVelocity(
-        RotationsPerSecond.convertFrom(armSim.getVelocityRadPerSec(), RadiansPerSecond)
+        -RotationsPerSecond.convertFrom(armSim.getVelocityRadPerSec(), RadiansPerSecond)
             * GEAR_RATIO);
 
     motorSim.setRawRotorPosition(
-        Rotations.convertFrom(armSim.getAngleRads(), Radians) * GEAR_RATIO);
+        -Rotations.convertFrom(armSim.getAngleRads(), Radians) * GEAR_RATIO);
   }
 }

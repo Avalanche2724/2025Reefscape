@@ -20,14 +20,14 @@ import java.util.function.Supplier;
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
-    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7.5),
+    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7),
     ALG_INTAKE_GROUND(0.28, 0),
     ALG_PROC(0.55, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
     INTAKE_CORAL_STATION(0.75, 35),
     // Straight outtake:
-    OUTTAKE_L1(0.57, 0),
+    OUTTAKE_L1(0.8, 0),
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
@@ -55,7 +55,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private static final double ELEVATOR_AT_POSITION_THRESHOLD = Meters.convertFrom(1, Inch);
-  private static final double WRIST_THRESHOLD = Rotations.convertFrom(3, Degree);
+  private static final double WRIST_THRESHOLD = 2; // DEGREES
   // Simulation
   private static final double SIM_LOOP_PERIOD = 0.005;
 
@@ -112,6 +112,10 @@ public class Superstructure extends SubsystemBase {
     var c = getCurrentCommand();
     if (c != null) SmartDashboard.putString("CURRENT SUP COMMAND", c.getName());
     else SmartDashboard.putString("CURRENT SUP COMMAND", "null");
+
+    SmartDashboard.putNumber("S ELEV TARGET POSITION", currentElevatorTargetPosition);
+    SmartDashboard.putNumber("S WRIST TARGET POSITION", currentWristTargetPosition);
+    SmartDashboard.putBoolean("AT TARGET POSITION", atTargetPosition());
   }
 
   // Inputs
@@ -172,9 +176,10 @@ public class Superstructure extends SubsystemBase {
 
   public Command zeroElevatorCommand() {
     return sequence(
-        run(elevator::setMotorZeroingVelocity).until(elevator::isStalling),
-        run(elevator::stopMotor).withTimeout(0.3),
-        runOnce(elevator::zeroElevatorPosition));
+            run(elevator::setMotorZeroingVelocity).until(elevator::isStalling),
+            run(elevator::stopMotor).withTimeout(0.3),
+            runOnce(elevator::zeroElevatorPosition))
+        .withName("ZERO ELEV");
   }
 
   public Command elevatorAlgaeLaunchSetup() {

@@ -73,7 +73,7 @@ public class Controls {
     intake = bot.intake;
     climber = bot.climber;
 
-    Robot.instance.addPeriodic(this::debugUpdateNearestBranch, 0.02);
+    Robot.instance.addPeriodic(this::periodic, 0.02);
   }
 
   /*
@@ -119,14 +119,12 @@ public class Controls {
 
     driver.leftBumper.whileTrue(intake.runIntake());
     driver.rightBumper.whileTrue(intake.fullSend());
-    /*
-        driver.povDown().whileTrue(intake.runVariable(() -> -3));
 
-        driver.povUp().whileTrue(drivetrain.wheelCharacterization());
-    */
+    driver.y.whileTrue(intake.run(1.5));
+    coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
     driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
-    configureDriveTuningBindings();
+    // configureDriveTuningBindings();
 
     // configureSysidBindings();
 
@@ -141,29 +139,34 @@ public class Controls {
         .whileTrue(driveToNearestReefBranchCommand(this::positionToReefLevel, false)); // Right side
 
     // Auto align bindings with automatic ejection when aligned
-    var wantingToAutoAlignRn = driver.leftTriggerB.and(driver.rightTriggerB);
-    var atTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.01, () -> 1));
+    var wantingToAutoAlignRn = driver.leftTriggerB.or(driver.rightTriggerB);
+    var atTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.05, () -> 2));
     var nearTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.5, () -> 5));
     /*
         // When we are kinda near the target position while auto aligning, set superstructure position
         wantingToAutoAlignRn
             .and(nearTargetPositionTrigger)
-            .whileTrue(superstructure.goToPosition(() -> nextTargetPosition));
+            .whileTrue(
+                Commands.print("AT TARG POS SET POS")
+                    .andThen(superstructure.goToPosition(() -> nextTargetPosition)));
 
         // When we reach the target position while auto-aligning, eject intake
         wantingToAutoAlignRn
             .and(atTargetPositionTrigger)
-            .and(superstructure::atTargetPosition)
-            .whileTrue(intake.fullSend().withTimeout(1));
+            .and(() -> superstructure.atPosition(nextTargetPosition))
+            .whileTrue(
+                intake
+                    .fullSend()
+                    .withTimeout(1)
+                    .andThen(superstructure.goToPositionOnce(Position.STOW)));
     */
     operator.leftJoystickPushed.whileTrue(
         superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 
-    /*operator
-            .rightStick()
-            .whileTrue(superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
-    */
-    operator.rightJoystickPushed.whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
+    operator.rightJoystickPushed.whileTrue(
+        superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+
+    // operator.rightJoystickPushed.whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
 
     operator.leftMiddle // left squares
         .onTrue(runOnce(() -> isOnCoralBindings = false));
@@ -205,6 +208,11 @@ public class Controls {
   }
 
   private void configureDriveTuningBindings() {
+    /*
+        driver.povDown().whileTrue(intake.runVariable(() -> -3));
+
+        driver.povUp().whileTrue(drivetrain.wheelCharacterization());
+    */
     driver.povUp.whileTrue(
         drivetrain.applyRequest(() -> forwardStraight.withVelocityX(2).withVelocityY(0)));
     driver.povDown.whileTrue(
@@ -217,7 +225,7 @@ public class Controls {
                 point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))));
   }
 
-  private void xconfigureSysidBindings() {
+  private void configureSysidBindings() {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
 
@@ -267,6 +275,9 @@ public class Controls {
       // Get current pose and expected target pose
       Pose2d currentPose = drivetrain.getState().Pose;
       Pose2d targetPose = lastPoseForAutoAlign;
+      if (targetPose == null) {
+        return false;
+      }
 
       // Check if we're close enough to target position and properly aligned
       double positionTolerance = meters.getAsDouble();
@@ -374,8 +385,8 @@ public class Controls {
     return currentPose;
   }
 
-  // Debug method to periodically publish the nearest branch position to NetworkTables
-  private void debugUpdateNearestBranch() {
+  // Periodic stuff
+  private void periodic() {
     Pose2d targetPose = findNearestReefBranch(ReefLevel.L1, true);
     nearestBranchPose.set(targetPose);
   }
