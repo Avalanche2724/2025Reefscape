@@ -1,7 +1,6 @@
 package frc.robot;
 
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
@@ -96,51 +95,43 @@ public class AutoRoutines {
       throw new RuntimeException("One or more trajectories are missing!");
     }
 
-    routine.active().onTrue(Start_to_reef.cmd());
+    routine.active().onTrue(Commands.sequence(Start_to_reef.resetOdometry(), Start_to_reef.cmd()));
     Start_to_reef.done()
         .onTrue(
             sequence(
+                Start_to_reef.resetOdometry(),
                 Commands.print("Reached Reef"),
-                superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH),
-                waitUntil(
-                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
+                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L2_LAUNCH),
                 intake.ejectIntake().withTimeout(0.5),
                 Commands.print("Ejecting Intake"),
                 reef_to_lollipop.spawnCmd()));
 
-    routine.active().onTrue(reef_to_lollipop.cmd());
     reef_to_lollipop
         .done()
         .onTrue(
             sequence(
                 Commands.print("Reached Lollipop"),
-                superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1),
-                waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L1)),
+                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
                 intake.runIntake().withTimeout(0.5),
                 Commands.print("Running Intake"),
                 lollipop_to_reef.spawnCmd()));
 
-    routine.active().onTrue(lollipop_to_reef.cmd());
     lollipop_to_reef
         .done()
         .onTrue(
             sequence(
                 Commands.print("Returning to Reef"),
-                superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH),
-                waitUntil(
-                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
+                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L2_LAUNCH),
                 intake.ejectIntake().withTimeout(0.5),
                 Commands.print("Ejecting Again"),
                 reef_to_human_player_station.spawnCmd()));
 
-    routine.active().onTrue(reef_to_human_player_station.cmd());
     reef_to_human_player_station
         .done()
         .onTrue(
             sequence(
                 Commands.print("Heading to Human Player Station"),
-                superstructure.goToPosition(Superstructure.Position.STOW),
-                waitUntil(() -> superstructure.atPosition(Superstructure.Position.STOW)),
+                superstructure.goToPositionOnce(Superstructure.Position.STOW),
                 Commands.print("Auto Routine Complete")));
 
     return routine;
