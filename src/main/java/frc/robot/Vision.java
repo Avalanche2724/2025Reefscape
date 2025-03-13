@@ -193,7 +193,7 @@ public class Vision {
           // Map to nearest 90 deg angle
           var newRotation =
               Rotation2d.fromDegrees(Math.round(coprocRotation.getDegrees() / 90) * 90);
-          // If the rotation is within 5 degrees of a 90 degree angle, use that angle
+          // If the rotation is near a 90 degree angle, use that angle
           if (Math.abs(coprocRotation.getDegrees() - newRotation.getDegrees()) < 6) {
             photonEstimator.addHeadingData(coprocPnpEst.get().timestampSeconds, newRotation);
           } // Else add the entire rotation
