@@ -68,18 +68,18 @@ public class Vision {
 
   public Camera camera1 =
       new Camera(
-          "Arducam_OV9281_USB_Camera (1)",
+          "Arducam_fr_elev",
           new Transform3d(
               new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(12.5))));
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(15))));
 
-  /* public Camera camera2 =
-        new Camera(
-            "Arducam_OV9281_USB_Camera",
-            new Transform3d(
-                new Translation3d(Inches.of(12.6), Inches.of(8.75), Inches.of(9.0)),
-                new Rotation3d(Degrees.of(0.0), Degrees.of(-10), Degrees.of(-15))));
-  */
+  public Camera camera2 =
+      new Camera(
+          "Arducam_fl_swerve",
+          new Transform3d(
+              new Translation3d(Inches.of(12.6), Inches.of(8.75), Inches.of(9.0)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-10), Degrees.of(-15))));
+
   {
     if (Robot.isSimulation()) {
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.

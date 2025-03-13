@@ -120,7 +120,7 @@ public class Controls {
     driver.leftBumper.whileTrue(intake.runIntake());
     driver.rightBumper.whileTrue(intake.fullSend());
 
-    driver.y.whileTrue(intake.run(-3.3));
+    driver.y.whileTrue(intake.run(-3.2));
     driver.a.whileTrue(intake.leftMajority());
     coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 

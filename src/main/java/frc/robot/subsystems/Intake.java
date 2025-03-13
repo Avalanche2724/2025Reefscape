@@ -53,7 +53,7 @@ public class Intake extends SubsystemBase {
   }
 
   public Command holdIntake() {
-    return run(1);
+    return run(5);
   }
 
   public Command fullSend2() {

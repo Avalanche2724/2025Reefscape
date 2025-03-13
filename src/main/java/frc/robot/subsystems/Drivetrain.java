@@ -46,7 +46,6 @@ import org.photonvision.EstimatedRobotPose;
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
   private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
-  // public Vision vision;
   /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   private static final double kVisionLoopPeriod = 0.01; // 10 ms
@@ -64,7 +63,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
   private final PIDController m_pathThetaController = new PIDController(7, 0, 0.05);
-  private final PIDController m_pathDistanceController = new PIDController(7.5, 0, 0.06);
+  private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.05);
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
   private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization =
@@ -192,7 +191,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
               // Do vision
               correctFromVision(vision.camera1);
-              // correctFromVision(vision.camera2);
+              correctFromVision(vision.camera2);
             });
     visionNotifier.startPeriodic(kVisionLoopPeriod);
   }
@@ -219,6 +218,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
   }
 
+  // Vision
+
   public void integrateVisionCorrection(
       Optional<EstimatedRobotPose> est, Matrix<N3, N1> standardDeviations) {
     if (est.isPresent()) {
@@ -238,7 +239,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         this::integrateVisionCorrection);
   }
 
-  /** Command to PID to a position; useful for auto-align */
+  // Commands for auto-align
+
+  /** PID to a position; useful for auto-align */
   private void pidToPosition(Pose2d target) {
     m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -260,7 +263,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     // If we're close enough to the target, the direction vector could be zero
     Translation2d directionVector;
-    if (distance > 0.05) {
+    if (distance > 0.04) {
       // Create a unit vector in the direction of the target, then scale by the speed magnitude
       directionVector = deltaTranslation.times(speedMagnitude / distance);
     } else {
@@ -273,7 +276,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             currentPose.getRotation().getRadians(), target.getRotation().getRadians());
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
 
-    if (Math.abs(rotationRate) < 0.08) {
+    if (Math.abs(rotationRate) < 0.07) {
       rotationRate = 0;
     }
 
@@ -367,6 +370,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                       "Wheel characterization CALCULATED RADIUS", calculatedRadius.in(Inches));
                 })));
   }
+
+  // Simulation stuff
 
   private void startSimThread() {
     m_lastSimTime = Utils.getCurrentTimeSeconds();
