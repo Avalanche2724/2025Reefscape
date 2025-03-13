@@ -19,8 +19,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -51,11 +49,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private static final double kVisionLoopPeriod = 0.01; // 10 ms
   // Simulation:
   private static final double kSimLoopPeriod = 0.005; // 5 ms
-  public final StructPublisher<Pose2d> drivePoseTelemetry =
-      NetworkTableInstance.getDefault()
-          .getTable("SmartDashboard")
-          .getStructTopic("VisionPose", Pose2d.struct)
-          .publish();
   private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
   private final PIDController m_pathXController = new PIDController(10, 0, 0);
@@ -224,7 +217,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
       Optional<EstimatedRobotPose> est, Matrix<N3, N1> standardDeviations) {
     if (est.isPresent()) {
       var estimation = est.get();
-      drivePoseTelemetry.set(estimation.estimatedPose.toPose2d());
       addVisionMeasurement(
           estimation.estimatedPose.toPose2d(),
           Utils.fpgaToCurrentTime(estimation.timestampSeconds),

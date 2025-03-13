@@ -35,6 +35,8 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.List;
@@ -106,21 +108,23 @@ public class Vision {
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
+
     // TODO Experiment and determine estimation noise on an actual robot.
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
     public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
     private final Transform3d robotToCam;
     private final PhotonCamera camera;
-    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> enabledPnpParams =
+    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> lockedPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e8));
-    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> disabledPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1));
+    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> unlockedPnpParams =
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 100));
     private final PhotonPoseEstimator photonEstimator;
     private String cameraName;
     private String visionEstimationKey;
     private Optional<Matrix<N3, N3>> cameraMatrix;
     private Optional<Matrix<N8, N1>> cameraDistortion;
     private Matrix<N3, N1> curStdDevs;
+    public final StructPublisher<Pose2d> drivePoseTelemetry;
 
     public Camera(String cameraName, Transform3d robotToCam) {
       this.cameraName = cameraName;
@@ -129,6 +133,12 @@ public class Vision {
       camera = new PhotonCamera(cameraName);
       cameraMatrix = camera.getCameraMatrix();
       cameraDistortion = camera.getDistCoeffs();
+
+      drivePoseTelemetry =
+          NetworkTableInstance.getDefault()
+              .getTable("SmartDashboard")
+              .getStructTopic(visionEstimationKey, Pose2d.struct)
+              .publish();
 
       photonEstimator =
           new PhotonPoseEstimator(kTagLayout, PoseStrategy.CONSTRAINED_SOLVEPNP, this.robotToCam);
@@ -162,16 +172,44 @@ public class Vision {
           cameraDistortion = camera.getDistCoeffs();
         }
       }
-      photonEstimator.addHeadingData(headingFpgaTimestamp, heading);
 
-      for (var change : camera.getAllUnreadResults()) {
+      var unreadResults = camera.getAllUnreadResults();
+
+      if (DriverStation.isEnabled()) {
+        photonEstimator.addHeadingData(headingFpgaTimestamp, heading);
+      }
+
+      for (var change : unreadResults) {
+        photonEstimator.setPrimaryStrategy(PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
+        var coprocPnpEst = photonEstimator.update(change);
+        photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
+        if (coprocPnpEst.isEmpty()) {
+          System.out.print("Warning: coproc pnp est empty");
+          continue;
+        }
+
+        if (DriverStation.isDisabled()) {
+          var coprocRotation = coprocPnpEst.get().estimatedPose.getRotation().toRotation2d();
+          // Map to nearest 90 deg angle
+          var newRotation =
+              Rotation2d.fromDegrees(Math.round(coprocRotation.getDegrees() / 90) * 90);
+          // If the rotation is within 5 degrees of a 90 degree angle, use that angle
+          if (Math.abs(coprocRotation.getDegrees() - newRotation.getDegrees()) < 6) {
+            photonEstimator.addHeadingData(coprocPnpEst.get().timestampSeconds, newRotation);
+          } // Else add the entire rotation
+          else {
+            photonEstimator.addHeadingData(coprocPnpEst.get().timestampSeconds, coprocRotation);
+          }
+        }
+
         var visionEst =
             photonEstimator.update(
                 change,
                 cameraMatrix,
                 cameraDistortion,
-                DriverStation.isDisabled() ? disabledPnpParams : enabledPnpParams);
+                DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams);
         updateEstimationStdDevs(visionEst, change.getTargets());
+        drivePoseTelemetry.set(visionEst.map(est -> est.estimatedPose.toPose2d()).orElse(null));
         estimateConsumer.accept(visionEst, curStdDevs);
 
         if (Robot.isSimulation()) {
