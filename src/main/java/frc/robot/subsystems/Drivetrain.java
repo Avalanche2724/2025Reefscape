@@ -149,13 +149,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   public AutoFactory createAutoFactory() {
-    return new AutoFactory(
-        () -> getState().Pose,
-        this::resetPose,
-        this::followPath,
-        true,
-        this,
-        (sample, isStart) -> {});
+    return new AutoFactory(() -> getState().Pose, this::resetPose, this::followPath, true, this);
+  }
+
+  double[] m_poseArray = new double[3];
+
+  public void logPose2d(String key, Pose2d pose) {
+    m_poseArray[0] = pose.getX();
+    m_poseArray[1] = pose.getY();
+    m_poseArray[2] = pose.getRotation().getDegrees();
+    SignalLogger.writeDoubleArray(key, m_poseArray);
   }
 
   public void followPath(SwerveSample sample) {
@@ -168,6 +171,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     targetSpeeds.vyMetersPerSecond += m_pathYController.calculate(pose.getY(), sample.y);
     targetSpeeds.omegaRadiansPerSecond +=
         m_pathThetaController.calculate(pose.getRotation().getRadians(), sample.heading);
+
+    logPose2d("Auto/CurrentPose", pose);
+    logPose2d("Auto/TargetPose", sample.getPose());
 
     setControl(
         m_pathApplyFieldSpeeds
@@ -216,11 +222,13 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   public void integrateVisionCorrection(
       Optional<EstimatedRobotPose> est, Matrix<N3, N1> standardDeviations) {
     if (est.isPresent()) {
+
       var estimation = est.get();
+      var pose2d = estimation.estimatedPose.toPose2d();
+      logPose2d("Vision_Estimation", pose2d);
+
       addVisionMeasurement(
-          estimation.estimatedPose.toPose2d(),
-          Utils.fpgaToCurrentTime(estimation.timestampSeconds),
-          standardDeviations);
+          pose2d, Utils.fpgaToCurrentTime(estimation.timestampSeconds), standardDeviations);
     }
   }
 

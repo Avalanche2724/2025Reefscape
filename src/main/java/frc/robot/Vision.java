@@ -72,14 +72,14 @@ public class Vision {
       new Camera(
           "Arducam_fr_elev",
           new Transform3d(
-              new Translation3d(Inches.of(7.5), Inches.of(-10.5), Inches.of(11.1)),
+              new Translation3d(Inches.of(7.5), Inches.of(-10.4), Inches.of(11.1)),
               new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(15))));
 
   public Camera camera2 =
       new Camera(
           "Arducam_fl_swerve",
           new Transform3d(
-              new Translation3d(Inches.of(12.6), Inches.of(8.75), Inches.of(9.0)),
+              new Translation3d(Inches.of(12.6), Inches.of(8.7), Inches.of(8.7)),
               new Rotation3d(Degrees.of(0.0), Degrees.of(-10), Degrees.of(-15))));
 
   {
