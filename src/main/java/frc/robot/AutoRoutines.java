@@ -99,7 +99,6 @@ public class AutoRoutines {
     Start_to_reef.done()
         .onTrue(
             sequence(
-                Start_to_reef.resetOdometry(),
                 Commands.print("Reached Reef"),
                 superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L2_LAUNCH),
                 intake.ejectIntake().withTimeout(0.5),
