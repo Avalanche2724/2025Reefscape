@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -20,20 +21,20 @@ import java.util.function.Supplier;
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
-    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7.5),
+    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7),
     ALG_INTAKE_GROUND(0.28, 0),
     ALG_PROC(0.55, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
-    INTAKE_CORAL_STATION(0.75, 35),
+    INTAKE_CORAL_STATION(0.85, 35),
     // Straight outtake:
-    OUTTAKE_L1(0.57, 0),
+    OUTTAKE_L1(0.8, 0),
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(0.98, 0),
-    OUTTAKE_L3_LAUNCH(1.42, 0),
-    OUTTAKE_L4_LAUNCH(1.45, 80),
+    OUTTAKE_L2_LAUNCH(1.05, 0),
+    OUTTAKE_L3_LAUNCH(1.48, 0),
+    OUTTAKE_L4_LAUNCH(1.44, 87),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
     OUTTAKE_L4_VERT_P1(1.52, 60),
@@ -55,7 +56,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private static final double ELEVATOR_AT_POSITION_THRESHOLD = Meters.convertFrom(1, Inch);
-  private static final double WRIST_THRESHOLD = Rotations.convertFrom(3, Degree);
+  private static final double WRIST_THRESHOLD = 2; // DEGREES
   // Simulation
   private static final double SIM_LOOP_PERIOD = 0.005;
 
@@ -95,8 +96,9 @@ public class Superstructure extends SubsystemBase {
         new Trigger(
             () ->
                 lastSetPosition == Position.STOW
-                    && atWristPosition(currentWristTargetPosition)
-                    && atMostElevatorPosition(0.3));
+                    && atWristPositionApprox(currentWristTargetPosition)
+                    && atMostElevatorPosition(0.45)
+                    && atLeastElevatorPosition(0.3));
 
     // Auto-zero elevator when stowed
     isStowed.onTrue(zeroElevatorCommand());
@@ -112,6 +114,10 @@ public class Superstructure extends SubsystemBase {
     var c = getCurrentCommand();
     if (c != null) SmartDashboard.putString("CURRENT SUP COMMAND", c.getName());
     else SmartDashboard.putString("CURRENT SUP COMMAND", "null");
+
+    SmartDashboard.putNumber("S ELEV TARGET POSITION", currentElevatorTargetPosition);
+    SmartDashboard.putNumber("S WRIST TARGET POSITION", currentWristTargetPosition);
+    SmartDashboard.putBoolean("AT TARGET POSITION", atTargetPosition());
   }
 
   // Inputs
@@ -141,6 +147,10 @@ public class Superstructure extends SubsystemBase {
     return Math.abs(wrist.getWristDegreesOffset() - angle) < WRIST_THRESHOLD;
   }
 
+  public boolean atWristPositionApprox(double angle) {
+    return Math.abs(wrist.getWristDegreesOffset() - angle) < 15;
+  }
+
   // Controls
   public void setPositions(double elevatorHeight, double wristAngle) {
     boolean shouldStopWrist =
@@ -153,6 +163,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void setPositions(Position pos) {
+    lastSetPosition = pos;
     setPositions(pos.elevatorHeight, pos.wristAngle);
   }
 
@@ -172,9 +183,12 @@ public class Superstructure extends SubsystemBase {
 
   public Command zeroElevatorCommand() {
     return sequence(
-        run(elevator::setMotorZeroingVelocity).until(elevator::isStalling),
-        run(elevator::stopMotor).withTimeout(0.3),
-        runOnce(elevator::zeroElevatorPosition));
+            parallel(
+                run(elevator::setMotorZeroingVelocity).until(elevator.isStallingTrigger),
+                Commands.print("setting zmv")),
+            run(elevator::stopMotor).withTimeout(0.3),
+            runOnce(elevator::zeroElevatorPosition))
+        .withName("ZERO ELEV");
   }
 
   public Command elevatorAlgaeLaunchSetup() {

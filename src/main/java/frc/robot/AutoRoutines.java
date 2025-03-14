@@ -1,6 +1,7 @@
 package frc.robot;
 
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
@@ -59,11 +60,11 @@ public class AutoRoutines {
 
   public AutoRoutine simplePathAuto2() {
     var routine = m_factory.newRoutine("simple path auto");
-    var _base_l2score = routine.trajectory("_base_l2score");
+    var _base_l2score = routine.trajectory("Start to F branch");
 
-    routine.active().onTrue(_base_l2score.cmd());
+    routine.active().onTrue(_base_l2score.resetOdometry().andThen(_base_l2score.cmd()));
     routine.active().onTrue(superstructure.goToPosition(Position.STOW));
-    /*_base_l2score
+    _base_l2score
         .done()
         .onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
     _base_l2score
@@ -72,7 +73,7 @@ public class AutoRoutines {
             sequence(
                 waitUntil(
                     () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
-                intake.ejectIntake().withTimeout(0.5)));*/
+                intake.ejectIntake().withTimeout(0.5)));
 
     return routine; // TODO
   }

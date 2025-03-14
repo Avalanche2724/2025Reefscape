@@ -19,8 +19,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -46,17 +44,11 @@ import org.photonvision.EstimatedRobotPose;
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
   private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
-  // public Vision vision;
   /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   private static final double kVisionLoopPeriod = 0.01; // 10 ms
   // Simulation:
   private static final double kSimLoopPeriod = 0.005; // 5 ms
-  public final StructPublisher<Pose2d> drivePoseTelemetry =
-      NetworkTableInstance.getDefault()
-          .getTable("SmartDashboard")
-          .getStructTopic("VisionPose", Pose2d.struct)
-          .publish();
   private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
   private final PIDController m_pathXController = new PIDController(10, 0, 0);
@@ -64,7 +56,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
   private final PIDController m_pathThetaController = new PIDController(7, 0, 0.05);
-  private final PIDController m_pathDistanceController = new PIDController(7.5, 0, 0.06);
+  private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.05);
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
   private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization =
@@ -157,13 +149,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   public AutoFactory createAutoFactory() {
-    return new AutoFactory(
-        () -> getState().Pose,
-        this::resetPose,
-        this::followPath,
-        true,
-        this,
-        (sample, isStart) -> {});
+    return new AutoFactory(() -> getState().Pose, this::resetPose, this::followPath, true, this);
+  }
+
+  double[] m_poseArray = new double[3];
+
+  public void logPose2d(String key, Pose2d pose) {
+    m_poseArray[0] = pose.getX();
+    m_poseArray[1] = pose.getY();
+    m_poseArray[2] = pose.getRotation().getDegrees();
+    SignalLogger.writeDoubleArray(key, m_poseArray);
   }
 
   public void followPath(SwerveSample sample) {
@@ -176,6 +171,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     targetSpeeds.vyMetersPerSecond += m_pathYController.calculate(pose.getY(), sample.y);
     targetSpeeds.omegaRadiansPerSecond +=
         m_pathThetaController.calculate(pose.getRotation().getRadians(), sample.heading);
+
+    logPose2d("Auto/CurrentPose", pose);
+    logPose2d("Auto/TargetPose", sample.getPose());
 
     setControl(
         m_pathApplyFieldSpeeds
@@ -192,7 +190,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
               // Do vision
               correctFromVision(vision.camera1);
-              // correctFromVision(vision.camera2);
+              correctFromVision(vision.camera2);
             });
     visionNotifier.startPeriodic(kVisionLoopPeriod);
   }
@@ -219,15 +217,18 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     }
   }
 
+  // Vision
+
   public void integrateVisionCorrection(
       Optional<EstimatedRobotPose> est, Matrix<N3, N1> standardDeviations) {
     if (est.isPresent()) {
+
       var estimation = est.get();
-      drivePoseTelemetry.set(estimation.estimatedPose.toPose2d());
+      var pose2d = estimation.estimatedPose.toPose2d();
+      logPose2d("Vision_Estimation", pose2d);
+
       addVisionMeasurement(
-          estimation.estimatedPose.toPose2d(),
-          Utils.fpgaToCurrentTime(estimation.timestampSeconds),
-          standardDeviations);
+          pose2d, Utils.fpgaToCurrentTime(estimation.timestampSeconds), standardDeviations);
     }
   }
 
@@ -238,7 +239,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         this::integrateVisionCorrection);
   }
 
-  /** Command to PID to a position; useful for auto-align */
+  // Commands for auto-align
+
+  /** PID to a position; useful for auto-align */
   private void pidToPosition(Pose2d target) {
     m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -260,7 +263,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     // If we're close enough to the target, the direction vector could be zero
     Translation2d directionVector;
-    if (distance > 0.05) {
+    if (distance > 0.04) {
       // Create a unit vector in the direction of the target, then scale by the speed magnitude
       directionVector = deltaTranslation.times(speedMagnitude / distance);
     } else {
@@ -273,7 +276,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             currentPose.getRotation().getRadians(), target.getRotation().getRadians());
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
 
-    if (Math.abs(rotationRate) < 0.08) {
+    if (Math.abs(rotationRate) < 0.07) {
       rotationRate = 0;
     }
 
@@ -367,6 +370,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                       "Wheel characterization CALCULATED RADIUS", calculatedRadius.in(Inches));
                 })));
   }
+
+  // Simulation stuff
 
   private void startSimThread() {
     m_lastSimTime = Utils.getCurrentTimeSeconds();
