@@ -114,8 +114,8 @@ public class Wrist {
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 18; // todo: try retuning and lowering?
-    config.Slot1.kD = 7;
+    config.Slot1.kP = 15; // todo: try retuning and lowering?
+    config.Slot1.kD = 5;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
@@ -124,7 +124,7 @@ public class Wrist {
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 1; // rotations per second squared
+    config.MotionMagic.MotionMagicAcceleration = 0.8; // rotations per second squared
     config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 

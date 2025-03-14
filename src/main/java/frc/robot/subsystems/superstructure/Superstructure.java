@@ -26,14 +26,14 @@ public class Superstructure extends SubsystemBase {
     ALG_PROC(0.55, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
-    INTAKE_CORAL_STATION(0.76, 35),
+    INTAKE_CORAL_STATION(0.85, 35),
     // Straight outtake:
     OUTTAKE_L1(0.8, 0),
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(0.98, 0),
-    OUTTAKE_L3_LAUNCH(1.42, 0),
+    OUTTAKE_L2_LAUNCH(1.05, 0),
+    OUTTAKE_L3_LAUNCH(1.48, 0),
     OUTTAKE_L4_LAUNCH(1.44, 87),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
