@@ -187,7 +187,7 @@ public class Superstructure extends SubsystemBase {
             parallel(
                 run(elevator::setMotorZeroingVelocity).until(elevator.isStallingTrigger),
                 Commands.print("setting zmv")),
-            run(elevator::stopMotor).withTimeout(1).finallyDo(elevator::zeroElevatorPosition))
+            run(elevator::stopMotor).withTimeout(0.5).finallyDo(elevator::zeroElevatorPosition))
         .withName("ZERO ELEV");
   }
 

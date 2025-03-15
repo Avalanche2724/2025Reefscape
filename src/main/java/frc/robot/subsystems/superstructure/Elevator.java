@@ -166,7 +166,7 @@ public class Elevator {
         && Math.abs(getVelocity()) < VELOCITY_DETECT_THRESHOLD;
   }
 
-  Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.15);
+  Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.25);
 
   public double getVelocity() {
     return motorVelocity.getValueAsDouble();
