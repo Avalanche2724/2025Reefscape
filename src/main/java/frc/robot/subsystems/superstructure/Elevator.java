@@ -110,9 +110,9 @@ public class Elevator {
     config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 2; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // meters per second
-    config.MotionMagic.MotionMagicJerk = 25; // meters per second cubed
+    config.MotionMagic.MotionMagicAcceleration = 1.8; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.35; // meters per second
+    config.MotionMagic.MotionMagicJerk = 18; // meters per second cubed
 
     // Other things
     config.CurrentLimits.StatorCurrentLimit = 40;

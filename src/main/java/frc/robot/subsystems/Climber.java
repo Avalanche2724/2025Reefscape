@@ -16,8 +16,8 @@ public class Climber extends SubsystemBase {
     TalonFXConfiguration config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-    config.CurrentLimits.StatorCurrentLimit = 200;
-    config.CurrentLimits.SupplyCurrentLimit = 80;
+    config.CurrentLimits.StatorCurrentLimit = 240;
+    config.CurrentLimits.SupplyCurrentLimit = 90;
 
     config.CurrentLimits.StatorCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;

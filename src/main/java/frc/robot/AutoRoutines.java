@@ -28,20 +28,28 @@ public class AutoRoutines {
     climber = container.climber;
   }
 
+  public AutoRoutine l1forauto_LEFT() {
+    var routine = m_factory.newRoutine("l1forauto_LEFT");
+    var l1forauto = routine.trajectory("NEW_FORGO_L1_LEFT");
+
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                l1forauto.resetOdometry(),
+                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
+                waitSeconds(2.5),
+                l1forauto.cmd(),
+                waitSeconds(1.0),
+                intake.ejectIntake().withTimeout(1)));
+
+    return routine; // TODO
+  }
+
   public AutoRoutine l1forauto_RIGHT() {
     var routine = m_factory.newRoutine("l1forauto_RIGHT");
     var l1forauto = routine.trajectory("NEW_FORGO_L1_RIGHT");
-    /*
-    routine.active().onTrue(l1forauto.resetOdometry().andThen(l1forauto.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1));
-    // 1forauto.done().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1));
-    l1forauto
-        .done()
-        .onTrue(
-            sequence(
-                waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L1)),
-                waitSeconds(3.0),
-                intake.ejectIntake().withTimeout(1)));*/
+
     routine
         .active()
         .onTrue(
@@ -87,17 +95,7 @@ public class AutoRoutines {
   public AutoRoutine l1forauto_PUSH() {
     var routine = m_factory.newRoutine("l1forauto_PUSH");
     var l1forauto = routine.trajectory("NEW_FORGO_L1_PUSH");
-    /*
-    routine.active().onTrue(l1forauto.resetOdometry().andThen(l1forauto.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1));
-    // 1forauto.done().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1));
-    l1forauto
-        .done()
-        .onTrue(
-            sequence(
-                waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L1)),
-                waitSeconds(3.0),
-                intake.ejectIntake().withTimeout(1)));*/
+
     routine
         .active()
         .onTrue(

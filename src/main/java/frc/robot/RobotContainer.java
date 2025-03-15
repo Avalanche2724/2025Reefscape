@@ -34,13 +34,15 @@ public class RobotContainer {
 
   public RobotContainer() {
     // Register autos
-    autoChooser.addRoutine("SimplePath", autoRoutines::simplePathAuto);
+    autoChooser.addRoutine("SimplePath (ONLY FORWARD)", autoRoutines::simplePathAuto);
     autoChooser.addRoutine("NOT SIMPLE PATH", autoRoutines::simplePathAuto2);
     autoChooser.addRoutine("StartToHumanStation", autoRoutines::StartToHumanStation);
     autoChooser.addRoutine("BRR FORWARD", autoRoutines::brrforward);
-    autoChooser.addRoutine("l1forauto_ORIG", autoRoutines::l1forauto_ORIG);
+
+    autoChooser.addRoutine("l1forauto_ORIG (leftmost)", autoRoutines::l1forauto_ORIG);
+    autoChooser.addRoutine("l1forauto_LEFT_OPPCAGE", autoRoutines::l1forauto_LEFT);
     autoChooser.addRoutine("l1forauto_RIGHT", autoRoutines::l1forauto_RIGHT);
-    autoChooser.addRoutine("l1forauto_PUSH", autoRoutines::l1forauto_RIGHT);
+    autoChooser.addRoutine("l1forauto_PUSH", autoRoutines::l1forauto_PUSH);
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
