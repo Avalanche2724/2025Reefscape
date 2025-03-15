@@ -26,7 +26,7 @@ public class Superstructure extends SubsystemBase {
     ALG_PROC(0.65, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
-    INTAKE_CORAL_STATION(0.85, 35),
+    INTAKE_CORAL_STATION(0.865, 35),
     // Straight outtake:
     OUTTAKE_L1(0.8, 0),
     /*OUTTAKE_L2(0.927, -35),
@@ -187,8 +187,7 @@ public class Superstructure extends SubsystemBase {
             parallel(
                 run(elevator::setMotorZeroingVelocity).until(elevator.isStallingTrigger),
                 Commands.print("setting zmv")),
-            run(elevator::stopMotor).withTimeout(0.5),
-            runOnce(elevator::zeroElevatorPosition))
+            run(elevator::stopMotor).withTimeout(1).finallyDo(elevator::zeroElevatorPosition))
         .withName("ZERO ELEV");
   }
 
