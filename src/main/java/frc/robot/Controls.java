@@ -164,10 +164,14 @@ public class Controls {
     operator.leftJoystickPushed.whileTrue(
         superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 
-    operator.rightJoystickPushed.whileTrue(
-        superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+    operator
+        .rightJoystickPushed
+        .negate()
+        .whileTrue(
+            superstructure.incrementElevator(
+                () -> -0.01 * MathUtil.applyDeadband(operator.getRightY(), 0.25)));
 
-    // operator.rightJoystickPushed.whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
+    operator.rightJoystickPushed.whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
 
     operator.leftMiddle // left squares
         .onTrue(runOnce(() -> isOnCoralBindings = false));

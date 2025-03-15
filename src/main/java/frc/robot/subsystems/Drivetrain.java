@@ -55,8 +55,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final PIDController m_pathYController = new PIDController(10, 0, 0);
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
-  private final PIDController m_pathThetaController = new PIDController(7, 0, 0.05);
-  private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.05);
+  private final PIDController m_pathThetaController = new PIDController(7, 0, 0.1);
+  private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.1);
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
   private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization =
@@ -278,7 +278,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
     SignalLogger.writeDouble("auto align rotation rate", rotationRate);
 
-    if (Math.abs(rotationRate) < 0.06) {
+    if (Math.abs(rotationRate) < 0.03) {
       rotationRate = 0;
     }
 
