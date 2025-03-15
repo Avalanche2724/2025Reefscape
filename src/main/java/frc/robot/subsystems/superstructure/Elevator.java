@@ -74,7 +74,7 @@ public class Elevator {
   public SysIdRoutine sysIdRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(0.5).div(Seconds.one()),
+              Volts.of(1).div(Seconds.one()),
               Volts.of(4),
               null,
               (state) -> SignalLogger.writeString("Elevator_SysId_State", state.toString())),
@@ -122,8 +122,9 @@ public class Elevator {
     motor.getClosedLoopError().setUpdateFrequency(50);
     motor.getClosedLoopReference().setUpdateFrequency(50);
     // Make SysId a bit more accurate, hopefully
-    motorPosition.setUpdateFrequency(100);
-    motorVelocity.setUpdateFrequency(100);
+    motorPosition.setUpdateFrequency(200);
+    motorVelocity.setUpdateFrequency(200);
+    motorVoltage.setUpdateFrequency(200);
 
     var followerConfig = new TalonFXConfiguration();
     followerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
