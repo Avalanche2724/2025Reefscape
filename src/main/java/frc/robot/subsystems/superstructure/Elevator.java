@@ -93,6 +93,15 @@ public class Elevator {
     config.Slot0.kV = 7.5487;
     config.Slot0.kA = 0.17841;
     config.Slot0.kG = 0.26462;
+    /*
+        config.Slot0.kP = 132.55;
+    config.Slot0.kD = 1.4836;
+    config.Slot0.kS = 0.062696;
+    config.Slot0.kV = 7.6213;
+    config.Slot0.kA = 0.07906;
+    config.Slot0.kG = 0.28811;
+
+     */
 
     // For zeroing sequence and algae launching
     config.Slot1.kP = 25;

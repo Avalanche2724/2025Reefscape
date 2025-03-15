@@ -32,8 +32,8 @@ public class Superstructure extends SubsystemBase {
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(1.05, 0),
-    OUTTAKE_L3_LAUNCH(1.48, 0),
+    OUTTAKE_L2_LAUNCH(1, 0),
+    OUTTAKE_L3_LAUNCH(1.44, 0),
     OUTTAKE_L4_LAUNCH(1.44, 87),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
@@ -101,7 +101,7 @@ public class Superstructure extends SubsystemBase {
                     && atLeastElevatorPosition(0.3));
 
     // Auto-zero elevator when stowed
-    isStowed.onTrue(zeroElevatorCommand());
+    // isStowed.onTrue(zeroElevatorCommand());
   }
 
   @Override
