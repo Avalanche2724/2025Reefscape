@@ -32,8 +32,8 @@ public class Superstructure extends SubsystemBase {
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
-    OUTTAKE_L2_LAUNCH(1.03, 0),
-    OUTTAKE_L3_LAUNCH(1.47, 0),
+    OUTTAKE_L2_LAUNCH(1.015, 0),
+    OUTTAKE_L3_LAUNCH(1.455, 0),
     OUTTAKE_L4_LAUNCH(1.44, 87),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
@@ -97,11 +97,12 @@ public class Superstructure extends SubsystemBase {
             () ->
                 lastSetPosition == Position.STOW
                     && atWristPositionApprox(currentWristTargetPosition)
-                    && atMostElevatorPosition(0.45)
-                    && atLeastElevatorPosition(0.3));
+                    && atMostElevatorPosition(0.4)
+                    && atLeastElevatorPosition(0.25)
+                    && getCurrentCommand() == null);
 
     // Auto-zero elevator when stowed
-    // isStowed.onTrue(zeroElevatorCommand());
+    isStowed.onTrue(zeroElevatorCommand());
   }
 
   @Override
@@ -186,7 +187,7 @@ public class Superstructure extends SubsystemBase {
             parallel(
                 run(elevator::setMotorZeroingVelocity).until(elevator.isStallingTrigger),
                 Commands.print("setting zmv")),
-            run(elevator::stopMotor).withTimeout(0.3),
+            run(elevator::stopMotor).withTimeout(0.5),
             runOnce(elevator::zeroElevatorPosition))
         .withName("ZERO ELEV");
   }

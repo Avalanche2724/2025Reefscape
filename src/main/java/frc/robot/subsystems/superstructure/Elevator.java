@@ -104,13 +104,13 @@ public class Elevator {
      */
 
     // For zeroing sequence and algae launching
-    config.Slot1.kP = 25;
+    config.Slot1.kP = 20;
     config.Slot1.kS = 4.5; // Estimated from voltage kS
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
     config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 2.5; // meters per second squared
+    config.MotionMagic.MotionMagicAcceleration = 2; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // meters per second
     config.MotionMagic.MotionMagicJerk = 25; // meters per second cubed
 
