@@ -120,7 +120,7 @@ public class Controls {
     driver.leftBumper.whileTrue(intake.runIntake());
     driver.rightBumper.whileTrue(intake.fullSend());
 
-    driver.y.whileTrue(intake.run(-3.2));
+    driver.y.whileTrue(intake.run(-2.9));
     driver.a.whileTrue(intake.leftMajority());
     coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
@@ -164,10 +164,10 @@ public class Controls {
     operator.leftJoystickPushed.whileTrue(
         superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 
-    // operator.rightJoystickPushed.whileTrue(
-    //    superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
+    operator.rightJoystickPushed.whileTrue(
+        superstructure.incrementElevator(() -> -0.01 * operator.getRightY()));
 
-    operator.rightJoystickPushed.whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
+    // operator.rightJoystickPushed.whileTrue(climber.runVoltage(() -> -12 * operator.getRightX()));
 
     operator.leftMiddle // left squares
         .onTrue(runOnce(() -> isOnCoralBindings = false));
