@@ -72,15 +72,15 @@ public class Vision {
       new Camera(
           "Arducam_fr_elev",
           new Transform3d(
-              new Translation3d(Inches.of(7.5), Inches.of(-10.4), Inches.of(11.1)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-15.2), Degrees.of(15))));
+              new Translation3d(Inches.of(7.5), Inches.of(-10.4), Inches.of(10.6)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-14.5), Degrees.of(15))));
 
   public Camera camera2 =
       new Camera(
           "Arducam_fl_swerve",
           new Transform3d(
-              new Translation3d(Inches.of(12.6), Inches.of(8.7), Inches.of(8.7)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-10), Degrees.of(-15))));
+              new Translation3d(Inches.of(12.6), Inches.of(8.7), Inches.of(8.4)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-10.5), Degrees.of(-15))));
 
   {
     if (Robot.isSimulation()) {
