@@ -263,7 +263,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     // If we're close enough to the target, the direction vector could be zero
     Translation2d directionVector;
-    if (distance > 0.04) {
+    if (distance > 0.03) {
       // Create a unit vector in the direction of the target, then scale by the speed magnitude
       directionVector = deltaTranslation.times(speedMagnitude / distance);
     } else {
@@ -276,7 +276,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
             currentPose.getRotation().getRadians(), target.getRotation().getRadians());
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
 
-    if (Math.abs(rotationRate) < 0.07) {
+    if (Math.abs(rotationRate) < 0.06) {
       rotationRate = 0;
     }
 

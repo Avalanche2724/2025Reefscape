@@ -265,7 +265,7 @@ public class Controls {
 
   public Command algaeLaunchSequence() {
     return sequence(
-        superstructure.elevatorAlgaeLaunchSetup().alongWith(intake.holdIntake()),
+        intake.holdIntake().alongWith(superstructure.elevatorAlgaeLaunchSetup()),
         intake.fullSend().withTimeout(0.2),
         superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend()));
   }

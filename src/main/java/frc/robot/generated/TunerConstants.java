@@ -41,7 +41,7 @@ public class TunerConstants {
           .withKP(0.3)
           .withKI(0)
           .withKD(0)
-          .withKS(0.124) // this was modified down, producing a bit of inaccuracy, but preventing
+          .withKS(0.15) // this was modified down, producing a bit of inaccuracy, but preventing
           // jittering behavior
           .withKV(0.124)
           .withKA(0); // 0.042154 (??)
