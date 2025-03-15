@@ -1,7 +1,6 @@
 package frc.robot;
 
-import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
@@ -31,7 +30,7 @@ public class AutoRoutines {
 
   public AutoRoutine simplePathAuto() {
     var routine = m_factory.newRoutine("forward going auto");
-    var simplePath = routine.trajectory("Go Forward");
+    var simplePath = routine.trajectory("NEW_goforward");
 
     routine
         .active()
@@ -74,6 +73,27 @@ public class AutoRoutines {
                 waitUntil(
                     () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
                 intake.ejectIntake().withTimeout(0.5)));
+
+    return routine; // TODO
+  }
+
+  public AutoRoutine brrforward() {
+    var routine = m_factory.newRoutine("brr forward");
+    var brrforward = routine.trajectory("NEW_FORWARDGO");
+
+    routine.active().onTrue(brrforward.resetOdometry().andThen(brrforward.cmd()));
+    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
+    brrforward
+        .done()
+        .onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
+    brrforward
+        .done()
+        .onTrue(
+            sequence(
+                waitUntil(
+                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
+                waitSeconds(3.0),
+                intake.ejectIntake().withTimeout(1)));
 
     return routine; // TODO
   }

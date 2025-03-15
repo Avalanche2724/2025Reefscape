@@ -184,7 +184,7 @@ public class Vision {
         var coprocPnpEst = photonEstimator.update(change);
         photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
         if (coprocPnpEst.isEmpty()) {
-          System.out.print("Warning: coproc pnp est empty");
+          // System.out.print("Warning: coproc pnp est empty");
           continue;
         }
 
