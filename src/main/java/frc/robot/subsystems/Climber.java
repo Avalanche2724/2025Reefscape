@@ -15,6 +15,15 @@ public class Climber extends SubsystemBase {
   public Climber() {
     TalonFXConfiguration config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
+    config.CurrentLimits.StatorCurrentLimit = 150;
+    config.CurrentLimits.SupplyCurrentLimit = 80;
+
+    config.CurrentLimits.StatorCurrentLimitEnable = true;
+    config.CurrentLimits.SupplyCurrentLimitEnable = true;
+    config.CurrentLimits.SupplyCurrentLowerTime = 4;
+    config.CurrentLimits.SupplyCurrentLowerLimit = 40;
+
     motor.getConfigurator().apply(config);
     setDefaultCommand(runVoltage(() -> 0));
     // the following lines of code were mentor written so I commented them out

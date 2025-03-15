@@ -38,6 +38,7 @@ public class RobotContainer {
     autoChooser.addRoutine("NOT SIMPLE PATH", autoRoutines::simplePathAuto2);
     autoChooser.addRoutine("StartToHumanStation", autoRoutines::StartToHumanStation);
     autoChooser.addRoutine("BRR FORWARD", autoRoutines::brrforward);
+    autoChooser.addRoutine("l1forauto", autoRoutines::l1forauto);
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     // Set up drivetrain telemetry

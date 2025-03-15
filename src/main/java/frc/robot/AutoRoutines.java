@@ -28,6 +28,24 @@ public class AutoRoutines {
     climber = container.climber;
   }
 
+  public AutoRoutine l1forauto() {
+    var routine = m_factory.newRoutine("l1forauto");
+    var l1forauto = routine.trajectory("NEW_FORGO_L1");
+
+    routine.active().onTrue(l1forauto.resetOdometry().andThen(l1forauto.cmd()));
+    routine.active().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1));
+    // 1forauto.done().onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L1));
+    l1forauto
+        .done()
+        .onTrue(
+            sequence(
+                waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L1)),
+                waitSeconds(3.0),
+                intake.ejectIntake().withTimeout(1)));
+
+    return routine; // TODO
+  }
+
   public AutoRoutine simplePathAuto() {
     var routine = m_factory.newRoutine("forward going auto");
     var simplePath = routine.trajectory("NEW_goforward");

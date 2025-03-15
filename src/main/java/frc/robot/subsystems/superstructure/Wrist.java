@@ -114,8 +114,8 @@ public class Wrist {
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 15; // todo: try retuning and lowering?
-    config.Slot1.kD = 5;
+    config.Slot1.kP = 10; // todo: try retuning and lowering?
+    config.Slot1.kD = 3;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
