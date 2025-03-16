@@ -41,7 +41,8 @@ public class AutoRoutines {
                 waitSeconds(2.5),
                 l1forauto.cmd(),
                 waitSeconds(1.0),
-                intake.ejectIntake().withTimeout(1)));
+                intake.ejectIntake().withTimeout(1),
+                superstructure.goToPosition(Position.STOW)));
 
     return routine; // TODO
   }
@@ -59,7 +60,8 @@ public class AutoRoutines {
                 waitSeconds(2.5),
                 l1forauto.cmd(),
                 waitSeconds(1.0),
-                intake.ejectIntake().withTimeout(1)));
+                intake.ejectIntake().withTimeout(1),
+                superstructure.goToPosition(Position.STOW)));
 
     return routine; // TODO
   }
@@ -87,7 +89,8 @@ public class AutoRoutines {
                 waitSeconds(2.5),
                 l1forauto.cmd(),
                 waitSeconds(1.0),
-                intake.ejectIntake().withTimeout(1)));
+                intake.ejectIntake().withTimeout(1),
+                superstructure.goToPosition(Position.STOW)));
 
     return routine; // TODO
   }
@@ -105,7 +108,8 @@ public class AutoRoutines {
                 waitSeconds(2.5),
                 l1forauto.cmd(),
                 waitSeconds(1.0),
-                intake.ejectIntake().withTimeout(1)));
+                intake.ejectIntake().withTimeout(1),
+                superstructure.goToPosition(Position.STOW)));
 
     return routine; // TODO
   }

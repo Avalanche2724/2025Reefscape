@@ -55,7 +55,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final PIDController m_pathYController = new PIDController(10, 0, 0);
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
-  private final PIDController m_pathThetaController = new PIDController(7, 0, 0.1);
+  private final PIDController m_pathThetaController = new PIDController(7.5, 0, 0.1);
   private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.1);
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
