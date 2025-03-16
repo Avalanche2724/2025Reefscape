@@ -167,6 +167,7 @@ public class Controls {
     operator
         .rightJoystickPushed
         .negate()
+        .and(() -> Math.abs(operator.getRightY()) > 0.25)
         .whileTrue(
             superstructure.incrementElevator(
                 () -> -0.01 * MathUtil.applyDeadband(operator.getRightY(), 0.25)));
@@ -190,7 +191,9 @@ public class Controls {
     coralAlgaeActivePresets(operator.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
     coralAlgaeActivePresets(operator.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
     coralAlgaeActivePresets(operator.y, Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
-    operator.leftTriggerB.whileTrue(superstructure.getToPositionThenHold(() -> nextTargetPosition));
+    // operator.leftTriggerB.whileTrue(superstructure.getToPositionThenHold(() ->
+    // nextTargetPosition));
+    operator.leftTriggerB.whileTrue(superstructure.goToPosition(Position.STOW));
 
     operator.rightTriggerB.whileTrue(algaeLaunchSequence());
   }
@@ -252,8 +255,7 @@ public class Controls {
   public void coralAlgaeActivePresets(Trigger button, Position coral, Position algae) {
     button.whileTrue(
         coralAlgaeCommand(
-            superstructure.getToPositionThenHold(coral),
-            superstructure.getToPositionThenHold(algae)));
+            superstructure.goToPosition(coral), superstructure.getToPositionThenHold(algae)));
   }
 
   public void coralAlgaeSettingPresets(Trigger button, Position coral, Position algae) {

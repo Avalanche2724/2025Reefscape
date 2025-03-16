@@ -87,12 +87,13 @@ public class Elevator {
     var config = new TalonFXConfiguration();
 
     // Slot for regular positional control
+
     config.Slot0.kP = 190.41;
     config.Slot0.kD = 14.148;
-    config.Slot0.kS = 0.11697;
+    config.Slot0.kS = 0.085;
     config.Slot0.kV = 7.5487;
     config.Slot0.kA = 0.17841;
-    config.Slot0.kG = 0.26462;
+    config.Slot0.kG = 0.305;
     /*
         config.Slot0.kP = 132.55;
     config.Slot0.kD = 1.4836;

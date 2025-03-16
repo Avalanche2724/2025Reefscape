@@ -96,7 +96,8 @@ public class Superstructure extends SubsystemBase {
         new Trigger(
             () ->
                 lastSetPosition == Position.STOW
-                    && atWristPositionApprox(currentWristTargetPosition)
+                    && (atWristPositionApprox(currentWristTargetPosition)
+                        || currentWristTargetPosition == Position.STOW.wristAngle)
                     && atMostElevatorPosition(0.4)
                     && atLeastElevatorPosition(0.25)
                     && getCurrentCommand() == null);
