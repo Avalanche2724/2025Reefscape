@@ -271,7 +271,7 @@ public class Controls {
   public Command algaeLaunchSequence() {
     return sequence(
         intake.holdIntake().alongWith(superstructure.elevatorAlgaeLaunchSetup()),
-        intake.fullSend().withTimeout(0.2),
+        intake.fullSend().withTimeout(0.7),
         superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend()));
   }
 
