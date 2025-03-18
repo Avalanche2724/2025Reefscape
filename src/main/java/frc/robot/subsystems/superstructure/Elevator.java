@@ -28,7 +28,9 @@ public class Elevator {
   public static final int ELEVATOR_ID = 41;
   public static final int ELEVATOR2_ID = 42;
   public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches); // 0.1651m
-  public static final double MAX_HEIGHT = Meters.convertFrom(59.06, Inches); // 1.5 m
+  public static final double MAX_HEIGHT = 1.58;
+  // Meters.convertFrom(59.06, Inches); // 1.5 m
+  //
   private static final double GEAR_RATIO = 14.0;
   // Extra factor of 2 because there are 2 sprockets pushing up the elevato
   private static final double DRUM_RADIUS =
@@ -105,22 +107,22 @@ public class Elevator {
      */
 
     // For zeroing sequence and algae launching
-    config.Slot1.kP = 20;
+    config.Slot1.kP = 15;
     config.Slot1.kS = 4.5; // Estimated from voltage kS
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
     config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 0.8; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.0; // meters per second
-    config.MotionMagic.MotionMagicJerk = 20; // meters per second cubed
+    config.MotionMagic.MotionMagicAcceleration = 5.0; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // meters per second
+    // config.MotionMagic.MotionMagicJerk = 20; // meters per second cubed
 
     // Other things
     config.CurrentLimits.StatorCurrentLimit = 40;
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     // Forward/reverse limits
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     // does this fix things?
