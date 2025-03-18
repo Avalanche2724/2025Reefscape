@@ -73,14 +73,14 @@ public class Vision {
           "Arducam_fr_elev",
           new Transform3d(
               new Translation3d(Inches.of(7.5), Inches.of(-10.4), Inches.of(10.6)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-14.5), Degrees.of(15))));
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(15))));
 
   public Camera camera2 =
       new Camera(
           "Arducam_fl_swerve",
           new Transform3d(
-              new Translation3d(Inches.of(12.6), Inches.of(8.7), Inches.of(8.4)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-10.5), Degrees.of(-15))));
+              new Translation3d(Inches.of(12.6), Inches.of(8.7), Inches.of(8.7)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-10), Degrees.of(-15))));
 
   {
     if (Robot.isSimulation()) {
@@ -115,9 +115,9 @@ public class Vision {
     private final Transform3d robotToCam;
     private final PhotonCamera camera;
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> lockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e8));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> unlockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 100));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(true, 0));
     private final PhotonPoseEstimator photonEstimator;
     private String cameraName;
     private String visionEstimationKey;

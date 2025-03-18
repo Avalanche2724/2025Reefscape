@@ -126,6 +126,7 @@ public class Controls {
 
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();
+    driver.povUp.whileTrue(drivetrain.wheelCharacterization());
 
     configureSysidBindings();
 

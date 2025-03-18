@@ -11,6 +11,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -55,7 +56,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final PIDController m_pathYController = new PIDController(10, 0, 0);
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
-  private final PIDController m_pathThetaController = new PIDController(7.5, 0, 0.1);
+  private final PIDController m_pathThetaController = new PIDController(7.5, 0, 0);
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
   private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization =
@@ -241,9 +242,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   // Commands for auto-align
 
   /** PID to a position; useful for auto-align */
-  private final PIDController autoAlignTheta = new PIDController(1, 0, 0);
+  private final PIDController autoAlignTheta = new PIDController(0.3, 0, 0);
 
-  private final PIDController autoAlignDistance = new PIDController(1, 0, 0);
+  private final PIDController autoAlignDistance = new PIDController(9, 0, 0);
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
   private void pidToPosition(Pose2d target) {
     autoAlignTheta.enableContinuousInput(-Math.PI, Math.PI);
@@ -264,36 +266,40 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     double speedMagnitude = autoAlignDistance.calculate(distance, 0);
     speedMagnitude = Math.copySign(Math.sqrt(Math.abs(speedMagnitude)), speedMagnitude);
 
+    if (Math.abs(distance) < Meters.convertFrom(0.5, Inches)) {
+      speedMagnitude = 0;
+    }
+
     SmartDashboard.putNumber("autoalign speed ", speedMagnitude);
     SignalLogger.writeDouble("auto align speed", speedMagnitude);
 
-    // If we're close enough to the target, the direction vector could be zero
-    Translation2d directionVector;
-    if (distance > 0.01) {
-      // Create a unit vector in the direction of the target, then scale by the speed magnitude
-      directionVector = deltaTranslation.times(speedMagnitude / distance);
-    } else {
-      directionVector = new Translation2d(); // Zero vector
-    }
+    Translation2d directionVector = deltaTranslation.times(speedMagnitude / distance);
 
     // Calculate the rotation rate using the theta controller
     double rotationRate =
-        m_pathThetaController.calculate(
+        autoAlignTheta.calculate(
             currentPose.getRotation().getRadians(), target.getRotation().getRadians());
+    double rotationDifference =
+        MathUtil.angleModulus(
+            currentPose.getRotation().getRadians() - target.getRotation().getRadians());
 
     rotationRate = Math.copySign(Math.sqrt(Math.abs(rotationRate)), rotationRate);
 
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
     SignalLogger.writeDouble("auto align rotation rate", rotationRate);
 
-    /* if (Math.abs(rotationRate) < 0.03) {
+    if (Math.abs(rotationDifference) < Radians.convertFrom(1, Degrees)) {
       rotationRate = 0;
-    }*/
+    }
 
     // Create chassis speeds using the direction vector and rotation rate
-    var speeds = new ChassisSpeeds(directionVector.getX(), directionVector.getY(), rotationRate);
-
-    setControl(pathPidToPoint.withSpeeds(speeds));
+    // if (rotationRate == 0 && speedMagnitude == 0) {
+    if (false) {
+      setControl(brake);
+    } else {
+      var speeds = new ChassisSpeeds(directionVector.getX(), directionVector.getY(), rotationRate);
+      setControl(pathPidToPoint.withSpeeds(speeds));
+    }
   }
 
   public Command driveToPosition(Supplier<Pose2d> target) {
