@@ -274,4 +274,14 @@ public class AutoRoutines {
 
     return routine;
   }
+
+  public AutoRoutine verycoolpath() {
+    var routine = m_factory.newRoutine("verycoolpath");
+    var verycoolpath_1 = routine.trajectory("CoolPath");
+
+    routine.active().onTrue(verycoolpath_1.resetOdometry().andThen(verycoolpath_1.cmd()));
+    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
+
+    return routine; // TODO
+  }
 }
