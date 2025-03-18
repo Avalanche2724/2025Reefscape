@@ -206,11 +206,13 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    setMotorVelocity(ALGAE_LAUNCHING_VELOCITY, false);
+    motor.set(11);
+    // setMotorVelocity(ALGAE_LAUNCHING_VELOCITY, false);
   }
 
   void setMotorLaunchingVelocityDown() {
-    setMotorVelocity(-ALGAE_LAUNCHING_VELOCITY, false);
+    motor.set(-11);
+    // setMotorVelocity(-ALGAE_LAUNCHING_VELOCITY, false);
   }
 
   // Mechanism visualization and simulation stuff
