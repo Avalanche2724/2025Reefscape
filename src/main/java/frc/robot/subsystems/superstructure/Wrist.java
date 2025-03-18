@@ -124,7 +124,7 @@ public class Wrist {
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 0.5; // rotations per second squared
+    config.MotionMagic.MotionMagicAcceleration = 0.75; // rotations per second squared
     config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 

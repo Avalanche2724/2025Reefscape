@@ -21,12 +21,12 @@ public class Intake extends SubsystemBase {
     var config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    config.CurrentLimits.StatorCurrentLimit = 150;
-    config.CurrentLimits.SupplyCurrentLimit = 60;
+    config.CurrentLimits.StatorCurrentLimit = 200;
+    config.CurrentLimits.SupplyCurrentLimit = 90;
 
     config.CurrentLimits.StatorCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.SupplyCurrentLowerTime = 6;
+    config.CurrentLimits.SupplyCurrentLowerTime = 4;
     config.CurrentLimits.SupplyCurrentLowerLimit = 40;
     leftMotor.getConfigurator().apply(config);
 
@@ -53,7 +53,7 @@ public class Intake extends SubsystemBase {
   }
 
   public Command holdIntake() {
-    return run(8);
+    return run(3);
   }
 
   public Command fullSend2() {

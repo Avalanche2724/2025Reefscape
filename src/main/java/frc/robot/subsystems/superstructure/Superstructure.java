@@ -22,7 +22,7 @@ public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
     MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7),
-    ALG_INTAKE_GROUND(0.28, 0),
+    ALG_INTAKE_GROUND(0.34, 0),
     ALG_PROC(0.65, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
@@ -194,9 +194,9 @@ public class Superstructure extends SubsystemBase {
 
   public Command elevatorAlgaeLaunchSetup() {
     return sequence(
-        setWristPositionCommand(70),
+        setWristPositionCommand(81),
         runOnce(elevator::setMotorLaunchingVelocityUp),
-        waitUntil(() -> atLeastElevatorPosition(1.28)));
+        waitUntil(() -> atLeastElevatorPosition(1.33)));
   }
 
   public Command elevatorAlgaeLaunchPostscript() {

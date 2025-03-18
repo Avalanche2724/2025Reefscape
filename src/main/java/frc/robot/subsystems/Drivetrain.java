@@ -56,7 +56,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
   private final PIDController m_pathThetaController = new PIDController(7.5, 0, 0.1);
-  private final PIDController m_pathDistanceController = new PIDController(7, 0, 0.1);
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
   private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization =
@@ -242,8 +241,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   // Commands for auto-align
 
   /** PID to a position; useful for auto-align */
+  private final PIDController autoAlignTheta = new PIDController(1, 0, 0);
+
+  private final PIDController autoAlignDistance = new PIDController(1, 0, 0);
+
   private void pidToPosition(Pose2d target) {
-    m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
+    autoAlignTheta.enableContinuousInput(-Math.PI, Math.PI);
 
     var currentPose = getState().Pose;
 
@@ -258,13 +261,15 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     double distance = deltaTranslation.getNorm();
 
     // Use a single PID controller for distance
-    double speedMagnitude = m_pathDistanceController.calculate(distance, 0);
+    double speedMagnitude = autoAlignDistance.calculate(distance, 0);
+    speedMagnitude = Math.copySign(Math.sqrt(Math.abs(speedMagnitude)), speedMagnitude);
+
     SmartDashboard.putNumber("autoalign speed ", speedMagnitude);
+    SignalLogger.writeDouble("auto align speed", speedMagnitude);
 
     // If we're close enough to the target, the direction vector could be zero
     Translation2d directionVector;
-    SignalLogger.writeDouble("auto align speed", speedMagnitude);
-    if (distance > 0.03) {
+    if (distance > 0.01) {
       // Create a unit vector in the direction of the target, then scale by the speed magnitude
       directionVector = deltaTranslation.times(speedMagnitude / distance);
     } else {
@@ -275,12 +280,15 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     double rotationRate =
         m_pathThetaController.calculate(
             currentPose.getRotation().getRadians(), target.getRotation().getRadians());
+
+    rotationRate = Math.copySign(Math.sqrt(Math.abs(rotationRate)), rotationRate);
+
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
     SignalLogger.writeDouble("auto align rotation rate", rotationRate);
 
-    if (Math.abs(rotationRate) < 0.03) {
+    /* if (Math.abs(rotationRate) < 0.03) {
       rotationRate = 0;
-    }
+    }*/
 
     // Create chassis speeds using the direction vector and rotation rate
     var speeds = new ChassisSpeeds(directionVector.getX(), directionVector.getY(), rotationRate);
