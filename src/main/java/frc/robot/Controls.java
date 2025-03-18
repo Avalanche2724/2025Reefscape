@@ -112,16 +112,18 @@ public class Controls {
         .andThen(drivetrain.applyRequest(() -> drive.withVelocityX(speed[0] += 0.0005)));
   }
 
+  //
   public void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
     driver.rightMiddle.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
     driver.leftMiddle.whileTrue(superstructure.zeroElevatorCommand());
 
-    driver.leftBumper.whileTrue(intake.runIntake());
+    driver.leftBumper.whileTrue(intake.leftMajority());
     driver.rightBumper.whileTrue(intake.fullSend());
 
-    driver.y.whileTrue(intake.run(-2.9));
-    driver.a.whileTrue(intake.leftMajority());
+    driver.y.whileTrue(intake.run(-2.8));
+    driver.a.whileTrue(intake.runIntake());
+
     coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
