@@ -113,10 +113,17 @@ public class Intake extends SubsystemBase {
   }
 
   public Command leftMajority() {
+    int[] a = new int[1];
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(8));
-          rightMotor.setControl(voltageOut.withOutput(4));
+          // a[0]++;
+          // if ((a[0] / 50) % 2 == 1) {
+          leftMotor.setControl(voltageOut.withOutput(3));
+          rightMotor.setControl(voltageOut.withOutput(7));
+          // } else {
+          // leftMotor.setControl(voltageOut.withOutput(11));
+          // rightMotor.setControl(voltageOut.withOutput(5));
+          // }
         });
   }
 }

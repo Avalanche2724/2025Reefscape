@@ -22,7 +22,7 @@ public class TunerConstants {
   // CAN bus that the devices are located on;
   // All swerve devices must share the same CAN bus
   public static final CANBus kCANBus = new CANBus("CANivore", "./logs/example.hoot");
-  public static final Distance kWheelRadius = Inches.of(1.94);
+  public static final Distance kWheelRadius = Inches.of(1.894);
   // The steer motor uses any SwerveModule.SteerRequestType control request with the
   // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
   private static final Slot0Configs steerGains =

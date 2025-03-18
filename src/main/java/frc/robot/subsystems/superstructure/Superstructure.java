@@ -34,7 +34,7 @@ public class Superstructure extends SubsystemBase {
     // Launching outtake:
     OUTTAKE_L2_LAUNCH(1.01, 0),
     OUTTAKE_L3_LAUNCH(1.44, 0),
-    OUTTAKE_L4_LAUNCH(1.44, 87),
+    OUTTAKE_L4_LAUNCH(1.44, 88),
     // Vertical outtake:
     OUTTAKE_L1_VERTICAL(0.875, -45),
     OUTTAKE_L4_VERT_P1(1.52, 60),
