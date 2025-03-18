@@ -258,7 +258,8 @@ public class Controls {
   public void coralAlgaeActivePresets(Trigger button, Position coral, Position algae) {
     button.whileTrue(
         coralAlgaeCommand(
-            superstructure.goToPosition(coral), superstructure.getToPositionThenHold(algae)));
+            superstructure.getToPositionThenHold(coral),
+            superstructure.getToPositionThenHold(algae)));
   }
 
   public void coralAlgaeSettingPresets(Trigger button, Position coral, Position algae) {
