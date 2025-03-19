@@ -116,8 +116,9 @@ public class Vision {
     private final PhotonCamera camera;
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> lockedPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
+    // TODO fix before comp
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> unlockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(true, 0));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
     private final PhotonPoseEstimator photonEstimator;
     private String cameraName;
     private String visionEstimationKey;
