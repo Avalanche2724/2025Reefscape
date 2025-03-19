@@ -27,7 +27,8 @@ public class Elevator {
   // Constants
   public static final int ELEVATOR_ID = 41;
   public static final int ELEVATOR2_ID = 42;
-  public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches); // 0.1651m
+  // this is a bit wrong now but it's fine™
+  public static final double MIN_HEIGHT = Meters.convertFrom(7, Inches);
   public static final double MAX_HEIGHT = 1.58;
   // Meters.convertFrom(59.06, Inches); // 1.5 m
   //
@@ -206,12 +207,12 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    motor.set(11);
+    motor.set(1);
     // setMotorVelocity(ALGAE_LAUNCHING_VELOCITY, false);
   }
 
   void setMotorLaunchingVelocityDown() {
-    motor.set(-11);
+    motor.set(-1);
     // setMotorVelocity(-ALGAE_LAUNCHING_VELOCITY, false);
   }
 

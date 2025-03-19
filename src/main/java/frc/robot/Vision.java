@@ -117,8 +117,9 @@ public class Vision {
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> lockedPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
     // TODO fix before comp
+    // TODO seed with other pose or something?
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> unlockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e5));
     private final PhotonPoseEstimator photonEstimator;
     private String cameraName;
     private String visionEstimationKey;
@@ -126,6 +127,7 @@ public class Vision {
     private Optional<Matrix<N8, N1>> cameraDistortion;
     private Matrix<N3, N1> curStdDevs;
     public final StructPublisher<Pose2d> drivePoseTelemetry;
+    public final StructPublisher<Pose2d> pnpPoseTelemetry;
 
     public Camera(String cameraName, Transform3d robotToCam) {
       this.cameraName = cameraName;
@@ -139,6 +141,11 @@ public class Vision {
           NetworkTableInstance.getDefault()
               .getTable("SmartDashboard")
               .getStructTopic(visionEstimationKey, Pose2d.struct)
+              .publish();
+      pnpPoseTelemetry =
+          NetworkTableInstance.getDefault()
+              .getTable("SmartDashboard")
+              .getStructTopic("PNP" + visionEstimationKey, Pose2d.struct)
               .publish();
 
       photonEstimator =
@@ -186,8 +193,12 @@ public class Vision {
         photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
         if (coprocPnpEst.isEmpty()) {
           // System.out.print("Warning: coproc pnp est empty");
+          // photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
           continue;
+        } else {
+          // photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
         }
+        pnpPoseTelemetry.accept(coprocPnpEst.get().estimatedPose.toPose2d());
 
         if (DriverStation.isDisabled()) {
           var coprocRotation = coprocPnpEst.get().estimatedPose.getRotation().toRotation2d();
