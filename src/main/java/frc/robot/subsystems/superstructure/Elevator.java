@@ -118,7 +118,7 @@ public class Elevator {
     // config.MotionMagic.MotionMagicJerk = 20; // meters per second cubed
 
     // Other things
-    config.CurrentLimits.StatorCurrentLimit = 40;
+    config.CurrentLimits.StatorCurrentLimit = 25;
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     // Forward/reverse limits
