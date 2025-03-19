@@ -10,6 +10,7 @@ import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Position;
+import frc.robot.util.FieldConstants;
 
 public class AutoRoutines {
   private final AutoFactory m_factory;
@@ -18,6 +19,7 @@ public class AutoRoutines {
   private final Superstructure superstructure;
   private final Intake intake;
   private final Climber climber;
+  private final Controls controls;
 
   public AutoRoutines(AutoFactory factory, RobotContainer container) {
     m_factory = factory;
@@ -26,6 +28,66 @@ public class AutoRoutines {
     superstructure = container.superstructure;
     intake = container.intake;
     climber = container.climber;
+    controls = container.controls;
+  }
+
+  public AutoRoutine verycoolpath() {
+    var routine = m_factory.newRoutine("verycoolpath");
+    var START_TO_BRANCH1 = routine.trajectory("CoolPath", 0);
+    var BRANCH1_TO_HP = routine.trajectory("CoolPath", 1);
+    var HP_TO_BRANCH2 = routine.trajectory("CoolPath", 2);
+    var BRANCH2_TO_HP = routine.trajectory("CoolPath", 3);
+    var HP_TO_BRANCH3 = routine.trajectory("CoolPath", 4);
+
+    routine.active().onTrue(START_TO_BRANCH1.resetOdometry().andThen(START_TO_BRANCH1.cmd()));
+    routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+
+    START_TO_BRANCH1
+        .done()
+        .onTrue(
+            sequence(
+                controls
+                    .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, false)
+                    .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
+                intake.ejectIntake().withTimeout(0.5),
+                BRANCH1_TO_HP.spawnCmd()));
+
+    BRANCH1_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
+    BRANCH1_TO_HP
+        .done()
+        .onTrue(sequence(intake.runIntake().withTimeout(1), HP_TO_BRANCH2.spawnCmd()));
+
+    HP_TO_BRANCH2.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+
+    HP_TO_BRANCH2
+        .done()
+        .onTrue(
+            sequence(
+                controls
+                    .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, true)
+                    .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
+                intake.ejectIntake().withTimeout(0.5),
+                BRANCH2_TO_HP.spawnCmd()));
+
+    BRANCH2_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
+
+    BRANCH2_TO_HP
+        .done()
+        .onTrue(sequence(intake.runIntake().withTimeout(1), HP_TO_BRANCH3.spawnCmd()));
+
+    HP_TO_BRANCH3.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+
+    HP_TO_BRANCH3
+        .done()
+        .onTrue(
+            sequence(
+                controls
+                    .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, false)
+                    .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
+                intake.ejectIntake().withTimeout(0.5),
+                Commands.print("Auto Routine Complete")));
+
+    return routine; // TODO
   }
 
   public AutoRoutine l1forauto_LEFT() {
@@ -273,15 +335,5 @@ public class AutoRoutines {
             Commands.print("Auto Routine Complete"))); */
 
     return routine;
-  }
-
-  public AutoRoutine verycoolpath() {
-    var routine = m_factory.newRoutine("verycoolpath");
-    var verycoolpath_1 = routine.trajectory("CoolPath");
-
-    routine.active().onTrue(verycoolpath_1.resetOdometry().andThen(verycoolpath_1.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
-
-    return routine; // TODO
   }
 }

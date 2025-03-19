@@ -24,7 +24,7 @@ public class RobotContainer {
   public final Climber climber = new Climber();
 
   // Other utility classes
-  private final Controls controls = new Controls(this);
+  public final Controls controls = new Controls(this);
   private final Telemetry logger = new Telemetry();
 
   // Auto stuff

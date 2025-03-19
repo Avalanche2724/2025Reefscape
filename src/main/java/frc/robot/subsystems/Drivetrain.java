@@ -303,7 +303,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   public Command driveToPosition(Supplier<Pose2d> target) {
-    return run(() -> pidToPosition(target.get()));
+    return run(() -> pidToPosition(target.get())).finallyDo(() -> setControl(brake));
   }
 
   /**
