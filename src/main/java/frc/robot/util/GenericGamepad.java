@@ -58,6 +58,7 @@ public class GenericGamepad {
   protected Trigger topMiddle;
   // Equivalent to Options on PS4 (No equivalent on Xbox)
   protected Trigger bottomMiddle;
+
   public GenericGamepad(CommandPS4Controller controller) {
     a = controller.cross();
     b = controller.circle();
@@ -97,6 +98,7 @@ public class GenericGamepad {
 
     rumble = (val) -> {};
   }
+
   public GenericGamepad(CommandXboxController controller) {
     a = controller.a();
     b = controller.b();
