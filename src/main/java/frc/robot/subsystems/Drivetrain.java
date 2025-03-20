@@ -238,7 +238,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   // Commands for auto-align
 
   /** PID to a position; useful for auto-align */
-  private final PIDController autoAlignTheta = new PIDController(0.3, 0, 0);
+  private final PIDController autoAlignTheta = new PIDController(5, 0, 0.3);
 
   private final PIDController autoAlignDistance = new PIDController(9, 0, 0);
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
@@ -284,7 +284,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
     SignalLogger.writeDouble("auto align rotation rate", rotationRate);
 
-    if (Math.abs(rotationDifference) < Radians.convertFrom(1, Degrees)) {
+    if (Math.abs(rotationDifference) < Radians.convertFrom(2, Degrees)) {
       rotationRate = 0;
     }
 
