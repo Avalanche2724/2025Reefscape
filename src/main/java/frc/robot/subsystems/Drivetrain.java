@@ -42,20 +42,18 @@ import org.photonvision.EstimatedRobotPose;
  * be used in command-based projects.
  */
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
-  /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
-  private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
-  /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
-  private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
-  private static final double kVisionLoopPeriod = 0.01; // 10 ms
-  // Simulation:
-  private static final double kSimLoopPeriod = 0.005; // 5 ms
-  private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds =
+  // Swerve requests for auto
+  private final SwerveRequest.ApplyFieldSpeeds pathApplyFieldSpeeds =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
-  private final PIDController m_pathXController = new PIDController(9, 0, 0);
-  private final PIDController m_pathYController = new PIDController(9, 0, 0);
+  // Swerve request
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
+
+  private final PIDController m_pathXController = new PIDController(9, 0, 0);
+  private final PIDController m_pathYController = new PIDController(9, 0, 0);
   private final PIDController m_pathThetaController = new PIDController(6, 0, 0);
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
   private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization =
@@ -63,7 +61,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization =
       new SwerveRequest.SysIdSwerveRotation();
   /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
-  private final SysIdRoutine m_sysIdRoutineTranslation =
+  private final SysIdRoutine sysIdRoutineTranslation =
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
@@ -73,9 +71,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
           new SysIdRoutine.Mechanism(
               output -> setControl(m_translationCharacterization.withVolts(output)), null, this));
   /* The SysId routine to test */
-  public SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+  public final SysIdRoutine m_sysIdRoutineToApply = sysIdRoutineTranslation;
   /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
-  private final SysIdRoutine m_sysIdRoutineSteer =
+  private final SysIdRoutine sysIdRoutineSteer =
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
@@ -84,12 +82,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               state -> SignalLogger.writeString("SysIdSteer_State", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(m_steerCharacterization.withVolts(volts)), null, this));
-  /*
-   * SysId routine for characterizing rotation.
-   * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
-   * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
-   */
-  private final SysIdRoutine m_sysIdRoutineRotation =
+  private final SysIdRoutine sysIdRoutineRotation =
       new SysIdRoutine(
           new SysIdRoutine.Config(
               /* This is in radians per second², but SysId only supports "volts per second" */
@@ -106,8 +99,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               },
               null,
               this));
+
+  /** PID controllers for auto-align */
+  private final PIDController autoAlignTheta = new PIDController(5, 0, 0);
+
+  private final PIDController autoAlignDistance = new PIDController(9, 0, 0);
+
   public Vision vision = new Vision();
+  double[] m_poseArray = new double[3];
   private boolean hasAppliedOperatorPerspectiveYet = false;
+
   private Notifier visionNotifier = null;
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
@@ -135,8 +136,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     // configNeutralMode(NeutralModeValue.Coast);
   }
 
-  // SysId
-
   /**
    * Returns a command that applies the specified control request to this swerve drivetrain.
    *
@@ -151,14 +150,14 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     return new AutoFactory(() -> getState().Pose, this::resetPose, this::followPath, true, this);
   }
 
-  double[] m_poseArray = new double[3];
-
   public void logPose2d(String key, Pose2d pose) {
     m_poseArray[0] = pose.getX();
     m_poseArray[1] = pose.getY();
     m_poseArray[2] = pose.getRotation().getDegrees();
     SignalLogger.writeDoubleArray(key, m_poseArray);
   }
+
+  // Vision
 
   public void followPath(SwerveSample sample) {
     m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
@@ -175,7 +174,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     logPose2d("Auto/TargetPose", sample.getPose());
 
     setControl(
-        m_pathApplyFieldSpeeds
+        pathApplyFieldSpeeds
             .withSpeeds(targetSpeeds)
             .withWheelForceFeedforwardsX(sample.moduleForcesX())
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
@@ -191,8 +190,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               correctFromVision(vision.camera1);
               correctFromVision(vision.camera2);
             });
-    visionNotifier.startPeriodic(kVisionLoopPeriod);
+    // visionNotifier.startPeriodic(0.01);
   }
+
+  // Commands for auto-align
 
   @Override
   public void periodic() {
@@ -208,15 +209,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
           .ifPresent(
               allianceColor -> {
                 setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? kRedAlliancePerspectiveRotation
-                        : kBlueAlliancePerspectiveRotation);
+                    allianceColor == Alliance.Red ? Rotation2d.k180deg : Rotation2d.kZero);
                 hasAppliedOperatorPerspectiveYet = true;
               });
     }
   }
-
-  // Vision
 
   public void integrateVisionCorrection(
       EstimatedRobotPose estimation, Matrix<N3, N1> standardDeviations) {
@@ -235,14 +232,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         this::integrateVisionCorrection);
   }
 
-  // Commands for auto-align
-
-  /** PID to a position; useful for auto-align */
-  private final PIDController autoAlignTheta = new PIDController(5, 0, 0.3);
-
-  private final PIDController autoAlignDistance = new PIDController(9, 0, 0);
-  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-
   private void pidToPosition(Pose2d target) {
     autoAlignTheta.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -260,8 +249,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     // Use a single PID controller for distance
     double speedMagnitude = autoAlignDistance.calculate(distance, 0);
-    speedMagnitude = Math.copySign(Math.sqrt(Math.abs(speedMagnitude)), speedMagnitude);
-
+    // speedMagnitude = Math.copySign(Math.sqrt(Math.abs(speedMagnitude)), speedMagnitude);
+    // 0.5 inches
     if (Math.abs(distance) < Meters.convertFrom(0.5, Inches)) {
       speedMagnitude = 0;
     }
@@ -279,11 +268,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         MathUtil.angleModulus(
             currentPose.getRotation().getRadians() - target.getRotation().getRadians());
 
-    rotationRate = Math.copySign(Math.sqrt(Math.abs(rotationRate)), rotationRate);
+    // rotationRate = Math.copySign(Math.sqrt(Math.abs(rotationRate)), rotationRate);
 
     SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
     SignalLogger.writeDouble("auto align rotation rate", rotationRate);
 
+    // 2 degrees
     if (Math.abs(rotationDifference) < Radians.convertFrom(2, Degrees)) {
       rotationRate = 0;
     }
@@ -406,6 +396,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 vision.simulationPeriodic(getState().Pose);
               }
             });
-    m_simNotifier.startPeriodic(kSimLoopPeriod);
+    m_simNotifier.startPeriodic(0.005);
   }
 }

@@ -17,10 +17,31 @@ import java.util.*;
  * have a blue alliance origin.
  */
 public class FieldConstants {
-  public static final AprilTagFieldLayout layout = Vision.kTagLayout;
+  public enum ReefLevel {
+    L1(Units.inchesToMeters(25.0), 0),
+    L2(Units.inchesToMeters(31.875 - Math.cos(Math.toRadians(35.0)) * 0.625), -35),
+    L3(Units.inchesToMeters(47.625 - Math.cos(Math.toRadians(35.0)) * 0.625), -35),
+    L4(Units.inchesToMeters(72), -90);
+
+    public final double height;
+    public final double pitch;
+
+    ReefLevel(double height, double pitch) {
+      this.height = height;
+      this.pitch = pitch; // Degrees
+    }
+
+    public static ReefLevel fromLevel(int level) {
+      return Arrays.stream(values())
+          .filter(height -> height.ordinal() == level)
+          .findFirst()
+          .orElse(L4);
+    }
+  }
+
+  public static final AprilTagFieldLayout layout = Vision.APRILTAG_FIELD_LAYOUT;
   public static final double fieldLength = layout.getFieldLength();
   public static final double fieldWidth = layout.getFieldWidth();
-
   public static final double startingLineX =
       Units.inchesToMeters(299.438); // Measured from the inside of starting line
   public static final double algaeDiameter = Units.inchesToMeters(16);
@@ -149,27 +170,5 @@ public class FieldConstants {
         new Pose2d(Units.inchesToMeters(48), middleIceCream.getY() + separation, new Rotation2d());
     public static final Pose2d rightIceCream =
         new Pose2d(Units.inchesToMeters(48), middleIceCream.getY() - separation, new Rotation2d());
-  }
-
-  public enum ReefLevel {
-    L1(Units.inchesToMeters(25.0), 0),
-    L2(Units.inchesToMeters(31.875 - Math.cos(Math.toRadians(35.0)) * 0.625), -35),
-    L3(Units.inchesToMeters(47.625 - Math.cos(Math.toRadians(35.0)) * 0.625), -35),
-    L4(Units.inchesToMeters(72), -90);
-
-    ReefLevel(double height, double pitch) {
-      this.height = height;
-      this.pitch = pitch; // Degrees
-    }
-
-    public static ReefLevel fromLevel(int level) {
-      return Arrays.stream(values())
-          .filter(height -> height.ordinal() == level)
-          .findFirst()
-          .orElse(L4);
-    }
-
-    public final double height;
-    public final double pitch;
   }
 }

@@ -76,36 +76,6 @@ public class Controls {
     Robot.instance.addPeriodic(this::periodic, 0.02);
   }
 
-  /*
-   todo
-    public static Transform2d solveRobotToCamera(
-        Pose2d cameraPose1, Pose2d cameraPose2, Rotation2d angleOnRobot) {
-      // Extract the camera positions and rotations
-      double x1 = cameraPose1.getTranslation().getX();
-      double y1 = cameraPose1.getTranslation().getY();
-      double x2 = cameraPose2.getTranslation().getX();
-      double y2 = cameraPose2.getTranslation().getY();
-
-      double theta1 = cameraPose1.getRotation().getRadians();
-      double theta2 = cameraPose2.getRotation().getRadians();
-
-      // Compute the coefficients for x and y
-      double cos1 = Math.cos(theta1);
-      double sin1 = Math.sin(theta1);
-      double cos2 = Math.cos(theta2);
-      double sin2 = Math.sin(theta2);
-
-      // Compute the determinant (denominator) for solving the system
-      double denominator = (cos1 - cos2) * (cos1 - cos2) + (sin1 - sin2) * (sin1 - sin2);
-
-      // Calculate x and y
-      double x = ((x2 - x1) * (cos1 - cos2) + (y2 - y1) * (sin1 - sin2)) / -denominator;
-      double y = ((x2 - x1) * (sin1 - sin2) + (y2 - y1) * (cos2 - cos1)) / denominator;
-
-      // Return the robotToCamera transform as a Transform2d
-      return new Transform2d(new Translation2d(x, y).rotateBy(angleOnRobot), angleOnRobot);
-    }
-  */
   public Command tuneDrivetrainStaticFriction() {
     double[] speed = new double[] {0};
     return runOnce(() -> speed[0] = 0)
