@@ -11,12 +11,10 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -47,15 +45,21 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
   // Swerve request
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
-      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
+      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-  private final PIDController m_pathXController = new PIDController(9, 0, 0);
-  private final PIDController m_pathYController = new PIDController(9, 0, 0);
-  private final PIDController m_pathThetaController = new PIDController(6, 0, 0);
+  private final PIDController pathXController = new PIDController(9, 0, 0);
+  private final PIDController pathYController = new PIDController(9, 0, 0);
+  private final PIDController pathThetaController = new PIDController(7, 0, 0);
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+
+  /** PID controllers for auto-align */
+
+  // private final PIDController pathXController = new PIDController(10, 0, 0);
+  //  private final PIDController pathYController = new PIDController(10, 0, 0);
 
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();
+
   private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization =
       new SwerveRequest.SysIdSwerveSteerGains();
   private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization =
@@ -99,11 +103,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               },
               null,
               this));
-
-  /** PID controllers for auto-align */
-  private final PIDController autoAlignTheta = new PIDController(5, 0, 0);
-
-  private final PIDController autoAlignDistance = new PIDController(9, 0, 0);
 
   public Vision vision = new Vision();
   double[] m_poseArray = new double[3];
@@ -160,15 +159,15 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   // Vision
 
   public void followPath(SwerveSample sample) {
-    m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
+    pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     var pose = getState().Pose;
 
     var targetSpeeds = sample.getChassisSpeeds();
-    targetSpeeds.vxMetersPerSecond += m_pathXController.calculate(pose.getX(), sample.x);
-    targetSpeeds.vyMetersPerSecond += m_pathYController.calculate(pose.getY(), sample.y);
+    targetSpeeds.vxMetersPerSecond += pathXController.calculate(pose.getX(), sample.x);
+    targetSpeeds.vyMetersPerSecond += pathYController.calculate(pose.getY(), sample.y);
     targetSpeeds.omegaRadiansPerSecond +=
-        m_pathThetaController.calculate(pose.getRotation().getRadians(), sample.heading);
+        pathThetaController.calculate(pose.getRotation().getRadians(), sample.heading);
 
     logPose2d("Auto/CurrentPose", pose);
     logPose2d("Auto/TargetPose", sample.getPose());
@@ -233,59 +232,18 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   }
 
   private void pidToPosition(Pose2d target) {
-    autoAlignTheta.enableContinuousInput(-Math.PI, Math.PI);
+    pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
-    var currentPose = getState().Pose;
+    var pose = getState().Pose;
 
-    // Calculate vector from current position to target using WPILib's math classes
-    Translation2d currentTranslation = currentPose.getTranslation();
-    Translation2d targetTranslation = target.getTranslation();
+    var speeds =
+        new ChassisSpeeds(
+            pathXController.calculate(pose.getX(), target.getX()),
+            pathYController.calculate(pose.getY(), target.getY()),
+            pathThetaController.calculate(
+                pose.getRotation().getRadians(), target.getRotation().getRadians()));
 
-    // Get the vector from current to target position
-    Translation2d deltaTranslation = currentTranslation.minus(targetTranslation);
-
-    // Calculate distance to target
-    double distance = deltaTranslation.getNorm();
-
-    // Use a single PID controller for distance
-    double speedMagnitude = autoAlignDistance.calculate(distance, 0);
-    // speedMagnitude = Math.copySign(Math.sqrt(Math.abs(speedMagnitude)), speedMagnitude);
-    // 0.5 inches
-    if (Math.abs(distance) < Meters.convertFrom(0.5, Inches)) {
-      speedMagnitude = 0;
-    }
-
-    SmartDashboard.putNumber("autoalign speed ", speedMagnitude);
-    SignalLogger.writeDouble("auto align speed", speedMagnitude);
-
-    Translation2d directionVector = deltaTranslation.times(speedMagnitude / distance);
-
-    // Calculate the rotation rate using the theta controller
-    double rotationRate =
-        autoAlignTheta.calculate(
-            currentPose.getRotation().getRadians(), target.getRotation().getRadians());
-    double rotationDifference =
-        MathUtil.angleModulus(
-            currentPose.getRotation().getRadians() - target.getRotation().getRadians());
-
-    // rotationRate = Math.copySign(Math.sqrt(Math.abs(rotationRate)), rotationRate);
-
-    SmartDashboard.putNumber("autoalign rotation rate", rotationRate);
-    SignalLogger.writeDouble("auto align rotation rate", rotationRate);
-
-    // 2 degrees
-    if (Math.abs(rotationDifference) < Radians.convertFrom(2, Degrees)) {
-      rotationRate = 0;
-    }
-
-    // Create chassis speeds using the direction vector and rotation rate
-    // if (rotationRate == 0 && speedMagnitude == 0) {
-    if (false) {
-      setControl(brake);
-    } else {
-      var speeds = new ChassisSpeeds(directionVector.getX(), directionVector.getY(), rotationRate);
-      setControl(pathPidToPoint.withSpeeds(speeds));
-    }
+    setControl(pathPidToPoint.withSpeeds(speeds));
   }
 
   public Command driveToPosition(Supplier<Pose2d> target) {
