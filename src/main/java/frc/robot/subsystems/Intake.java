@@ -8,6 +8,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.function.DoubleSupplier;
 
 public class Intake extends SubsystemBase {
@@ -35,6 +36,15 @@ public class Intake extends SubsystemBase {
 
     setDefaultCommand(stopIntake());
   }
+
+  boolean hasGamePiece() {
+    return (leftMotor.getTorqueCurrent().getValueAsDouble() > 10
+        && rightMotor.getTorqueCurrent().getValueAsDouble() > 10
+        && leftMotor.getVelocity().getValueAsDouble() < 2
+        && rightMotor.getVelocity().getValueAsDouble() < 2);
+  }
+
+  public Trigger hasGamePieceTrigger = new Trigger(this::hasGamePiece).debounce(0.2);
 
   public Command runIntake() {
     return run(
