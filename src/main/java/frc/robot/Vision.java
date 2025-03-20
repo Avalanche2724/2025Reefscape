@@ -39,7 +39,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import org.photonvision.EstimatedRobotPose;
@@ -49,7 +48,6 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   // TODO: should be andymark; appears to have bug in sim (?)
@@ -108,18 +106,14 @@ public class Vision {
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
-
-    // TODO Experiment and determine estimation noise on an actual robot.
-    public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
     private final Transform3d robotToCam;
     private final PhotonCamera camera;
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> lockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e15));
     // TODO fix before comp
     // TODO seed with other pose or something?
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> unlockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e5));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(true, 0));
     private final PhotonPoseEstimator photonEstimator;
     private String cameraName;
     private String visionEstimationKey;
@@ -140,7 +134,7 @@ public class Vision {
       drivePoseTelemetry =
           NetworkTableInstance.getDefault()
               .getTable("SmartDashboard")
-              .getStructTopic(visionEstimationKey, Pose2d.struct)
+              .getStructTopic("Constrained" + visionEstimationKey, Pose2d.struct)
               .publish();
       pnpPoseTelemetry =
           NetworkTableInstance.getDefault()
@@ -166,6 +160,92 @@ public class Vision {
       }
     }
 
+    // TODO Experiment and determine estimation noise on an actual robot.
+    public static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(4, 4, 8);
+    public static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 1);
+
+    // TODO: should we return multiple poses?
+    // TODO we need alerting and stuff for when the camera is not connected
+    public void getEstimatedGlobalPose(
+        double headingFpgaTimestamp,
+        Rotation2d heading,
+        BiConsumer<EstimatedRobotPose, Matrix<N3, N1>> estimateConsumer) {
+      // Update camera matrix/distortion if necessary
+      if (camera.isConnected()) {
+        if (cameraMatrix.isEmpty()) {
+          cameraMatrix = camera.getCameraMatrix();
+        }
+        if (cameraDistortion.isEmpty()) {
+          cameraDistortion = camera.getDistCoeffs();
+        }
+      }
+
+      var unreadResults = camera.getAllUnreadResults();
+
+      // Add heading data from thingy
+      photonEstimator.addHeadingData(headingFpgaTimestamp, heading);
+
+      for (var change : unreadResults) {
+        // Get pnp est
+        // This could also be the single-tag trig estimate if only one tag is seen
+        photonEstimator.setPrimaryStrategy(PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
+        var solvePnpEst = photonEstimator.update(change);
+
+        if (solvePnpEst.isEmpty()) continue;
+
+        var solvePnpEstimate = solvePnpEst.get();
+
+        pnpPoseTelemetry.set(solvePnpEstimate.estimatedPose.toPose2d());
+
+        // Get tags
+        var targets = change.getTargets();
+        int numTags = 0;
+        double avgDist = 0;
+        for (var tgt : targets) {
+          var tagPose = photonEstimator.getFieldTags().getTagPose(tgt.getFiducialId());
+          if (tagPose.isEmpty()) continue;
+          numTags++;
+          avgDist +=
+              tagPose
+                  .get()
+                  .toPose2d()
+                  .getTranslation()
+                  .getDistance(solvePnpEstimate.estimatedPose.toPose2d().getTranslation());
+        }
+        avgDist /= numTags;
+
+        var estStdDevs = numTags == 1 ? singleTagDevs : multiTagDevs;
+        // Just taken from the photonvision example
+        estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
+
+        // If num tags = 1, just use trig solvepnp, don't update heading
+        // Note: we're assuming we currently have an accurate field relative heading but whatever
+        if (numTags == 1) {
+          if (avgDist <= 4) {
+            estimateConsumer.accept(solvePnpEstimate, estStdDevs);
+          }
+        } else {
+          // If we have multiple tags: use constrained solvepnp
+          photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
+          var constrainedEst =
+              photonEstimator.update(
+                  change,
+                  cameraMatrix,
+                  cameraDistortion,
+                  DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams);
+          if (constrainedEst.isPresent()) {
+            var constrainedEstimate = constrainedEst.get();
+
+            drivePoseTelemetry.set(constrainedEstimate.estimatedPose.toPose2d());
+
+            estimateConsumer.accept(constrainedEstimate, estStdDevs);
+          } else {
+            System.out.println("Warning: constrained pnp failed?");
+          }
+        }
+      }
+    }
+    /*
     // TODO: should we return multiple poses?
     // TODO we need alerting and stuff for when the camera is not connected
     public void getEstimatedGlobalPose(
@@ -220,7 +300,46 @@ public class Vision {
                 cameraMatrix,
                 cameraDistortion,
                 DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams);
-        updateEstimationStdDevs(visionEst, change.getTargets());
+
+        List<PhotonTrackedTarget> targets = change.getTargets();
+        if (visionEst.isEmpty()) {
+          // No pose input. Default to single-tag std devs
+          curStdDevs = kSingleTagStdDevs;
+        } else {
+          // Pose present. Start running Heuristic
+          var estStdDevs = kSingleTagStdDevs;
+          int numTags = 0;
+          double avgDist = 0;
+
+          // Precalculation - see how many tags we found, and calculate an average-distance metric
+          for (var tgt : targets) {
+            var tagPose = photonEstimator.getFieldTags().getTagPose(tgt.getFiducialId());
+            if (tagPose.isEmpty()) continue;
+            numTags++;
+            avgDist +=
+                tagPose
+                    .get()
+                    .toPose2d()
+                    .getTranslation()
+                    .getDistance(visionEst.get().estimatedPose.toPose2d().getTranslation());
+          }
+
+          if (numTags == 0) {
+            // No tags visible. Default to single-tag std devs
+            curStdDevs = kSingleTagStdDevs;
+          } else {
+            // One or more tags visible, run the full heuristic.
+            avgDist /= numTags;
+            // Decrease std devs if multiple targets are visible
+            if (numTags > 1) estStdDevs = kMultiTagStdDevs;
+            // Increase std devs based on (average) distance
+            if (numTags == 1 && avgDist > 4)
+              estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+            else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
+            curStdDevs = estStdDevs;
+          }
+        }
+
         drivePoseTelemetry.set(visionEst.map(est -> est.estimatedPose.toPose2d()).orElse(null));
         estimateConsumer.accept(visionEst, curStdDevs);
 
@@ -234,46 +353,6 @@ public class Vision {
         }
       }
     }
-
-    private void updateEstimationStdDevs(
-        Optional<EstimatedRobotPose> estimatedPose, List<PhotonTrackedTarget> targets) {
-      if (estimatedPose.isEmpty()) {
-        // No pose input. Default to single-tag std devs
-        curStdDevs = kSingleTagStdDevs;
-      } else {
-        // Pose present. Start running Heuristic
-        var estStdDevs = kSingleTagStdDevs;
-        int numTags = 0;
-        double avgDist = 0;
-
-        // Precalculation - see how many tags we found, and calculate an average-distance metric
-        for (var tgt : targets) {
-          var tagPose = photonEstimator.getFieldTags().getTagPose(tgt.getFiducialId());
-          if (tagPose.isEmpty()) continue;
-          numTags++;
-          avgDist +=
-              tagPose
-                  .get()
-                  .toPose2d()
-                  .getTranslation()
-                  .getDistance(estimatedPose.get().estimatedPose.toPose2d().getTranslation());
-        }
-
-        if (numTags == 0) {
-          // No tags visible. Default to single-tag std devs
-          curStdDevs = kSingleTagStdDevs;
-        } else {
-          // One or more tags visible, run the full heuristic.
-          avgDist /= numTags;
-          // Decrease std devs if multiple targets are visible
-          if (numTags > 1) estStdDevs = kMultiTagStdDevs;
-          // Increase std devs based on (average) distance
-          if (numTags == 1 && avgDist > 4)
-            estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-          else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
-          curStdDevs = estStdDevs;
-        }
-      }
-    }
+    */
   }
 }

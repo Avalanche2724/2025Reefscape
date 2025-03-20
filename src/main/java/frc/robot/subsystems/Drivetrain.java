@@ -34,7 +34,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Vision;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-import java.util.Optional;
 import java.util.function.Supplier;
 import org.photonvision.EstimatedRobotPose;
 
@@ -220,16 +219,13 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   // Vision
 
   public void integrateVisionCorrection(
-      Optional<EstimatedRobotPose> est, Matrix<N3, N1> standardDeviations) {
-    if (est.isPresent()) {
+      EstimatedRobotPose estimation, Matrix<N3, N1> standardDeviations) {
+    var pose2d = estimation.estimatedPose.toPose2d();
+    // logPose2d("Vision_Estimation", pose2d);
+    // TODO log
 
-      var estimation = est.get();
-      var pose2d = estimation.estimatedPose.toPose2d();
-      logPose2d("Vision_Estimation", pose2d);
-
-      addVisionMeasurement(
-          pose2d, Utils.fpgaToCurrentTime(estimation.timestampSeconds), standardDeviations);
-    }
+    addVisionMeasurement(
+        pose2d, Utils.fpgaToCurrentTime(estimation.timestampSeconds), standardDeviations);
   }
 
   public void correctFromVision(Vision.Camera camera) {
