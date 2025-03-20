@@ -51,12 +51,12 @@ public class Elevator {
   private final StatusSignal<Angle> motorPosition = motor.getPosition();
   private final StatusSignal<AngularVelocity> motorVelocity = motor.getVelocity();
   private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
+  Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.25);
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Control
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   private final VelocityTorqueCurrentFOC velocityControl =
       new VelocityTorqueCurrentFOC(0).withSlot(1);
-
   // Simulation
   private final ElevatorSim m_elevatorSim =
       new ElevatorSim(
@@ -169,8 +169,6 @@ public class Elevator {
     return getTorqueCurrent() < STALL_DETECT_TORQUE
         && Math.abs(getVelocity()) < VELOCITY_DETECT_THRESHOLD;
   }
-
-  Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.25);
 
   public double getVelocity() {
     return motorVelocity.getValueAsDouble();

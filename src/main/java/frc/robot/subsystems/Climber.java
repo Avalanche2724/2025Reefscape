@@ -11,6 +11,7 @@ import java.util.function.DoubleSupplier;
 public class Climber extends SubsystemBase {
 
   private final TalonFX motor = new TalonFX(61);
+  private final VoltageOut control = new VoltageOut(0);
 
   public Climber() {
     TalonFXConfiguration config = new TalonFXConfiguration();
@@ -30,8 +31,6 @@ public class Climber extends SubsystemBase {
     // import robot;
 
   }
-
-  private final VoltageOut control = new VoltageOut(0);
 
   public Command runVoltage(DoubleSupplier arg) {
     return run(
