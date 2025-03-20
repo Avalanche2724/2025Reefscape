@@ -57,7 +57,10 @@ public class LED extends SubsystemBase {
 
   public Command netchecker() {
     var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
-
-    return runPattern(LEDPattern.solid(Color.kGreen));
+    if (position > 6.8 && position < 7.98) {
+      return runPattern(LEDPattern.solid(Color.kGreen));
+    } else {
+      return runPattern(LEDPattern.solid(Color.kBlue));
+    }
   }
 }
