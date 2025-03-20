@@ -51,7 +51,7 @@ import org.photonvision.simulation.VisionSystemSim;
 
 public class Vision {
   // TODO: should be andymark; appears to have bug in sim (?)
-  public static final AprilTagFieldLayout kTagLayout;
+  public static final AprilTagFieldLayout APRILTAG_FIELD_LAYOUT;
 
   static {
     var layout1 = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
@@ -61,7 +61,8 @@ public class Vision {
           int tagId = tag.ID;
           return !((tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22));
         });
-    kTagLayout = new AprilTagFieldLayout(list, layout1.getFieldLength(), layout1.getFieldWidth());
+    APRILTAG_FIELD_LAYOUT =
+        new AprilTagFieldLayout(list, layout1.getFieldLength(), layout1.getFieldWidth());
   }
 
   public VisionSystemSim visionSim = Robot.isSimulation() ? new VisionSystemSim("main") : null;
@@ -83,7 +84,7 @@ public class Vision {
   {
     if (Robot.isSimulation()) {
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
-      visionSim.addAprilTags(kTagLayout);
+      visionSim.addAprilTags(APRILTAG_FIELD_LAYOUT);
     }
   }
 
@@ -106,35 +107,24 @@ public class Vision {
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
-    private final Transform3d robotToCam;
-    private final PhotonCamera camera;
-    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> lockedPnpParams =
+    // Standard deviations for vision estimations:
+    private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(5, 5, 10);
+    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.8, 0.8, 1.6);
+    // PNP params
+    private static final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> pnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
-    // TODO fix before comp
-    // TODO seed with other pose or something?
-    private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> unlockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(true, 0));
-
-    public class BetterPhotonPoseEstimator extends PhotonPoseEstimator {
-      /** Create a new PhotonPoseEstimator. */
-      public BetterPhotonPoseEstimator(
-          AprilTagFieldLayout fieldTags, PoseStrategy strategy, Transform3d robotToCamera) {
-        super(fieldTags, strategy, robotToCamera);
-      }
-
-      public void resetPoseCache() {
-        poseCacheTimestampSeconds = -1;
-      }
-    }
-
-    private final BetterPhotonPoseEstimator photonEstimator;
-    private String cameraName;
-    private String visionEstimationKey;
+    // Publishers for position telemetry
+    private final StructPublisher<Pose2d> constrainedPoseTelemetry;
+    private final StructPublisher<Pose2d> pnpPoseTelemetry;
+    // PhotonVision stuff
+    private final PhotonCamera camera;
+    private final PhotonPoseEstimator photonEstimator;
+    // Other things:
+    private final Transform3d robotToCam;
+    private final String cameraName;
+    private final String visionEstimationKey;
     private Optional<Matrix<N3, N3>> cameraMatrix;
     private Optional<Matrix<N8, N1>> cameraDistortion;
-    private Matrix<N3, N1> curStdDevs;
-    public final StructPublisher<Pose2d> drivePoseTelemetry;
-    public final StructPublisher<Pose2d> pnpPoseTelemetry;
 
     public Camera(String cameraName, Transform3d robotToCam) {
       this.cameraName = cameraName;
@@ -144,26 +134,22 @@ public class Vision {
       cameraMatrix = camera.getCameraMatrix();
       cameraDistortion = camera.getDistCoeffs();
 
-      drivePoseTelemetry =
-          NetworkTableInstance.getDefault()
-              .getTable("SmartDashboard")
-              .getStructTopic("Constrained" + visionEstimationKey, Pose2d.struct)
-              .publish();
+      var smartDashboardTable = NetworkTableInstance.getDefault().getTable("SmartDashboard");
+
+      constrainedPoseTelemetry =
+          smartDashboardTable.getStructTopic("CON" + visionEstimationKey, Pose2d.struct).publish();
       pnpPoseTelemetry =
-          NetworkTableInstance.getDefault()
-              .getTable("SmartDashboard")
-              .getStructTopic("PNP" + visionEstimationKey, Pose2d.struct)
-              .publish();
+          smartDashboardTable.getStructTopic("PNP" + visionEstimationKey, Pose2d.struct).publish();
 
       photonEstimator =
-          new BetterPhotonPoseEstimator(
-              kTagLayout, PoseStrategy.CONSTRAINED_SOLVEPNP, this.robotToCam);
+          new PhotonPoseEstimator(
+              APRILTAG_FIELD_LAYOUT, PoseStrategy.CONSTRAINED_SOLVEPNP, this.robotToCam);
       photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
 
       if (Robot.isSimulation()) {
         var cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(79));
-        cameraProp.setCalibError(0.3, 0.1);
+        cameraProp.setCalibError(0.4, 0.3);
         cameraProp.setFPS(20);
         cameraProp.setAvgLatencyMs(20);
         cameraProp.setLatencyStdDevMs(4);
@@ -173,10 +159,6 @@ public class Vision {
         cameraSim.enableDrawWireframe(true);
       }
     }
-
-    // TODO Experiment and determine estimation noise on an actual robot.
-    public static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(4, 4, 8);
-    public static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 1);
 
     // TODO: should we return multiple poses?
     // TODO we need alerting and stuff for when the camera is not connected
@@ -201,11 +183,10 @@ public class Vision {
       // photonEstimator.addHeadingData(Sy);
 
       for (var change : unreadResults) {
-        // Get pnp est
-        // This could also be the single-tag trig estimate if only one tag is seen
+        // This could either be the multi-tag pnp estimate, or the single-tag trig estimate if only
+        // one tag is seen
         photonEstimator.setPrimaryStrategy(PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
         var solvePnpEst = photonEstimator.update(change);
-
         if (solvePnpEst.isEmpty()) continue; // 0 tags
 
         var solvePnpEstimate = solvePnpEst.get();
@@ -233,12 +214,12 @@ public class Vision {
         // Just taken from the photonvision example
         estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
 
-        // If num tags = 1, just use trig solvepnp, don't update heading
-        // Note: we're assuming we currently have an accurate field relative heading but whatever
         if (numTags == 0) {
-          // This shouldn't happen?
-          System.out.println("numtags = 0");
+          // This should not happen:
+          System.out.println("Warning: numtags = 0");
         } else if (numTags == 1) {
+          // If num tags = 1, just use the trig solvepnp pose, don't update heading
+          // Note: we're assuming we currently have an accurate field relative heading but whatever
           if (avgDist <= 4) {
             estimateConsumer.accept(solvePnpEstimate, estStdDevs);
           }
@@ -251,134 +232,55 @@ public class Vision {
                 solvePnpEstimate.estimatedPose.toPose2d().getRotation());
           }
 
-          // var pnpParams = DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams;
-          var pnpParams = lockedPnpParams;
           photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
-          photonEstimator.resetPoseCache();
           var constrainedEst =
               photonEstimator.update(change, cameraMatrix, cameraDistortion, pnpParams);
           if (constrainedEst.isPresent()) {
             var constrainedEstimate = constrainedEst.get();
 
-            drivePoseTelemetry.set(constrainedEstimate.estimatedPose.toPose2d());
+            constrainedPoseTelemetry.set(constrainedEstimate.estimatedPose.toPose2d());
 
             estimateConsumer.accept(constrainedEstimate, estStdDevs);
           } else {
-            // System.out.println("Warning: constrained pnp failed?");
-            // TODO Idk why debug later
+            // TODO Idk why this happens debug later
+            // For now just use the solvepnp estimate
+            System.out.println("Warning: constrained pnp failed?");
             estimateConsumer.accept(solvePnpEstimate, estStdDevs);
           }
         }
       }
     }
-    /*
-    // TODO: should we return multiple poses?
-    // TODO we need alerting and stuff for when the camera is not connected
-    public void getEstimatedGlobalPose(
-        double headingFpgaTimestamp,
-        Rotation2d heading,
-        BiConsumer<Optional<EstimatedRobotPose>, Matrix<N3, N1>> estimateConsumer) {
-      if (camera.isConnected()) {
-        if (cameraMatrix.isEmpty()) {
-          cameraMatrix = camera.getCameraMatrix();
-        }
-        if (cameraDistortion.isEmpty()) {
-          cameraDistortion = camera.getDistCoeffs();
-        }
-      }
-
-      var unreadResults = camera.getAllUnreadResults();
-
-      if (DriverStation.isEnabled()) {
-        photonEstimator.addHeadingData(headingFpgaTimestamp, heading);
-      }
-
-      for (var change : unreadResults) {
-        photonEstimator.setPrimaryStrategy(PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
-        var coprocPnpEst = photonEstimator.update(change);
-        photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
-        if (coprocPnpEst.isEmpty()) {
-          // System.out.print("Warning: coproc pnp est empty");
-          // photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
-          continue;
-        } else {
-          // photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
-        }
-        pnpPoseTelemetry.accept(coprocPnpEst.get().estimatedPose.toPose2d());
-
-        if (DriverStation.isDisabled()) {
-          var coprocRotation = coprocPnpEst.get().estimatedPose.getRotation().toRotation2d();
-          // Map to nearest 90 deg angle
-          var newRotation =
-              Rotation2d.fromDegrees(Math.round(coprocRotation.getDegrees() / 90) * 90);
-          // If the rotation is near a 90 degree angle, use that angle
-          if (Math.abs(coprocRotation.getDegrees() - newRotation.getDegrees()) < 6) {
-            photonEstimator.addHeadingData(coprocPnpEst.get().timestampSeconds, newRotation);
-          } // Else add the entire rotation
-          else {
-            photonEstimator.addHeadingData(coprocPnpEst.get().timestampSeconds, coprocRotation);
-          }
-        }
-
-        var visionEst =
-            photonEstimator.update(
-                change,
-                cameraMatrix,
-                cameraDistortion,
-                DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams);
-
-        List<PhotonTrackedTarget> targets = change.getTargets();
-        if (visionEst.isEmpty()) {
-          // No pose input. Default to single-tag std devs
-          curStdDevs = kSingleTagStdDevs;
-        } else {
-          // Pose present. Start running Heuristic
-          var estStdDevs = kSingleTagStdDevs;
-          int numTags = 0;
-          double avgDist = 0;
-
-          // Precalculation - see how many tags we found, and calculate an average-distance metric
-          for (var tgt : targets) {
-            var tagPose = photonEstimator.getFieldTags().getTagPose(tgt.getFiducialId());
-            if (tagPose.isEmpty()) continue;
-            numTags++;
-            avgDist +=
-                tagPose
-                    .get()
-                    .toPose2d()
-                    .getTranslation()
-                    .getDistance(visionEst.get().estimatedPose.toPose2d().getTranslation());
-          }
-
-          if (numTags == 0) {
-            // No tags visible. Default to single-tag std devs
-            curStdDevs = kSingleTagStdDevs;
-          } else {
-            // One or more tags visible, run the full heuristic.
-            avgDist /= numTags;
-            // Decrease std devs if multiple targets are visible
-            if (numTags > 1) estStdDevs = kMultiTagStdDevs;
-            // Increase std devs based on (average) distance
-            if (numTags == 1 && avgDist > 4)
-              estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-            else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
-            curStdDevs = estStdDevs;
-          }
-        }
-
-        drivePoseTelemetry.set(visionEst.map(est -> est.estimatedPose.toPose2d()).orElse(null));
-        estimateConsumer.accept(visionEst, curStdDevs);
-
-        if (Robot.isSimulation()) {
-          visionEst.ifPresentOrElse(
-              est ->
-                  getSimDebugField()
-                      .getObject(visionEstimationKey)
-                      .setPose(est.estimatedPose.toPose2d()),
-              () -> getSimDebugField().getObject(visionEstimationKey).setPoses());
-        }
-      }
-    }
-    */
   }
+
+  /*
+   todo: this thing
+
+    public static Transform2d solveRobotToCamera(
+        Pose2d cameraPose1, Pose2d cameraPose2, Rotation2d angleOnRobot) {
+      // Extract the camera positions and rotations
+      double x1 = cameraPose1.getTranslation().getX();
+      double y1 = cameraPose1.getTranslation().getY();
+      double x2 = cameraPose2.getTranslation().getX();
+      double y2 = cameraPose2.getTranslation().getY();
+
+      double theta1 = cameraPose1.getRotation().getRadians();
+      double theta2 = cameraPose2.getRotation().getRadians();
+
+      // Compute the coefficients for x and y
+      double cos1 = Math.cos(theta1);
+      double sin1 = Math.sin(theta1);
+      double cos2 = Math.cos(theta2);
+      double sin2 = Math.sin(theta2);
+
+      // Compute the determinant (denominator) for solving the system
+      double denominator = (cos1 - cos2) * (cos1 - cos2) + (sin1 - sin2) * (sin1 - sin2);
+
+      // Calculate x and y
+      double x = ((x2 - x1) * (cos1 - cos2) + (y2 - y1) * (sin1 - sin2)) / -denominator;
+      double y = ((x2 - x1) * (sin1 - sin2) + (y2 - y1) * (cos2 - cos1)) / denominator;
+
+      // Return the robotToCamera transform as a Transform2d
+      return new Transform2d(new Translation2d(x, y).rotateBy(angleOnRobot), angleOnRobot);
+    }
+  */
 }
