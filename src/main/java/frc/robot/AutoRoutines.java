@@ -71,11 +71,9 @@ public class AutoRoutines {
     HP_TO_BRANCH2.done().onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
     BRANCH2_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
-
     BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
     HP_TO_BRANCH3.active().onTrue(waitAndL2());
-
     HP_TO_BRANCH3
         .done()
         .onTrue(
