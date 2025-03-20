@@ -189,7 +189,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               correctFromVision(vision.camera1);
               correctFromVision(vision.camera2);
             });
-    // visionNotifier.startPeriodic(0.01);
+    visionNotifier.startPeriodic(0.01);
   }
 
   // Commands for auto-align
