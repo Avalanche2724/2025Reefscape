@@ -40,52 +40,24 @@ public class GenericGamepad {
   // Warning: rightY is -1 when up
   public DoubleSupplier rightY;
   public DoubleSupplier rightX;
-
-  public double getLeftY() {
-    return leftY.getAsDouble();
-  }
-
-  public double getLeftX() {
-    return leftX.getAsDouble();
-  }
-
-  public double getRightY() {
-    return rightY.getAsDouble();
-  }
-
-  public double getRightX() {
-    return rightX.getAsDouble();
-  }
-
   public Trigger leftJoystickPushed;
   public Trigger rightJoystickPushed;
   // Equivalent to Back on Xbox or Share on PS4
   public Trigger leftMiddle;
   // Equivalent to Start on Xbox or Options on PS4
   public Trigger rightMiddle;
-  // Equivalent to Touchpad on PS4 (No equivalent on Xbox)
-  protected Trigger topMiddle;
-  // Equivalent to Options on PS4 (No equivalent on Xbox)
-  protected Trigger bottomMiddle;
-
   public Trigger leftTriggerB;
   public Trigger rightTriggerB;
-
   public Trigger povLeft;
   public Trigger povRight;
   public Trigger povUp;
   public Trigger povDown;
-
   // Note does not work on PS4
   public DoubleConsumer rumble;
-
-  public static GenericGamepad from(int port) {
-    if (Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac")) {
-      return new GenericGamepad(new CommandPS4Controller(port));
-    } else {
-      return new GenericGamepad(new CommandXboxController(port));
-    }
-  }
+  // Equivalent to Touchpad on PS4 (No equivalent on Xbox)
+  protected Trigger topMiddle;
+  // Equivalent to Options on PS4 (No equivalent on Xbox)
+  protected Trigger bottomMiddle;
 
   public GenericGamepad(CommandPS4Controller controller) {
     a = controller.cross();
@@ -165,5 +137,29 @@ public class GenericGamepad {
     bottomMiddle = new Trigger(() -> false);
 
     rumble = (val) -> controller.getHID().setRumble(RumbleType.kBothRumble, val);
+  }
+
+  public static GenericGamepad from(int port) {
+    if (Robot.isSimulation() && System.getProperty("os.name").toLowerCase().contains("mac")) {
+      return new GenericGamepad(new CommandPS4Controller(port));
+    } else {
+      return new GenericGamepad(new CommandXboxController(port));
+    }
+  }
+
+  public double getLeftY() {
+    return leftY.getAsDouble();
+  }
+
+  public double getLeftX() {
+    return leftX.getAsDouble();
+  }
+
+  public double getRightY() {
+    return rightY.getAsDouble();
+  }
+
+  public double getRightX() {
+    return rightX.getAsDouble();
   }
 }

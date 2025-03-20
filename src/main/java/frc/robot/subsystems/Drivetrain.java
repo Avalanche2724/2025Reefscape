@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -43,9 +44,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   // Swerve requests for auto
   private final SwerveRequest.ApplyFieldSpeeds pathApplyFieldSpeeds =
       new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
-  // Swerve request
-  private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
-      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
   private final PIDController pathXController = new PIDController(9, 0, 0);
   private final PIDController pathYController = new PIDController(9, 0, 0);
@@ -103,14 +101,14 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               },
               null,
               this));
-
   public Vision vision = new Vision();
   double[] m_poseArray = new double[3];
   private boolean hasAppliedOperatorPerspectiveYet = false;
-
   private Notifier visionNotifier = null;
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
+
+  // Auto align stuff
 
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -145,6 +143,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     return run(() -> this.setControl(requestSupplier.get()));
   }
 
+  // Vision
+
   public AutoFactory createAutoFactory() {
     return new AutoFactory(() -> getState().Pose, this::resetPose, this::followPath, true, this);
   }
@@ -156,7 +156,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     SignalLogger.writeDoubleArray(key, m_poseArray);
   }
 
-  // Vision
+  // Commands for auto-align
 
   public void followPath(SwerveSample sample) {
     pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
@@ -186,13 +186,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               Threads.setCurrentThreadPriority(false, 0);
 
               // Do vision
-              correctFromVision(vision.camera1);
-              correctFromVision(vision.camera2);
+              correctFromVision(vision.cameraFrElev);
+              correctFromVision(vision.cameraFlSwerve);
             });
-    // visionNotifier.startPeriodic(0.01);
+    visionNotifier.startPeriodic(0.01);
   }
-
-  // Commands for auto-align
 
   @Override
   public void periodic() {
@@ -231,6 +229,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         this::integrateVisionCorrection);
   }
 
+  /*
   private void pidToPosition(Pose2d target) {
     pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -244,10 +243,67 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 pose.getRotation().getRadians(), target.getRotation().getRadians()));
 
     setControl(pathPidToPoint.withSpeeds(speeds));
+  }*/
+
+  private final PIDController autoAlignXController = new PIDController(9, 0, 0);
+  private final PIDController autoAlignYController = new PIDController(9, 0, 0);
+  private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
+
+  private final TrapezoidProfile autoAlignProfile =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 12));
+  private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
+  private TrapezoidProfile.State autoAlignGoal;
+  private Rotation2d autoAlignHeading;
+  private Pose2d autoAlignInitialPose;
+  private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
+      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+
+  // auto-align code mostly adapted from Ben from CTRE's messages in the FRC discord
+  private void pidToPosition(Pose2d target) {
+    // calculate our new distance and velocity in the desired direction of travel
+    autoAlignState = autoAlignProfile.calculate(0.020, autoAlignState, autoAlignGoal);
+    Pose2d curPose = getState().Pose;
+
+    double xSpeed =
+        autoAlignState.velocity * autoAlignHeading.getCos()
+            + autoAlignXController.calculate(
+                curPose.getX(),
+                autoAlignInitialPose.getX() + autoAlignState.position * autoAlignHeading.getCos());
+    double ySpeed =
+        autoAlignState.velocity * autoAlignHeading.getSin()
+            + autoAlignYController.calculate(
+                curPose.getY(),
+                autoAlignInitialPose.getY() + autoAlignState.position * autoAlignHeading.getSin());
+    double thetaSpeed =
+        autoAlignThetaController.calculate(
+            curPose.getRotation().getRadians(), target.getRotation().getRadians());
+
+    setControl(pathPidToPoint.withSpeeds(new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed)));
   }
 
   public Command driveToPosition(Supplier<Pose2d> target) {
-    return run(() -> pidToPosition(target.get())).finallyDo(() -> setControl(brake));
+    return runOnce(
+            () -> {
+              // inside method
+              autoAlignInitialPose = getState().Pose;
+
+              var translation =
+                  target.get().getTranslation().minus(autoAlignInitialPose.getTranslation());
+              var distance = translation.getNorm();
+              autoAlignHeading = translation.getAngle();
+
+              var speeds =
+                  ChassisSpeeds.fromRobotRelativeSpeeds(
+                      getState().Speeds, getState().Pose.getRotation());
+              var initialVel =
+                  speeds.vxMetersPerSecond * autoAlignHeading.getCos()
+                      + speeds.vyMetersPerSecond * autoAlignHeading.getSin();
+
+              autoAlignState = new TrapezoidProfile.State(0, initialVel);
+
+              autoAlignGoal = new TrapezoidProfile.State(distance, 0);
+            })
+        .andThen(run(() -> pidToPosition(target.get())).finallyDo(() -> setControl(brake)));
   }
 
   /**
