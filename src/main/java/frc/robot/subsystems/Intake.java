@@ -37,7 +37,7 @@ public class Intake extends SubsystemBase {
     setDefaultCommand(stopIntake());
   }
 
-  boolean hasGamePiece() {
+  public boolean hasGamePiece() {
     return (leftMotor.getTorqueCurrent().getValueAsDouble() > 10
         && rightMotor.getTorqueCurrent().getValueAsDouble() > 10
         && leftMotor.getVelocity().getValueAsDouble() < 2

@@ -28,7 +28,8 @@ public class LED extends SubsystemBase {
     // the last command to run will continue to be displayed.
     // Note: Other default patterns could be used instead!
     setDefaultCommand(
-        runPattern(LEDPattern.solid(new Color(0x27, 0x24, 0xFF))).withName("blue default"));
+        // runPattern(LEDPattern.solid(new Color(0x27, 0x24, 0xFF))).withName("blue default"));
+        netchecker().withName("ledchanger"));
   }
 
   @Override
@@ -56,11 +57,18 @@ public class LED extends SubsystemBase {
   }
 
   public Command netchecker() {
-    var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
-    if (position > 6.8 && position < 7.98) {
-      return runPattern(LEDPattern.solid(Color.kGreen));
-    } else {
-      return runPattern(LEDPattern.solid(Color.kBlue));
-    }
+    return run(() -> {
+          var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
+          var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
+          if (position > 6.8 && position < 7.98) {
+            LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
+          } else if (hasGamePiece) {
+            LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
+          } else {
+            LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
+          }
+          m_led.setData(m_buffer); // Update the LED strip
+        })
+        .ignoringDisable(true);
   }
 }
