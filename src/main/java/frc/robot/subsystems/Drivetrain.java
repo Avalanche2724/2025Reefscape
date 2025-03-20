@@ -186,8 +186,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               Threads.setCurrentThreadPriority(false, 0);
 
               // Do vision
-              correctFromVision(vision.camera1);
-              correctFromVision(vision.camera2);
+              correctFromVision(vision.cameraFrElev);
+              correctFromVision(vision.cameraFlSwerve);
             });
     visionNotifier.startPeriodic(0.01);
   }
