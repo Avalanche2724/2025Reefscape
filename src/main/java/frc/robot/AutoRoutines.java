@@ -4,6 +4,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
@@ -31,8 +32,25 @@ public class AutoRoutines {
     controls = container.controls;
   }
 
+  public Command driveToL2BranchAndScore(boolean leftSide) {
+    return sequence(
+        controls
+            .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, false)
+            .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
+        intake.ejectIntake().withTimeout(0.5));
+  }
+
+  public Command intakeUntilGamePiece() {
+    return race(intake.runIntake().withTimeout(2), waitUntil(intake.hasGamePieceTrigger));
+  }
+
+  public Command waitAndL2() {
+    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+  }
+
   public AutoRoutine verycoolpath() {
     var routine = m_factory.newRoutine("verycoolpath");
+
     var START_TO_BRANCH1 = routine.trajectory("CoolPath", 0);
     var BRANCH1_TO_HP = routine.trajectory("CoolPath", 1);
     var HP_TO_BRANCH2 = routine.trajectory("CoolPath", 2);
@@ -44,48 +62,27 @@ public class AutoRoutines {
 
     START_TO_BRANCH1
         .done()
-        .onTrue(
-            sequence(
-                controls
-                    .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, false)
-                    .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
-                intake.ejectIntake().withTimeout(0.5),
-                BRANCH1_TO_HP.spawnCmd()));
+        .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
 
     BRANCH1_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
-    BRANCH1_TO_HP
-        .done()
-        .onTrue(sequence(intake.runIntake().withTimeout(1), HP_TO_BRANCH2.spawnCmd()));
+    BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
 
-    HP_TO_BRANCH2.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
-
-    HP_TO_BRANCH2
-        .done()
-        .onTrue(
-            sequence(
-                controls
-                    .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, true)
-                    .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
-                intake.ejectIntake().withTimeout(0.5),
-                BRANCH2_TO_HP.spawnCmd()));
+    HP_TO_BRANCH2.active().onTrue(waitAndL2());
+    HP_TO_BRANCH2.done().onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
     BRANCH2_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
 
-    BRANCH2_TO_HP
-        .done()
-        .onTrue(sequence(intake.runIntake().withTimeout(1), HP_TO_BRANCH3.spawnCmd()));
+    BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
-    HP_TO_BRANCH3.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+    HP_TO_BRANCH3.active().onTrue(waitAndL2());
 
     HP_TO_BRANCH3
         .done()
         .onTrue(
             sequence(
-                controls
-                    .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, false)
-                    .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
-                intake.ejectIntake().withTimeout(0.5),
-                Commands.print("Auto Routine Complete")));
+                driveToL2BranchAndScore(false),
+                Commands.print("Complete!"),
+                superstructure.goToPositionOnce(Position.STOW)));
 
     return routine; // TODO
   }
