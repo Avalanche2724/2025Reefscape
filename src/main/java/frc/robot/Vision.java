@@ -109,12 +109,25 @@ public class Vision {
     private final Transform3d robotToCam;
     private final PhotonCamera camera;
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> lockedPnpParams =
-        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e15));
+        Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
     // TODO fix before comp
     // TODO seed with other pose or something?
     private final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> unlockedPnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(true, 0));
-    private final PhotonPoseEstimator photonEstimator;
+
+    public class BetterPhotonPoseEstimator extends PhotonPoseEstimator {
+      /** Create a new PhotonPoseEstimator. */
+      public BetterPhotonPoseEstimator(
+          AprilTagFieldLayout fieldTags, PoseStrategy strategy, Transform3d robotToCamera) {
+        super(fieldTags, strategy, robotToCamera);
+      }
+
+      public void resetPoseCache() {
+        poseCacheTimestampSeconds = -1;
+      }
+    }
+
+    private final BetterPhotonPoseEstimator photonEstimator;
     private String cameraName;
     private String visionEstimationKey;
     private Optional<Matrix<N3, N3>> cameraMatrix;
@@ -143,7 +156,8 @@ public class Vision {
               .publish();
 
       photonEstimator =
-          new PhotonPoseEstimator(kTagLayout, PoseStrategy.CONSTRAINED_SOLVEPNP, this.robotToCam);
+          new BetterPhotonPoseEstimator(
+              kTagLayout, PoseStrategy.CONSTRAINED_SOLVEPNP, this.robotToCam);
       photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
 
       if (Robot.isSimulation()) {
@@ -184,6 +198,7 @@ public class Vision {
 
       // Add heading data from thingy
       photonEstimator.addHeadingData(headingFpgaTimestamp, heading);
+      // photonEstimator.addHeadingData(Sy);
 
       for (var change : unreadResults) {
         // Get pnp est
@@ -220,7 +235,10 @@ public class Vision {
 
         // If num tags = 1, just use trig solvepnp, don't update heading
         // Note: we're assuming we currently have an accurate field relative heading but whatever
-        if (numTags == 1) {
+        if (numTags == 0) {
+          // This shouldn't happen?
+          System.out.println("numtags = 0");
+        } else if (numTags == 1) {
           if (avgDist <= 4) {
             estimateConsumer.accept(solvePnpEstimate, estStdDevs);
           }
@@ -236,6 +254,7 @@ public class Vision {
           // var pnpParams = DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams;
           var pnpParams = lockedPnpParams;
           photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
+          photonEstimator.resetPoseCache();
           var constrainedEst =
               photonEstimator.update(change, cameraMatrix, cameraDistortion, pnpParams);
           if (constrainedEst.isPresent()) {
@@ -245,7 +264,9 @@ public class Vision {
 
             estimateConsumer.accept(constrainedEstimate, estStdDevs);
           } else {
-            System.out.println("Warning: constrained pnp failed?");
+            // System.out.println("Warning: constrained pnp failed?");
+            // TODO Idk why debug later
+            estimateConsumer.accept(solvePnpEstimate, estStdDevs);
           }
         }
       }
