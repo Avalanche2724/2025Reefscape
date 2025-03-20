@@ -70,8 +70,8 @@ public class Vision {
       new Camera(
           "Arducam_fr_elev",
           new Transform3d(
-              new Translation3d(Inches.of(7.5), Inches.of(-10.4), Inches.of(10.6)),
-              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(15))));
+              new Translation3d(Inches.of(7.5), Inches.of(-10.4), Inches.of(11)),
+              new Rotation3d(Degrees.of(0.0), Degrees.of(-15), Degrees.of(12))));
 
   public Camera camera2 =
       new Camera(
@@ -191,7 +191,7 @@ public class Vision {
         photonEstimator.setPrimaryStrategy(PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
         var solvePnpEst = photonEstimator.update(change);
 
-        if (solvePnpEst.isEmpty()) continue;
+        if (solvePnpEst.isEmpty()) continue; // 0 tags
 
         var solvePnpEstimate = solvePnpEst.get();
 
@@ -225,14 +225,19 @@ public class Vision {
             estimateConsumer.accept(solvePnpEstimate, estStdDevs);
           }
         } else {
-          // If we have multiple tags: use constrained solvepnp
+          // If we have multiple tags: use constrained pnp, lock heading to original pnp heading if
+          // disabled
+          if (DriverStation.isDisabled()) {
+            photonEstimator.addHeadingData(
+                change.getTimestampSeconds(),
+                solvePnpEstimate.estimatedPose.toPose2d().getRotation());
+          }
+
+          // var pnpParams = DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams;
+          var pnpParams = lockedPnpParams;
           photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
           var constrainedEst =
-              photonEstimator.update(
-                  change,
-                  cameraMatrix,
-                  cameraDistortion,
-                  DriverStation.isDisabled() ? unlockedPnpParams : lockedPnpParams);
+              photonEstimator.update(change, cameraMatrix, cameraDistortion, pnpParams);
           if (constrainedEst.isPresent()) {
             var constrainedEstimate = constrainedEst.get();
 
