@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 public class Controls {
   // Constants and stuff
   private static final double MAX_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(1.5).in(RadiansPerSecond);
+  private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(2.0).in(RadiansPerSecond);
   private static final double STICK_DEADBAND = 0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
   // Subsystems and things
