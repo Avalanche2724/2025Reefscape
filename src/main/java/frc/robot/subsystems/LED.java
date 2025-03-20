@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 
 public class LED extends SubsystemBase {
   private static final int kPort = 9;
@@ -52,5 +53,11 @@ public class LED extends SubsystemBase {
 
   public Command thingy2() {
     return runPattern(LEDPattern.solid(Color.kBlack));
+  }
+
+  public Command netchecker() {
+    var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
+
+    return runPattern(LEDPattern.solid(Color.kGreen));
   }
 }

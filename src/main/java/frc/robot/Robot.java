@@ -14,7 +14,7 @@ import org.photonvision.estimation.OpenCVHelp;
 
 public class Robot extends TimedRobot {
   public static Robot instance;
-  private final RobotContainer robotContainer;
+  public final RobotContainer robotContainer;
   private Command autonomousCommand;
 
   public Robot() {
