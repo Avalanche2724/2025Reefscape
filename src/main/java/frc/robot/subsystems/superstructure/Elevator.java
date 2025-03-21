@@ -29,7 +29,7 @@ public class Elevator {
   public static final int ELEVATOR2_ID = 42;
   // this is a bit wrong now but it's fine™
   public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
-  public static final double MAX_HEIGHT = 1.58;
+  public static final double MAX_HEIGHT = 1.57;
   // Meters.convertFrom(59.06, Inches); // 1.5 m
   //
   private static final double GEAR_RATIO = 14.0;
@@ -123,7 +123,7 @@ public class Elevator {
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     // Forward/reverse limits
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     // does this fix things?

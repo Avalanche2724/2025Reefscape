@@ -232,17 +232,18 @@ public class Vision {
                 solvePnpEstimate.estimatedPose.toPose2d().getRotation());
           }
 
-          photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
-          var constrainedEst =
-              photonEstimator.update(change, cameraMatrix, cameraDistortion, pnpParams);
-          if (constrainedEst.isPresent()) {
-            var constrainedEstimate = constrainedEst.get();
+          // photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
+          // var constrainedEst =
+          //     photonEstimator.update(change, cameraMatrix, cameraDistortion, pnpParams);
+          // if (constrainedEst.isPresent()) {
+          if (false) {
+            // var constrainedEstimate = constrainedEst.get();
 
-            constrainedPoseTelemetry.set(constrainedEstimate.estimatedPose.toPose2d());
+            // constrainedPoseTelemetry.set(constrainedEstimate.estimatedPose.toPose2d());
 
-            estimateConsumer.accept(constrainedEstimate, estStdDevs);
+            // estimateConsumer.accept(constrainedEstimate, estStdDevs);
           } else {
-            // TODO Idk why this happens debug later
+            // TODO Idk why this happens debug later (??)
             // For now just use the solvepnp estimate
             // System.out.println("Warning: constrained pnp failed?");
             estimateConsumer.accept(solvePnpEstimate, estStdDevs);
