@@ -11,6 +11,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -249,12 +250,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     setControl(pathPidToPoint.withSpeeds(speeds));
   }*/
 
-  private final PIDController autoAlignXController = new PIDController(9, 0, 0.3);
-  private final PIDController autoAlignYController = new PIDController(9, 0, 0.3);
+  private final PIDController autoAlignXController = new PIDController(9, 0, 0.1);
+  private final PIDController autoAlignYController = new PIDController(9, 0, 0.1);
   private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
 
   private final TrapezoidProfile autoAlignProfile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 9));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 6));
   private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
   private TrapezoidProfile.State autoAlignGoal;
   private Rotation2d autoAlignHeading;
@@ -281,6 +282,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     double thetaSpeed =
         autoAlignThetaController.calculate(
             curPose.getRotation().getRadians(), target.getRotation().getRadians());
+    if (Math.abs(
+            MathUtil.angleModulus(
+                curPose.getRotation().getRadians() - target.getRotation().getRadians()))
+        < Radians.convertFrom(1.5, Degrees)) {
+      thetaSpeed = 0;
+    }
+    if (Math.hypot(ySpeed, xSpeed) < 0.08) {
+      ySpeed = 0;
+      xSpeed = 0;
+    }
 
     setControl(pathPidToPoint.withSpeeds(new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed)));
   }

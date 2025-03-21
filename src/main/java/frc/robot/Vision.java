@@ -244,7 +244,7 @@ public class Vision {
           } else {
             // TODO Idk why this happens debug later
             // For now just use the solvepnp estimate
-            System.out.println("Warning: constrained pnp failed?");
+            // System.out.println("Warning: constrained pnp failed?");
             estimateConsumer.accept(solvePnpEstimate, estStdDevs);
           }
         }
