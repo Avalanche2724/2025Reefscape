@@ -249,8 +249,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     setControl(pathPidToPoint.withSpeeds(speeds));
   }*/
 
-  private final PIDController autoAlignXController = new PIDController(9, 0, 0.1);
-  private final PIDController autoAlignYController = new PIDController(9, 0, 0.1);
+  private final PIDController autoAlignXController = new PIDController(9, 0, 0.3);
+  private final PIDController autoAlignYController = new PIDController(9, 0, 0.3);
   private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
 
   private final TrapezoidProfile autoAlignProfile =
