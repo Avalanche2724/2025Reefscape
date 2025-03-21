@@ -255,7 +255,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
 
   private final TrapezoidProfile autoAlignProfile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 5));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 6));
   private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
   private TrapezoidProfile.State autoAlignGoal;
   private Rotation2d autoAlignHeading;
@@ -271,8 +271,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     double currentDistance = curPose.getTranslation().getDistance(target.getTranslation());
 
-    double ffMinRadius = 0.2;
-    double ffMaxRadius = 0.6;
+    double ffMinRadius = 0.1;
+    double ffMaxRadius = 0.3;
 
     double ffScaler =
         MathUtil.clamp((currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius), 0.0, 1.0);

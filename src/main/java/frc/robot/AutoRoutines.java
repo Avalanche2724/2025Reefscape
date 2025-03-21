@@ -47,7 +47,11 @@ public class AutoRoutines {
   }
 
   public Command waitAndL2() {
-    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+    return waitSeconds(1).andThen(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+  }
+
+  public Command waitAndCoralStation() {
+    return waitSeconds(1).andThen(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
   }
 
   public AutoRoutine verycoolpath() {
@@ -66,7 +70,7 @@ public class AutoRoutines {
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
 
-    BRANCH1_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
+    BRANCH1_TO_HP.active().onTrue(waitAndCoralStation());
     BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
 
     HP_TO_BRANCH2.active().onTrue(waitAndL2());
@@ -74,7 +78,7 @@ public class AutoRoutines {
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
-    BRANCH2_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
+    BRANCH2_TO_HP.active().onTrue(waitAndCoralStation());
     BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
     HP_TO_BRANCH3.active().onTrue(waitAndL2());
