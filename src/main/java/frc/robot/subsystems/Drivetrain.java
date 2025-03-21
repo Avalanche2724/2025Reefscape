@@ -143,6 +143,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     return run(() -> this.setControl(requestSupplier.get()));
   }
 
+  public Command brakeOnce() {
+    return runOnce(() -> setControl(brake));
+  }
+
   // Vision
 
   public AutoFactory createAutoFactory() {
@@ -245,12 +249,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     setControl(pathPidToPoint.withSpeeds(speeds));
   }*/
 
-  private final PIDController autoAlignXController = new PIDController(9, 0, 0);
-  private final PIDController autoAlignYController = new PIDController(9, 0, 0);
+  private final PIDController autoAlignXController = new PIDController(9, 0, 0.1);
+  private final PIDController autoAlignYController = new PIDController(9, 0, 0.1);
   private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
 
   private final TrapezoidProfile autoAlignProfile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 12));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 9));
   private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
   private TrapezoidProfile.State autoAlignGoal;
   private Rotation2d autoAlignHeading;
