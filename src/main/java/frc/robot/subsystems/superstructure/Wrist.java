@@ -54,7 +54,7 @@ public class Wrist {
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-45, Degrees);
 
-  private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
+  private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.005;
   private static final double ENCODER_POSITION_RESET_SEC = 0.02;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
@@ -114,8 +114,8 @@ public class Wrist {
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 7; // todo: try retuning and lowering?
-    config.Slot1.kD = 2;
+    config.Slot1.kP = 8; // todo: try retuning and lowering?
+    config.Slot1.kD = 1.9;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;
@@ -125,7 +125,7 @@ public class Wrist {
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // rotations per second; maximum?
     config.MotionMagic.MotionMagicAcceleration = 1.5; // rotations per second squared
-    config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
+    config.MotionMagic.MotionMagicJerk = 3; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;

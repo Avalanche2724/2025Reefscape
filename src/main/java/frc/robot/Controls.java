@@ -270,7 +270,9 @@ public class Controls {
 
       var diff = currentPose.minus(targetPose);
       boolean isAtPosition = diff.getTranslation().getNorm() < positionTolerance;
-      boolean isAligned = Math.abs(diff.getRotation().getDegrees()) < angleTolerance;
+      boolean isAligned =
+          Math.toDegrees(Math.abs(MathUtil.angleModulus(diff.getRotation().getRadians())))
+              < angleTolerance;
 
       return isAtPosition && isAligned;
     };

@@ -8,6 +8,7 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Intake;
@@ -39,15 +40,17 @@ public class AutoRoutines {
         controls
             .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, leftSide)
             .until(
-                controls.createAtTargetPositionSupplier(
-                    () -> Meters.convertFrom(1.2, Inch), () -> 2)),
-        intake.fullSend().withTimeout(0.5));
+                new Trigger(
+                        controls.createAtTargetPositionSupplier(
+                            () -> Meters.convertFrom(1.2, Inch), () -> 2))
+                    .debounce(0.2)),
+        intake.fullSend().withTimeout(0.3));
   }
 
   public Command intakeUntilGamePiece() {
     return drivetrain
         .brakeOnce()
-        .andThen(race(intake.runIntake().withTimeout(2), waitUntil(intake.hasGamePieceTrigger)));
+        .andThen(race(intake.runIntake().withTimeout(1.5), waitUntil(intake.hasGamePieceTrigger)));
   }
 
   public Command waitAndL2() {
