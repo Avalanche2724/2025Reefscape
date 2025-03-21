@@ -42,8 +42,8 @@ public class AutoRoutines {
             .until(
                 new Trigger(
                         controls.createAtTargetPositionSupplier(
-                            () -> Meters.convertFrom(1.2, Inch), () -> 2))
-                    .debounce(0.2)),
+                            () -> Meters.convertFrom(1, Inch), () -> 1))
+                    .debounce(0.25)),
         intake.fullSend().withTimeout(0.3));
   }
 
@@ -70,7 +70,11 @@ public class AutoRoutines {
     var BRANCH2_TO_HP = routine.trajectory("CoolPath", 3);
     var HP_TO_BRANCH3 = routine.trajectory("CoolPath", 4);
 
-    routine.active().onTrue(/*START_TO_BRANCH1.resetOdometry().andThen*/ (START_TO_BRANCH1.cmd()));
+    routine
+        .active()
+        .onTrue(
+            (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
+                .andThen(START_TO_BRANCH1.cmd()));
     routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
 
     START_TO_BRANCH1
