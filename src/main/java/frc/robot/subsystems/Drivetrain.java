@@ -249,19 +249,19 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
     setControl(pathPidToPoint.withSpeeds(speeds));
   }*/
-
+  // TODO: kD 0.1 improvement? or bad?
   private final PIDController autoAlignXController = new PIDController(9, 0, 0.1);
   private final PIDController autoAlignYController = new PIDController(9, 0, 0.1);
   private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
 
   private final TrapezoidProfile autoAlignProfile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 6));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 5));
   private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
   private TrapezoidProfile.State autoAlignGoal;
   private Rotation2d autoAlignHeading;
   private Pose2d autoAlignInitialPose;
   private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
-      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+      new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
 
   // auto-align code mostly adapted from Ben from CTRE's messages in the FRC discord
   private void pidToPosition(Pose2d target) {
@@ -269,13 +269,21 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     autoAlignState = autoAlignProfile.calculate(0.020, autoAlignState, autoAlignGoal);
     Pose2d curPose = getState().Pose;
 
+    double currentDistance = curPose.getTranslation().getDistance(target.getTranslation());
+
+    double ffMinRadius = 0.2;
+    double ffMaxRadius = 0.6;
+
+    double ffScaler =
+        MathUtil.clamp((currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius), 0.0, 1.0);
+
     double xSpeed =
-        autoAlignState.velocity * autoAlignHeading.getCos()
+        ffScaler * autoAlignState.velocity * autoAlignHeading.getCos()
             + autoAlignXController.calculate(
                 curPose.getX(),
                 autoAlignInitialPose.getX() + autoAlignState.position * autoAlignHeading.getCos());
     double ySpeed =
-        autoAlignState.velocity * autoAlignHeading.getSin()
+        ffScaler * autoAlignState.velocity * autoAlignHeading.getSin()
             + autoAlignYController.calculate(
                 curPose.getY(),
                 autoAlignInitialPose.getY() + autoAlignState.position * autoAlignHeading.getSin());
@@ -288,7 +296,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         < Radians.convertFrom(1.5, Degrees)) {
       thetaSpeed = 0;
     }
-    if (Math.hypot(ySpeed, xSpeed) < 0.08) {
+    if (Math.hypot(ySpeed, xSpeed) < Meters.convertFrom(2, Inches)) {
       ySpeed = 0;
       xSpeed = 0;
     }

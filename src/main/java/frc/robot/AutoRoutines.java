@@ -35,7 +35,7 @@ public class AutoRoutines {
   public Command driveToL2BranchAndScore(boolean leftSide) {
     return sequence(
         controls
-            .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, false)
+            .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, leftSide)
             .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
         intake.ejectIntake().withTimeout(0.5));
   }
@@ -67,9 +67,7 @@ public class AutoRoutines {
         .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
 
     BRANCH1_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
-    BRANCH1_TO_HP
-        .atTimeBeforeEnd(0.4)
-        .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
+    BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
 
     HP_TO_BRANCH2.active().onTrue(waitAndL2());
     HP_TO_BRANCH2
@@ -77,9 +75,7 @@ public class AutoRoutines {
         .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
     BRANCH2_TO_HP.active().onTrue(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
-    BRANCH2_TO_HP
-        .atTimeBeforeEnd(0.4)
-        .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
+    BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
     HP_TO_BRANCH3.active().onTrue(waitAndL2());
     HP_TO_BRANCH3
