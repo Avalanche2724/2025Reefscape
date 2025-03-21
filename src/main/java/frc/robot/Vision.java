@@ -226,11 +226,11 @@ public class Vision {
         } else {
           // If we have multiple tags: use constrained pnp, lock heading to original pnp heading if
           // disabled
-          if (DriverStation.isDisabled()) {
-            photonEstimator.addHeadingData(
-                change.getTimestampSeconds(),
-                solvePnpEstimate.estimatedPose.toPose2d().getRotation());
-          }
+          // if (DriverStation.isDisabled()) {
+          //  photonEstimator.addHeadingData(
+          //      change.getTimestampSeconds(),
+          //      solvePnpEstimate.estimatedPose.toPose2d().getRotation());
+          // }
 
           // photonEstimator.setPrimaryStrategy(PoseStrategy.CONSTRAINED_SOLVEPNP);
           // var constrainedEst =
