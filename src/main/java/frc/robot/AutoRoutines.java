@@ -1,5 +1,7 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inch;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import choreo.auto.AutoFactory;
@@ -36,8 +38,10 @@ public class AutoRoutines {
     return sequence(
         controls
             .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, leftSide)
-            .until(controls.createAtTargetPositionSupplier(() -> 0.02, () -> 2)),
-        intake.ejectIntake().withTimeout(0.5));
+            .until(
+                controls.createAtTargetPositionSupplier(
+                    () -> Meters.convertFrom(1.2, Inch), () -> 2)),
+        intake.fullSend().withTimeout(0.5));
   }
 
   public Command intakeUntilGamePiece() {
@@ -63,7 +67,7 @@ public class AutoRoutines {
     var BRANCH2_TO_HP = routine.trajectory("CoolPath", 3);
     var HP_TO_BRANCH3 = routine.trajectory("CoolPath", 4);
 
-    routine.active().onTrue(START_TO_BRANCH1.resetOdometry().andThen(START_TO_BRANCH1.cmd()));
+    routine.active().onTrue(/*START_TO_BRANCH1.resetOdometry().andThen*/ (START_TO_BRANCH1.cmd()));
     routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
 
     START_TO_BRANCH1

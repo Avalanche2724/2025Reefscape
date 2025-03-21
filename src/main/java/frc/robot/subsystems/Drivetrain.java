@@ -250,12 +250,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     setControl(pathPidToPoint.withSpeeds(speeds));
   }*/
   // TODO: kD 0.1 improvement? or bad?
-  private final PIDController autoAlignXController = new PIDController(9, 0, 0.1);
-  private final PIDController autoAlignYController = new PIDController(9, 0, 0.1);
+  private final PIDController autoAlignXController = new PIDController(9, 0, 0.2);
+  private final PIDController autoAlignYController = new PIDController(9, 0, 0.2);
   private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
 
   private final TrapezoidProfile autoAlignProfile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 6));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 7));
   private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
   private TrapezoidProfile.State autoAlignGoal;
   private Rotation2d autoAlignHeading;
@@ -265,14 +265,15 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
   // auto-align code mostly adapted from Ben from CTRE's messages in the FRC discord
   private void pidToPosition(Pose2d target) {
+    autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
     // calculate our new distance and velocity in the desired direction of travel
     autoAlignState = autoAlignProfile.calculate(0.020, autoAlignState, autoAlignGoal);
     Pose2d curPose = getState().Pose;
 
     double currentDistance = curPose.getTranslation().getDistance(target.getTranslation());
 
-    double ffMinRadius = 0.1;
-    double ffMaxRadius = 0.3;
+    double ffMinRadius = 0.2;
+    double ffMaxRadius = 1.1;
 
     double ffScaler =
         MathUtil.clamp((currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius), 0.0, 1.0);
@@ -296,7 +297,8 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         < Radians.convertFrom(1.5, Degrees)) {
       thetaSpeed = 0;
     }
-    if (Math.hypot(ySpeed, xSpeed) < Meters.convertFrom(2, Inches)) {
+
+    if (currentDistance < Meters.convertFrom(1, Inches)) {
       ySpeed = 0;
       xSpeed = 0;
     }

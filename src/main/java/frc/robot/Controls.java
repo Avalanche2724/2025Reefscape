@@ -351,7 +351,7 @@ public class Controls {
       Rotation2d branchRotation = nearestBranch.getRotation();
       // Calculate a position that is away from the branch
       // in the direction opposite to the branch's orientation
-      double scoringDistance = Meters.convertFrom(32.5, Inches);
+      double scoringDistance = Meters.convertFrom(33, Inches);
       if (level == ReefLevel.L4) {
         scoringDistance = Meters.convertFrom(25, Inches);
       }
