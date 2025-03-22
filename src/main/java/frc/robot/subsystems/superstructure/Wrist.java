@@ -6,7 +6,6 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.DeviceIdentifier;
@@ -14,13 +13,13 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -64,8 +63,8 @@ public class Wrist {
   private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Controls
-  private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
-  private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(1);
+  // private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
+  private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(0);
   // Absolute encoder reading
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
@@ -106,29 +105,18 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    // config.Slot0.kP = Robot.isSimulation() ? 200 : 90;
     config.Slot0.kP = 60;
-    // config.Slot0.kD = 8;
-    // config.Slot0.kD = 0.22525;
-    config.Slot0.kD = 3;
+    config.Slot0.kI = 0.0001;
+    config.Slot0.kD = 4;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = 0.14;
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 10; // todo: try retuning and lowering?
-    config.Slot1.kD = 1;
-    config.Slot1.kS = config.Slot0.kS;
-    config.Slot1.kV = config.Slot0.kV;
-    config.Slot1.kA = config.Slot0.kA;
-    config.Slot1.kG = config.Slot0.kG;
-    config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
-    config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
+    config.CurrentLimits.StatorCurrentLimit = 40;
+    config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 2; // rotations per second squared
-    config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -165,6 +153,12 @@ public class Wrist {
     }
   }
 
+  // Trapezoid profile with max velocity 1 rps, max accel 2 rps/s
+  final TrapezoidProfile m_profile =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 2.0));
+  TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
+  TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
+
   public void periodic() {
     motorPosition.refresh();
     motorVelocity.refresh();
@@ -177,9 +171,15 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
 
-    if (setPosition
+    /*   if (setPosition
         && Math.abs(getWristRotations() - lastPositionSet) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
+    } */
+    if (setPosition) {
+      m_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
+      positionControl.Position = m_setpoint.position;
+      positionControl.Velocity = m_setpoint.velocity;
+      motor.setControl(positionControl);
     }
   }
 
@@ -240,11 +240,16 @@ public class Wrist {
     setPosition = true;
     lastPositionSet = pos;
 
-    if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
+    m_goal = new TrapezoidProfile.State(pos, 0);
+    // let periodic do the pid thingy
+
+    // motor.setControl(positionControl.withPosition(lastPositionSet));
+
+    /* if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
     } else {
       motor.setControl(motionMagicControl.withPosition(pos));
-    }
+    }*/
   }
 
   void setMotorDegreesOffset(double deg) {
