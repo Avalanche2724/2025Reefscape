@@ -153,9 +153,9 @@ public class Wrist {
     }
   }
 
-  // Trapezoid profile with max velocity 1 rps, max accel 2 rps/s
+  // Trapezoid profile
   final TrapezoidProfile m_profile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 2.0));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 2.4));
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
@@ -170,6 +170,7 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Velocity", getVelocity());
     SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
+    SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
 
     /*   if (setPosition
         && Math.abs(getWristRotations() - lastPositionSet) < THRESHOLD_SWITCHING_PID_GAINS) {
@@ -240,7 +241,7 @@ public class Wrist {
     setPosition = true;
     lastPositionSet = pos;
 
-    m_goal = new TrapezoidProfile.State(pos, 0);
+    m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
     // let periodic do the pid thingy
 
     // motor.setControl(positionControl.withPosition(lastPositionSet));
