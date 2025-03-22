@@ -135,16 +135,16 @@ public class Controls {
                     .withTimeout(1)
                     .andThen(superstructure.goToPositionOnce(Position.STOW)));
     */
-    operator.leftJoystickPushed.whileTrue(
-        superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
+    // operator.leftJoystickPushed.whileTrue(
+    //    superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 
     operator
         .rightJoystickPushed
         .negate()
-        .and(() -> Math.abs(operator.getRightY()) > 0.25)
+        .and(() -> Math.abs(operator.getRightY()) > 0.7)
         .whileTrue(
             superstructure.incrementElevator(
-                () -> -0.01 * MathUtil.applyDeadband(operator.getRightY(), 0.25)));
+                () -> -0.01 * MathUtil.applyDeadband(operator.getRightY(), 0.7)));
 
     operator.rightJoystickPushed.whileTrue(
         climber.runVoltage(() -> -12 * MathUtil.applyDeadband(operator.getRightX(), 0.25)));

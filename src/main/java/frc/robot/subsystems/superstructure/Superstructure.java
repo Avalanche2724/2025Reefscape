@@ -36,13 +36,13 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L3_LAUNCH(1.44, 0),
     OUTTAKE_L4_LAUNCH(1.58, 88),
     // Vertical outtake:
-    OUTTAKE_L1_VERTICAL(0.875, -45),
+    // OUTTAKE_L1_VERTICAL(0.875, -45),
     OUTTAKE_L4_VERT_P1(1.52, 60),
     OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
     INTAKE_ALGAE_L2(1.13, 0),
     INTAKE_ALGAE_L3(1.58, 0),
-    OUTTAKE_NET(1.2, 69);
+    OUTTAKE_NET(1.2, 72);
 
     // Meters
     public final double elevatorHeight;
@@ -194,9 +194,9 @@ public class Superstructure extends SubsystemBase {
 
   public Command elevatorAlgaeLaunchSetup() {
     return sequence(
-        setWristPositionCommand(69),
+        setWristPositionCommand(72),
         runOnce(elevator::setMotorLaunchingVelocityUp),
-        waitUntil(() -> atLeastElevatorPosition(1.43)));
+        waitUntil(() -> atLeastElevatorPosition(1.44)));
   }
 
   public Command elevatorAlgaeLaunchPostscript() {

@@ -52,7 +52,7 @@ public class Wrist {
   public static final double ARM_OFFSET = -0.049;
   public static final double ARM_OFFSET_DEG = Degrees.convertFrom(ARM_OFFSET, Rotations);
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
-  public static final double DOWN_LIMIT = Rotations.convertFrom(-45, Degrees);
+  public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
   private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
   private static final double ENCODER_POSITION_RESET_SEC = 0.001;
@@ -131,9 +131,9 @@ public class Wrist {
     config.MotionMagic.MotionMagicJerk = 3; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT + ARM_OFFSET;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT + ARM_OFFSET;
 
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
