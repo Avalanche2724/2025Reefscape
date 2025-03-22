@@ -54,7 +54,7 @@ public class Wrist {
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
   private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
-  private static final double ENCODER_POSITION_RESET_SEC = 0.1;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.01;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
