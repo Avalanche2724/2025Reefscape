@@ -65,7 +65,9 @@ public class LED extends SubsystemBase {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
           } else if (hasGamePiece) {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
-          } else if ()
+          } else if (coralmode) {
+            LEDPattern.solid(Color.kOrange).applyTo(m_buffer);
+          }
           else {
             LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
           }
