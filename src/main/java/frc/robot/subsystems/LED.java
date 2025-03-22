@@ -60,11 +60,13 @@ public class LED extends SubsystemBase {
     return run(() -> {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
+          var coralmode = Robot.instance.robotContainer.controls.isOnCoralBindings;
           if (position > 6.8 && position < 7.98) {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
           } else if (hasGamePiece) {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
-          } else {
+          } else if ()
+          else {
             LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
           }
           m_led.setData(m_buffer); // Update the LED strip
