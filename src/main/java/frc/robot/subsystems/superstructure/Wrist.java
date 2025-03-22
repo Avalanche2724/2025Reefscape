@@ -55,7 +55,7 @@ public class Wrist {
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
   private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
-  private static final double ENCODER_POSITION_RESET_SEC = 0.001;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.1;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -107,10 +107,10 @@ public class Wrist {
     var config = new TalonFXConfiguration();
 
     // config.Slot0.kP = Robot.isSimulation() ? 200 : 90;
-    config.Slot0.kP = 75;
+    config.Slot0.kP = 60;
     // config.Slot0.kD = 8;
     // config.Slot0.kD = 0.22525;
-    config.Slot0.kD = 5;
+    config.Slot0.kD = 3;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = 0.14;
@@ -127,8 +127,8 @@ public class Wrist {
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 1.3; // rotations per second squared
-    config.MotionMagic.MotionMagicJerk = 6; // rotations per second cubed
+    config.MotionMagic.MotionMagicAcceleration = 2; // rotations per second squared
+    config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;

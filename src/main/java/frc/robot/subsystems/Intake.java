@@ -83,6 +83,14 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  public Command semiSend() {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(-6));
+          rightMotor.setControl(voltageOut.withOutput(-6));
+        });
+  }
+
   public Command spinny() {
     return run(
         () -> {
