@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Percent;
-import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
@@ -10,6 +9,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
+import frc.robot.util.AllianceFlipUtil;
 
 public class LED extends SubsystemBase {
   private static final int kPort = 9;
@@ -60,13 +60,14 @@ public class LED extends SubsystemBase {
     return run(() -> {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
-          var coralmode = Robot.instance.robotContainer.controls.isOnCoralBindings;
-          if (position > 6.8 && position < 7.98) {
+          if (Math.abs(position - AllianceFlipUtil.applyX(7.4)) < Meters.convertFrom(1.5, Inch)) {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
+            Robot.instance.robotContainer.controls.driver.rumble.accept(0.6);
           } else if (hasGamePiece) {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
-          } else if ()
-          else {
+            Robot.instance.robotContainer.controls.driver.rumble.accept(0.35);
+          } else {
+            Robot.instance.robotContainer.controls.driver.rumble.accept(0);
             LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
           }
           m_led.setData(m_buffer); // Update the LED strip

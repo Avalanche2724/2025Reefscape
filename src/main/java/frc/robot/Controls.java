@@ -41,7 +41,7 @@ public class Controls {
   private final Intake intake;
   private final Climber climber;
   // Controllers
-  private final GenericGamepad driver = GenericGamepad.from(0);
+  public final GenericGamepad driver = GenericGamepad.from(0);
   private final GenericGamepad operator = GenericGamepad.from(1);
   // Swerve requests
   private final SwerveRequest.FieldCentric drive =
