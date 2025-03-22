@@ -107,17 +107,17 @@ public class Wrist {
     var config = new TalonFXConfiguration();
 
     // config.Slot0.kP = Robot.isSimulation() ? 200 : 90;
-    config.Slot0.kP = 63.413;
+    config.Slot0.kP = 75;
     // config.Slot0.kD = 8;
     // config.Slot0.kD = 0.22525;
-    config.Slot0.kD = 4;
+    config.Slot0.kD = 5;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = 0.14;
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.Slot1.kP = 12; // todo: try retuning and lowering?
+    config.Slot1.kP = 10; // todo: try retuning and lowering?
     config.Slot1.kD = 1;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
@@ -126,12 +126,12 @@ public class Wrist {
     config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 1.5; // rotations per second squared
-    config.MotionMagic.MotionMagicJerk = 3; // rotations per second cubed
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
+    config.MotionMagic.MotionMagicAcceleration = 1.3; // rotations per second squared
+    config.MotionMagic.MotionMagicJerk = 6; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT + ARM_OFFSET;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT + ARM_OFFSET;
