@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
@@ -25,6 +26,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
+    // DataLogManager.start();
+    // DataLogManager.logNetworkTables(false);
     double time = Timer.getFPGATimestamp();
     Threads.setCurrentThreadPriority(true, 2);
     CommandScheduler.getInstance().run();

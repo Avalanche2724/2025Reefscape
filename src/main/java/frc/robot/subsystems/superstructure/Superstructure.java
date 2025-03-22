@@ -42,7 +42,7 @@ public class Superstructure extends SubsystemBase {
     // Algae:
     INTAKE_ALGAE_L2(1.13, 0),
     INTAKE_ALGAE_L3(1.58, 0),
-    OUTTAKE_NET(1.2, 72);
+    OUTTAKE_NET(1.15, 72);
 
     // Meters
     public final double elevatorHeight;
