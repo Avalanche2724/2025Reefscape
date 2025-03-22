@@ -61,11 +61,11 @@ public class LED extends SubsystemBase {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
           if (Math.abs(position - AllianceFlipUtil.applyX(7.4)) < Meters.convertFrom(1.5, Inch)) {
-            LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
-            Robot.instance.robotContainer.controls.driver.rumble.accept(0.6);
+            LEDPattern.solid(Color.kOrange).applyTo(m_buffer);
+            Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
           } else if (hasGamePiece) {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
-            Robot.instance.robotContainer.controls.driver.rumble.accept(0.35);
+            Robot.instance.robotContainer.controls.driver.rumble.accept(0.2);
           } else {
             Robot.instance.robotContainer.controls.driver.rumble.accept(0);
             LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
