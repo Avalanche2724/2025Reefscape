@@ -6,6 +6,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
+import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -70,6 +71,43 @@ public class AutoRoutines {
     var BRANCH2_TO_HP = routine.trajectory("CoolPath", 3);
     var HP_TO_BRANCH3 = routine.trajectory("CoolPath", 4);
 
+    return makeCoolPath(
+        routine, START_TO_BRANCH1, BRANCH1_TO_HP, HP_TO_BRANCH2, BRANCH2_TO_HP, HP_TO_BRANCH3);
+  }
+
+  public AutoRoutine coolpath2back() {
+    var routine = m_factory.newRoutine("coolpath2back");
+
+    var START_TO_BRANCH1 = routine.trajectory("CoolPathTwoBack", 0);
+    var BRANCH1_TO_HP = routine.trajectory("CoolPathTwoBack", 1);
+    var HP_TO_BRANCH2 = routine.trajectory("CoolPathTwoBack", 2);
+    var BRANCH2_TO_HP = routine.trajectory("CoolPathTwoBack", 3);
+    var HP_TO_BRANCH3 = routine.trajectory("CoolPathTwoBack", 4);
+
+    return makeCoolPath(
+        routine, START_TO_BRANCH1, BRANCH1_TO_HP, HP_TO_BRANCH2, BRANCH2_TO_HP, HP_TO_BRANCH3);
+  }
+
+  public AutoRoutine coolpath2backsamecage() {
+    var routine = m_factory.newRoutine("coolpath2backsamecage");
+
+    var START_TO_BRANCH1 = routine.trajectory("CoolPathTwoBack_Same", 0);
+    var BRANCH1_TO_HP = routine.trajectory("CoolPathTwoBack", 1);
+    var HP_TO_BRANCH2 = routine.trajectory("CoolPathTwoBack", 2);
+    var BRANCH2_TO_HP = routine.trajectory("CoolPathTwoBack", 3);
+    var HP_TO_BRANCH3 = routine.trajectory("CoolPathTwoBack", 4);
+
+    return makeCoolPath(
+        routine, START_TO_BRANCH1, BRANCH1_TO_HP, HP_TO_BRANCH2, BRANCH2_TO_HP, HP_TO_BRANCH3);
+  }
+
+  private AutoRoutine makeCoolPath(
+      AutoRoutine routine,
+      AutoTrajectory START_TO_BRANCH1,
+      AutoTrajectory BRANCH1_TO_HP,
+      AutoTrajectory HP_TO_BRANCH2,
+      AutoTrajectory BRANCH2_TO_HP,
+      AutoTrajectory HP_TO_BRANCH3) {
     routine
         .active()
         .onTrue(

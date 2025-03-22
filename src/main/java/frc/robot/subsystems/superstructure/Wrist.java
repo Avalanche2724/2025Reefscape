@@ -54,7 +54,7 @@ public class Wrist {
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-45, Degrees);
 
-  private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.005;
+  private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
   private static final double ENCODER_POSITION_RESET_SEC = 0.001;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
@@ -107,9 +107,10 @@ public class Wrist {
     var config = new TalonFXConfiguration();
 
     // config.Slot0.kP = Robot.isSimulation() ? 200 : 90;
-    // config.Slot0.kD = 8;
     config.Slot0.kP = 63.413;
-    config.Slot0.kD = 0.22525;
+    // config.Slot0.kD = 8;
+    // config.Slot0.kD = 0.22525;
+    config.Slot0.kD = 4;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = 0.14;
@@ -117,7 +118,7 @@ public class Wrist {
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     config.Slot1.kP = 12; // todo: try retuning and lowering?
-    config.Slot1.kD = 0.3;
+    config.Slot1.kD = 1;
     config.Slot1.kS = config.Slot0.kS;
     config.Slot1.kV = config.Slot0.kV;
     config.Slot1.kA = config.Slot0.kA;

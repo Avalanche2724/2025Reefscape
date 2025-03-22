@@ -39,6 +39,8 @@ public class RobotContainer {
     autoChooser.addRoutine("StartToHumanStation", autoRoutines::StartToHumanStation);
     autoChooser.addRoutine("BRR FORWARD", autoRoutines::brrforward);
     autoChooser.addRoutine("verycoolpath", autoRoutines::verycoolpath);
+    autoChooser.addRoutine("coolpath2back", autoRoutines::coolpath2back);
+    autoChooser.addRoutine("coolpath2backsamecage", autoRoutines::coolpath2backsamecage);
 
     autoChooser.addRoutine("l1forauto_ORIG (leftmost)", autoRoutines::l1forauto_ORIG);
     autoChooser.addRoutine("l1forauto_LEFT_OPPCAGE", autoRoutines::l1forauto_LEFT);
