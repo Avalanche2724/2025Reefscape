@@ -89,9 +89,9 @@ public class Controls {
     driver.leftMiddle.whileTrue(superstructure.zeroElevatorCommand());
 
     driver.leftBumper.whileTrue(intake.leftMajority());
-    driver.rightBumper.whileTrue(intake.fullSend());
+    driver.rightBumper.whileTrue(intake.semiSend());
 
-    driver.y.whileTrue(intake.run(-2.8));
+    driver.y.whileTrue(intake.fullSend());
     driver.b.whileTrue(intake.run(2));
     driver.a.whileTrue(intake.runIntake());
 
