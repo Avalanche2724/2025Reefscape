@@ -91,11 +91,11 @@ public class AutoRoutines {
   public AutoRoutine coolpath2backsamecage() {
     var routine = m_factory.newRoutine("coolpath2backsamecage");
 
-    var START_TO_BRANCH1 = routine.trajectory("CoolPathTwoBack_Same", 0);
-    var BRANCH1_TO_HP = routine.trajectory("CoolPathTwoBack_Same", 1);
-    var HP_TO_BRANCH2 = routine.trajectory("CoolPathTwoBack_Same", 2);
-    var BRANCH2_TO_HP = routine.trajectory("CoolPathTwoBack_Same", 3);
-    var HP_TO_BRANCH3 = routine.trajectory("CoolPathTwoBack_Same", 4);
+    var START_TO_BRANCH1 = routine.trajectory("CoolPathTwoBack_SameCage", 0);
+    var BRANCH1_TO_HP = routine.trajectory("CoolPathTwoBack_SameCage", 1);
+    var HP_TO_BRANCH2 = routine.trajectory("CoolPathTwoBack_SameCage", 2);
+    var BRANCH2_TO_HP = routine.trajectory("CoolPathTwoBack_SameCage", 3);
+    var HP_TO_BRANCH3 = routine.trajectory("CoolPathTwoBack_SameCage", 4);
 
     return makeCoolPath(
         routine, START_TO_BRANCH1, BRANCH1_TO_HP, HP_TO_BRANCH2, BRANCH2_TO_HP, HP_TO_BRANCH3);

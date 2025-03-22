@@ -53,7 +53,7 @@ public class Wrist {
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
-  private static final double ENCODER_POSITION_RESET_SEC = 0.01;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.005;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -104,8 +104,8 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 60;
-    config.Slot0.kI = 0.0001;
+    config.Slot0.kP = 40;
+    config.Slot0.kI = 0;
     config.Slot0.kD = 4;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.94;
@@ -113,8 +113,8 @@ public class Wrist {
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.CurrentLimits.StatorCurrentLimit = 40;
-    config.CurrentLimits.StatorCurrentLimitEnable = true;
+    // config.CurrentLimits.StatorCurrentLimit = 40;
+    // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -154,7 +154,7 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 2.4));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
