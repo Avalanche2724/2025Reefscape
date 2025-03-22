@@ -115,8 +115,25 @@ public class Controls {
 
     // Auto align bindings with automatic ejection when aligned
     var wantingToAutoAlignRn = driver.leftTriggerB.or(driver.rightTriggerB);
-    var atTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.05, () -> 2));
-    var nearTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.5, () -> 5));
+    var atTargetPositionTrigger =
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(1.1, Inch), () -> 1.1))
+            .debounce(0.15);
+
+    wantingToAutoAlignRn
+        .and(atTargetPositionTrigger)
+        .and(superstructure::atTargetPosition)
+        .onTrue(
+            intake
+                .semiSend()
+                .withTimeout(0.4)
+                .alongWith(
+                    startEnd(() -> driver.rumble.accept(0.2), () -> driver.rumble.accept(0))
+                        .withTimeout(0.2)));
+
+    // var atTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.05, () ->
+    // 2));
+    // var nearTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.5, () ->
+    // 5));
     /*
         // When we are kinda near the target position while auto aligning, set superstructure position
         wantingToAutoAlignRn
@@ -147,7 +164,7 @@ public class Controls {
                 () -> -0.01 * MathUtil.applyDeadband(operator.getRightY(), 0.7)));
 
     operator.rightJoystickPushed.whileTrue(
-        climber.runVoltage(() -> -12 * MathUtil.applyDeadband(operator.getRightX(), 0.25)));
+        climber.runVoltage(() -> -6 * MathUtil.applyDeadband(operator.getRightX(), 0.25)));
 
     operator.leftMiddle // left squares
         .onTrue(runOnce(() -> isOnCoralBindings = false));

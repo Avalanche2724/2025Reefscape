@@ -86,8 +86,8 @@ public class Intake extends SubsystemBase {
   public Command semiSend() {
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(-3.3));
-          rightMotor.setControl(voltageOut.withOutput(-3.3));
+          leftMotor.setControl(voltageOut.withOutput(-3.45));
+          rightMotor.setControl(voltageOut.withOutput(-3.45));
         });
   }
 

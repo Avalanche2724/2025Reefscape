@@ -45,7 +45,7 @@ public class AutoRoutines {
                         controls.createAtTargetPositionSupplier(
                             () -> Meters.convertFrom(1, Inch), () -> 1))
                     .debounce(0.45)),
-        intake.semiSend().withTimeout(0.35));
+        intake.semiSend().withTimeout(0.4));
   }
 
   public Command intakeUntilGamePiece() {
