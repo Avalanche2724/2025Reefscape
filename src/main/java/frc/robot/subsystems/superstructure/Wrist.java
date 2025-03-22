@@ -6,6 +6,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.DeviceIdentifier;
@@ -13,6 +14,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -53,7 +55,7 @@ public class Wrist {
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
   private static final double THRESHOLD_SWITCHING_PID_GAINS = 0.01;
-  private static final double ENCODER_POSITION_RESET_SEC = 0.1;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.001;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -62,8 +64,8 @@ public class Wrist {
   private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Controls
-  // private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
-  private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(0);
+  private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
+  private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(1);
   // Absolute encoder reading
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
@@ -105,10 +107,9 @@ public class Wrist {
     var config = new TalonFXConfiguration();
 
     // config.Slot0.kP = Robot.isSimulation() ? 200 : 90;
+    config.Slot0.kP = 75;
     // config.Slot0.kD = 8;
     // config.Slot0.kD = 0.22525;
-    config.Slot0.kP = 20;
-    config.Slot0.kI = 0.001; // idk? maybe this helps
     config.Slot0.kD = 5;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.94;
@@ -116,25 +117,18 @@ public class Wrist {
     config.Slot0.kG = (0.48 + 0.37) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    // config.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 0.0; // i didn't like motion magic!
-    config.CurrentLimits.StatorCurrentLimit = 25;
-    config.CurrentLimits.StatorCurrentLimitEnable = true;
-    /*
-        config.Slot1.kP = 10; // todo: try retuning and lowering?
-        config.Slot1.kD = 1;
-        config.Slot1.kS = config.Slot0.kS;
-        config.Slot1.kV = config.Slot0.kV;
-        config.Slot1.kA = config.Slot0.kA;
-        config.Slot1.kG = config.Slot0.kG;
-        config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
-        config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
-    */
-    /*
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
-    config.MotionMagic.MotionMagicAcceleration = 2; // rotations per second squared
-    config.MotionMagic.MotionMagicJerk = 4; // rotations per second cubed
+    config.Slot1.kP = 10; // todo: try retuning and lowering?
+    config.Slot1.kD = 1;
+    config.Slot1.kS = config.Slot0.kS;
+    config.Slot1.kV = config.Slot0.kV;
+    config.Slot1.kA = config.Slot0.kA;
+    config.Slot1.kG = config.Slot0.kG;
+    config.Slot1.GravityType = GravityTypeValue.Arm_Cosine;
+    config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
-    */
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.3; // rotations per second; maximum?
+    config.MotionMagic.MotionMagicAcceleration = 1.3; // rotations per second squared
+    config.MotionMagic.MotionMagicJerk = 6; // rotations per second cubed
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -183,10 +177,10 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
 
-    /*   if (setPosition
+    if (setPosition
         && Math.abs(getWristRotations() - lastPositionSet) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
-    } */
+    }
   }
 
   // Signals
@@ -246,13 +240,11 @@ public class Wrist {
     setPosition = true;
     lastPositionSet = pos;
 
-    motor.setControl(positionControl.withPosition(lastPositionSet));
-
-    /* if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
+    if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
     } else {
       motor.setControl(motionMagicControl.withPosition(pos));
-    }*/
+    }
   }
 
   void setMotorDegreesOffset(double deg) {
