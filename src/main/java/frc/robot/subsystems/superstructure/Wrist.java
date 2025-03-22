@@ -104,9 +104,9 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 40;
+    config.Slot0.kP = 32;
     config.Slot0.kI = 0;
-    config.Slot0.kD = 4;
+    config.Slot0.kD = 3.6;
     config.Slot0.kS = (0.48 - 0.37) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = 0.14;
@@ -178,7 +178,11 @@ public class Wrist {
     if (setPosition) {
       m_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
       positionControl.Position = m_setpoint.position;
-      positionControl.Velocity = m_setpoint.velocity;
+      if (m_profile.timeLeftUntil(lastPositionSet) > 0.25) {
+        positionControl.Velocity = m_setpoint.velocity;
+      } else {
+        positionControl.Velocity = 0;
+      }
       motor.setControl(positionControl);
     }
   }
