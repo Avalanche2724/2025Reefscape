@@ -77,7 +77,7 @@ public class Elevator {
   public SysIdRoutine sysIdRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(1).div(Seconds.one()),
+              null,
               Volts.of(4),
               null,
               (state) -> SignalLogger.writeString("Elevator_SysId_State", state.toString())),
@@ -90,22 +90,13 @@ public class Elevator {
     var config = new TalonFXConfiguration();
 
     // Slot for regular positional control
-
-    config.Slot0.kP = 190.41;
-    config.Slot0.kD = 14.148;
-    config.Slot0.kS = 0.085;
-    config.Slot0.kV = 7.5487;
-    config.Slot0.kA = 0.17841;
-    config.Slot0.kG = 0.305;
-    /*
-        config.Slot0.kP = 132.55;
-    config.Slot0.kD = 1.4836;
-    config.Slot0.kS = 0.062696;
-    config.Slot0.kV = 7.6213;
-    config.Slot0.kA = 0.07906;
-    config.Slot0.kG = 0.28811;
-
-     */
+    // From SysID: max pos error 0.005, vel 0.05, control 12
+    config.Slot0.kP = 198.96;
+    config.Slot0.kD = 13.403;
+    config.Slot0.kS = 0.1063;
+    config.Slot0.kV = 7.6932;
+    config.Slot0.kA = 0.10934;
+    config.Slot0.kG = 0.2857;
 
     // For zeroing sequence and algae launching
     config.Slot1.kP = 15;
@@ -114,12 +105,12 @@ public class Elevator {
     config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 4.0; // meters per second squared
+    config.MotionMagic.MotionMagicAcceleration = 3.5; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4; // meters per second
     // config.MotionMagic.MotionMagicJerk = 20; // meters per second cubed
 
     // Other things
-    config.CurrentLimits.StatorCurrentLimit = 25;
+    config.CurrentLimits.StatorCurrentLimit = 50;
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     // Forward/reverse limits

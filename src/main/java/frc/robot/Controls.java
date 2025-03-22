@@ -101,7 +101,7 @@ public class Controls {
     // configureDriveTuningBindings();
     driver.povUp.whileTrue(drivetrain.wheelCharacterization());
 
-    configureSysidBindings();
+    // configureSysidBindings();
 
     // AUTO ALIGN
     driver
@@ -213,7 +213,7 @@ public class Controls {
     // Note that each routine should be run exactly once in a single log.
 
     // final SysIdRoutine routine = superstructure.wrist.sysIdRoutine;
-    var routine = superstructure.elevator.sysIdRoutine;
+    var routine = superstructure.wrist.sysIdRoutine;
     driver.leftMiddle.and(driver.y).whileTrue(routine.dynamic(SysIdRoutine.Direction.kForward));
     driver.leftMiddle.and(driver.a).whileTrue(routine.dynamic(SysIdRoutine.Direction.kReverse));
     driver
