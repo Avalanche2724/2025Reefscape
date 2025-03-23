@@ -51,7 +51,7 @@ public class AutoRoutines {
   public Command intakeUntilGamePiece() {
     return drivetrain
         .brakeOnce()
-        .andThen(race(intake.runIntake().withTimeout(1.9), waitUntil(intake.hasGamePieceTrigger)));
+        .andThen(race(intake.semiSpinny().withTimeout(1.9), waitUntil(intake.hasGamePieceTrigger)));
   }
 
   public Command waitAndL2() {
