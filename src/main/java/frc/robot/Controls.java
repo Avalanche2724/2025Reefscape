@@ -117,7 +117,7 @@ public class Controls {
     var wantingToAutoAlignRn = driver.leftTriggerB.or(driver.rightTriggerB);
     var atTargetPositionTrigger =
         new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(1.1, Inch), () -> 1.1))
-            .debounce(0.15);
+            .debounce(0.45);
 
     wantingToAutoAlignRn
         .and(atTargetPositionTrigger)
@@ -125,7 +125,7 @@ public class Controls {
         .onTrue(
             intake
                 .semiSend()
-                .withTimeout(0.4)
+                .withTimeout(0.6)
                 .alongWith(
                     startEnd(() -> driver.rumble.accept(0.2), () -> driver.rumble.accept(0))
                         .withTimeout(0.2)));
