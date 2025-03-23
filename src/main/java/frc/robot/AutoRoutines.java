@@ -44,14 +44,14 @@ public class AutoRoutines {
                 new Trigger(
                         controls.createAtTargetPositionSupplier(
                             () -> Meters.convertFrom(1, Inch), () -> 1))
-                    .debounce(0.45)),
-        intake.semiSend().withTimeout(0.4));
+                    .debounce(0.5)),
+        intake.semiSend().withTimeout(0.75));
   }
 
   public Command intakeUntilGamePiece() {
     return drivetrain
         .brakeOnce()
-        .andThen(race(intake.runIntake().withTimeout(1.5), waitUntil(intake.hasGamePieceTrigger)));
+        .andThen(race(intake.runIntake().withTimeout(1.9), waitUntil(intake.hasGamePieceTrigger)));
   }
 
   public Command waitAndL2() {

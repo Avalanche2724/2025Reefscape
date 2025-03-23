@@ -101,16 +101,18 @@ public class Wrist {
   private double lastPositionSet = 0;
   private boolean setPosition = false;
 
+  private double kA = 0.14;
+
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 20;
+    config.Slot0.kP = 25;
     config.Slot0.kI = 0;
     config.Slot0.kD = 3.6;
-    config.Slot0.kS = (0.48 - 0.37) / 2;
+    config.Slot0.kS = (0.49 - 0.38) / 2;
     config.Slot0.kV = 7.94;
-    config.Slot0.kA = 0.14;
-    config.Slot0.kG = (0.48 + 0.37) / 2;
+    config.Slot0.kA = kA;
+    config.Slot0.kG = (0.49 + 0.38) / 2;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     // config.CurrentLimits.StatorCurrentLimit = 40;
@@ -154,7 +156,7 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.38));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.55));
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
@@ -171,18 +173,19 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
 
-    /*   if (setPosition
-        && Math.abs(getWristRotations() - lastPositionSet) < THRESHOLD_SWITCHING_PID_GAINS) {
-      motor.setControl(positionControl.withPosition(lastPositionSet));
-    } */
     if (setPosition) {
       m_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
+      var next_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
       positionControl.Position = m_setpoint.position;
-      if (m_profile.timeLeftUntil(lastPositionSet) > 0.2) {
+      if (m_profile.timeLeftUntil(lastPositionSet) > 0.15) {
         positionControl.Velocity = m_setpoint.velocity;
       } else {
         positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
       }
+      // acceleration
+      double accel = (next_setpoint.velocity - m_setpoint.velocity) / 0.020;
+      double arbff = kA * accel;
+      positionControl.FeedForward = arbff;
       motor.setControl(positionControl);
     }
   }
