@@ -154,7 +154,7 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.4));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.38));
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
@@ -178,10 +178,10 @@ public class Wrist {
     if (setPosition) {
       m_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
       positionControl.Position = m_setpoint.position;
-      if (m_profile.timeLeftUntil(lastPositionSet) > 0.25) {
+      if (m_profile.timeLeftUntil(lastPositionSet) > 0.2) {
         positionControl.Velocity = m_setpoint.velocity;
       } else {
-        positionControl.Velocity = 0;
+        positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
       }
       motor.setControl(positionControl);
     }
