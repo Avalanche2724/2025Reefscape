@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,24 +25,22 @@ public class LED extends SubsystemBase {
     m_led.setLength(kLength);
     m_led.start();
 
-    // Set the default command to turn the strip off, otherwise the last colors written by
-    // the last command to run will continue to be displayed.
-    // Note: Other default patterns could be used instead!
-    setDefaultCommand(
-        // runPattern(LEDPattern.solid(new Color(0x27, 0x24, 0xFF))).withName("blue default"));
-        netchecker().withName("ledchanger"));
+    // Set the default command to continuously run netchecker,
+    // which now includes the white-blue animation instead of solid orange.
+    setDefaultCommand(netchecker().withName("ledchanger"));
   }
 
   @Override
   public void periodic() {
-    // Periodically send the latest LED color data to the LED strip for it to display
+    // Update the LED strip with the current buffer data.
     m_led.setData(m_buffer);
   }
 
   /**
-   * Creates a command that runs a pattern on the entire LED strip.
+   * Creates a command that runs a given LED pattern on the entire LED strip.
    *
    * @param pattern the LED pattern to run
+   * @return a command that applies the pattern
    */
   public Command runPattern(LEDPattern pattern) {
     return run(() -> pattern.applyTo(m_buffer)).ignoringDisable(true);
@@ -56,11 +55,16 @@ public class LED extends SubsystemBase {
     return runPattern(LEDPattern.solid(Color.kBlack));
   }
 
+  /**
+   * This command checks various robot states and applies different LED patterns. If none of the
+   * special conditions are met, it displays a slow white-blue animation.
+   */
   public Command netchecker() {
     return run(() -> {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
           var coralMode = Robot.instance.robotContainer.controls.isOnCoralBindings;
+
           if (Math.abs(position - AllianceFlipUtil.applyX(7.4)) < Meters.convertFrom(1.5, Inch)) {
             LEDPattern.solid(Color.kRed).applyTo(m_buffer);
             Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
@@ -72,10 +76,25 @@ public class LED extends SubsystemBase {
             if (coralMode) {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
-              LEDPattern.solid(Color.kOrange).applyTo(m_buffer);
+              // White-Blue Animation: smoothly interpolate between blue (0,0,255) and white
+              // (255,255,255)
+              double periodMicros = 10_000_000.0; // 10-second cycle
+              long now = RobotController.getTime();
+              double t = (now % (long) periodMicros) / periodMicros;
+              double phase = t * 2 * Math.PI;
+              double lerp = (Math.sin(phase) + 1) / 2.0;
+
+              int red = (int) (0 + (255 - 0) * lerp);
+              int green = (int) (0 + (255 - 0) * lerp);
+              int blue = 255;
+
+              for (int i = 0; i < m_buffer.getLength(); i++) {
+                m_buffer.setLED(i, new Color(red, green, blue));
+              }
             }
           }
-          m_led.setData(m_buffer); // Update the LED strip
+          // Update the LED strip with the new data.
+          m_led.setData(m_buffer);
         })
         .ignoringDisable(true);
   }
