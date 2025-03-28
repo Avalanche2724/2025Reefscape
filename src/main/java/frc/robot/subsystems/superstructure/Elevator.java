@@ -24,6 +24,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 @SuppressWarnings("FieldCanBeLocal") // Stop intellij complaints
 public class Elevator {
+  public static final double tempvar = 14.0 / (16.0 / 3.0);
+
   // Constants
   public static final int ELEVATOR_ID = 41;
   public static final int ELEVATOR2_ID = 42;
@@ -32,7 +34,7 @@ public class Elevator {
   public static final double MAX_HEIGHT = 1.56;
   // Meters.convertFrom(59.06, Inches); // 1.5 m
   //
-  private static final double GEAR_RATIO = 14.0;
+  private static final double GEAR_RATIO = 14.0 / tempvar;
   // Extra factor of 2 because there are 2 sprockets pushing up the elevato
   private static final double DRUM_RADIUS =
       Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 18.0))), Inches) * 2;
@@ -91,12 +93,12 @@ public class Elevator {
 
     // Slot for regular positional control
     // From SysID: max pos error 0.005, vel 0.05, control 12
-    config.Slot0.kP = 198.96;
-    config.Slot0.kD = 13.403;
+    config.Slot0.kP = 198.96 / tempvar;
+    config.Slot0.kD = 13.403 / tempvar;
     config.Slot0.kS = 0.1063;
-    config.Slot0.kV = 7.6932;
-    config.Slot0.kA = 0.10934;
-    config.Slot0.kG = 0.2857;
+    config.Slot0.kV = 7.6932 / tempvar;
+    config.Slot0.kG = 0.2857 * tempvar;
+    config.Slot0.kA = config.Slot0.kG / 9.8;
 
     // For zeroing sequence and algae launching
     config.Slot1.kP = 15;
