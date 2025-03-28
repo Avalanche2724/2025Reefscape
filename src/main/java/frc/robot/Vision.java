@@ -70,15 +70,23 @@ public class Vision {
       new Camera(
           "Arducam_fr_elev",
           new Transform3d(
-              new Translation3d(Inches.of(14 - 6.4), Inches.of(-14 + 3.5), Inches.of(11)),
-              new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(12))));
-
+              // TODO this translation seems way off on the Z and maybe X/Y revise later
+              new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.85), Inches.of(8)),
+              new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(15))));
+  /*
+    public Camera cameraFlSwerve =
+        new Camera(
+            "Arducam_fl_swerve",
+            new Transform3d(
+                new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
+                new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
+  */
   public Camera cameraFlSwerve =
       new Camera(
           "Arducam_fl_swerve",
           new Transform3d(
-              new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
-              new Rotation3d(Degrees.of(0), Degrees.of(-10), Degrees.of(-15))));
+              new Translation3d(Inches.of(14 - 3.0), Inches.of(14 - 3.0), Inches.of(8.7)),
+              new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
 
   {
     if (Robot.isSimulation()) {
@@ -148,7 +156,7 @@ public class Vision {
       if (Robot.isSimulation()) {
         var cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(79));
-        cameraProp.setCalibError(0.4, 0.3);
+        cameraProp.setCalibError(0, 0);
         cameraProp.setFPS(20);
         cameraProp.setAvgLatencyMs(20);
         cameraProp.setLatencyStdDevMs(4);
