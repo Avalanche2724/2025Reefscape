@@ -24,24 +24,22 @@ public class LED extends SubsystemBase {
     m_led.setLength(kLength);
     m_led.start();
 
-    // Set the default command to turn the strip off, otherwise the last colors written by
-    // the last command to run will continue to be displayed.
-    // Note: Other default patterns could be used instead!
-    setDefaultCommand(
-        // runPattern(LEDPattern.solid(new Color(0x27, 0x24, 0xFF))).withName("blue default"));
-        netchecker().withName("ledchanger"));
+    // Set the default command to netchecker, which now includes our alternating white-blue
+    // animation.
+    setDefaultCommand(netchecker().withName("ledchanger"));
   }
 
   @Override
   public void periodic() {
-    // Periodically send the latest LED color data to the LED strip for it to display
+    // Continuously update the LED strip with the current buffer data.
     m_led.setData(m_buffer);
   }
 
   /**
-   * Creates a command that runs a pattern on the entire LED strip.
+   * Creates a command that runs a given LED pattern on the entire LED strip.
    *
    * @param pattern the LED pattern to run
+   * @return a command that applies the pattern
    */
   public Command runPattern(LEDPattern pattern) {
     return run(() -> pattern.applyTo(m_buffer)).ignoringDisable(true);
@@ -56,11 +54,17 @@ public class LED extends SubsystemBase {
     return runPattern(LEDPattern.solid(Color.kBlack));
   }
 
+  /**
+   * This command checks various robot states and applies different LED patterns. When no special
+   * condition is met and coral mode is off, it displays an alternating white-blue pattern that
+   * scrolls down the LED strip.
+   */
   public Command netchecker() {
     return run(() -> {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
           var coralMode = Robot.instance.robotContainer.controls.isOnCoralBindings;
+
           if (Math.abs(position - AllianceFlipUtil.applyX(7.4)) < Meters.convertFrom(1.5, Inch)) {
             LEDPattern.solid(Color.kRed).applyTo(m_buffer);
             Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
@@ -72,10 +76,24 @@ public class LED extends SubsystemBase {
             if (coralMode) {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
-              LEDPattern.solid(Color.kOrange).applyTo(m_buffer);
+              // Create a base alternating pattern: even indices are white, odd indices are blue.
+              LEDPattern alternating =
+                  (reader, writer) -> {
+                    int len = reader.getLength();
+                    for (int i = 0; i < len; i++) {
+                      if (i % 2 == 0) {
+                        writer.setLED(i, Color.kWhite);
+                      } else {
+                        writer.setLED(i, Color.kBlue);
+                      }
+                    }
+                  };
+              // Animate the pattern by scrolling it slowly. Adjust the speed here as desired.
+              alternating.scrollAtRelativeSpeed(Percent.per(Second).of(10)).applyTo(m_buffer);
             }
           }
-          m_led.setData(m_buffer); // Update the LED strip
+          // Update the LED strip with the new data.
+          m_led.setData(m_buffer);
         })
         .ignoringDisable(true);
   }
