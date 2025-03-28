@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -25,14 +24,14 @@ public class LED extends SubsystemBase {
     m_led.setLength(kLength);
     m_led.start();
 
-    // Set the default command to continuously run netchecker,
-    // which now includes the white-blue animation instead of solid orange.
+    // Set the default command to netchecker, which now includes our alternating white-blue
+    // animation.
     setDefaultCommand(netchecker().withName("ledchanger"));
   }
 
   @Override
   public void periodic() {
-    // Update the LED strip with the current buffer data.
+    // Continuously update the LED strip with the current buffer data.
     m_led.setData(m_buffer);
   }
 
@@ -56,8 +55,9 @@ public class LED extends SubsystemBase {
   }
 
   /**
-   * This command checks various robot states and applies different LED patterns. If none of the
-   * special conditions are met, it displays a slow white-blue animation.
+   * This command checks various robot states and applies different LED patterns. When no special
+   * condition is met and coral mode is off, it displays an alternating white-blue pattern that
+   * scrolls down the LED strip.
    */
   public Command netchecker() {
     return run(() -> {
@@ -76,21 +76,20 @@ public class LED extends SubsystemBase {
             if (coralMode) {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
-              // White-Blue Animation: smoothly interpolate between blue (0,0,255) and white
-              // (255,255,255)
-              double periodMicros = 10_000_000.0; // 10-second cycle
-              long now = RobotController.getTime();
-              double t = (now % (long) periodMicros) / periodMicros;
-              double phase = t * 2 * Math.PI;
-              double lerp = (Math.sin(phase) + 1) / 2.0;
-
-              int red = (int) (0 + (255 - 0) * lerp);
-              int green = (int) (0 + (255 - 0) * lerp);
-              int blue = 255;
-
-              for (int i = 0; i < m_buffer.getLength(); i++) {
-                m_buffer.setLED(i, new Color(red, green, blue));
-              }
+              // Create a base alternating pattern: even indices are white, odd indices are blue.
+              LEDPattern alternating =
+                  (reader, writer) -> {
+                    int len = reader.getLength();
+                    for (int i = 0; i < len; i++) {
+                      if (i % 2 == 0) {
+                        writer.setLED(i, Color.kWhite);
+                      } else {
+                        writer.setLED(i, Color.kBlue);
+                      }
+                    }
+                  };
+              // Animate the pattern by scrolling it slowly. Adjust the speed here as desired.
+              alternating.scrollAtRelativeSpeed(Percent.per(Second).of(10)).applyTo(m_buffer);
             }
           }
           // Update the LED strip with the new data.
