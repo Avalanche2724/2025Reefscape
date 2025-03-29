@@ -25,6 +25,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -233,6 +234,8 @@ public class Wrist {
     return motorVoltage.getValueAsDouble();
   }
 
+  double lastSetTime = 0;
+
   // this is probably a horrible idea and I apologize to anybody looking at this in the future
   private Runnable absoluteEncoderResetter() {
     var setter =
@@ -250,8 +253,11 @@ public class Wrist {
         // TODO fix me later and implement better alerting
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
-        if (Math.abs(motorVel) < 1.0) {
-          setter.setPosition(pos + ARM_OFFSET, 0);
+        if (Timer.getFPGATimestamp() - lastSetTime > 0.5) {
+          if (Math.abs(motorVel) < 1.1) {
+            setter.setPosition(pos + ARM_OFFSET, 0);
+            lastSetTime = Timer.getFPGATimestamp();
+          }
         }
       }
     };

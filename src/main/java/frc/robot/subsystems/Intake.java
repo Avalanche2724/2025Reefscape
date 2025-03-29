@@ -140,11 +140,11 @@ public class Intake extends SubsystemBase {
         () -> a[0]++,
         () -> {
           if (a[0] % 2 == 1) {
-            leftMotor.setControl(voltageOut.withOutput(5));
-            rightMotor.setControl(voltageOut.withOutput(3));
+            leftMotor.setControl(voltageOut.withOutput(4));
+            rightMotor.setControl(voltageOut.withOutput(2));
           } else {
-            leftMotor.setControl(voltageOut.withOutput(3));
-            rightMotor.setControl(voltageOut.withOutput(5));
+            leftMotor.setControl(voltageOut.withOutput(2));
+            rightMotor.setControl(voltageOut.withOutput(4));
           }
         });
   }

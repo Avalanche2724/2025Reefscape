@@ -40,8 +40,8 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L4_VERT_P1(1.52, 60),
     OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
-    INTAKE_ALGAE_L2(1.13, 0),
-    INTAKE_ALGAE_L3(1.58, 0),
+    INTAKE_ALGAE_L2(1.08, 0),
+    INTAKE_ALGAE_L3(1.51, 0),
     OUTTAKE_NET(1.15, 72);
 
     // Meters
