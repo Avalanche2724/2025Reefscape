@@ -71,23 +71,24 @@ public class Vision {
           "Arducam_fr_elev",
           new Transform3d(
               // TODO this translation seems way off on the Z and maybe X/Y revise later
-              new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.85), Inches.of(8)),
+              new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.85), Inches.of(8.55)),
               new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(15))));
+
+  public Camera cameraFlSwerve =
+      new Camera(
+          "Arducam_fl_swerve",
+          new Transform3d(
+              new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
+              new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
+
   /*
     public Camera cameraFlSwerve =
         new Camera(
             "Arducam_fl_swerve",
             new Transform3d(
-                new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
+                new Translation3d(Inches.of(14 - 3.0), Inches.of(14 - 3.0), Inches.of(8.7)),
                 new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
   */
-  public Camera cameraFlSwerve =
-      new Camera(
-          "Arducam_fl_swerve",
-          new Transform3d(
-              new Translation3d(Inches.of(14 - 3.0), Inches.of(14 - 3.0), Inches.of(8.7)),
-              new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
-
   {
     if (Robot.isSimulation()) {
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.

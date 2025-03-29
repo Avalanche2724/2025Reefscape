@@ -85,28 +85,28 @@ public class Controls {
   //
   public void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
-    // driver.rightMiddle.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-    // driver.leftMiddle.whileTrue(superstructure.zeroElevatorCommand());
+    driver.rightMiddle.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+    driver.leftMiddle.whileTrue(superstructure.zeroElevatorCommand());
 
     driver.leftBumper.whileTrue(intake.leftMajority());
     driver.rightBumper.whileTrue(intake.semiSend());
 
     configureSysidBindings();
-    /*
-        driver.y.whileTrue(intake.fullSend());
-        driver.b.whileTrue(intake.run(2));
-        driver.a.whileTrue(intake.runIntake());
 
-        coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
-    */
+    driver.y.whileTrue(intake.fullSend());
+    driver.b.whileTrue(intake.run(2));
+    driver.a.whileTrue(intake.runIntake());
+
+    coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
+
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();
-    // driver.povUp.whileTrue(drivetrain.wheelCharacterization());
+    driver.povUp.whileTrue(drivetrain.wheelCharacterization());
 
     // configureSysidBindings();
 
     // AUTO ALIGN
-    /*
+
     driver
         .leftTriggerB
         .and(this::enableAutoAlign)
@@ -116,8 +116,6 @@ public class Controls {
         .and(this::enableAutoAlign)
         .whileTrue(driveToNearestReefBranchCommand(this::positionToReefLevel, false)); // Right side
 
-
-     */
     // Auto align bindings with automatic ejection when aligned
     var wantingToAutoAlignRn = driver.leftTriggerB.or(driver.rightTriggerB);
     var atTargetPositionTrigger =

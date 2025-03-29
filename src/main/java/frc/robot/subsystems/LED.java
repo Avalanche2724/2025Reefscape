@@ -68,11 +68,11 @@ public class LED extends SubsystemBase {
   private static final double SNOW_START_POSITION = 19.0; // Where new snow spawns
 
   // Bottom stack constants
-  private static final double BOTTOM_STACK_SHIFT_FACTOR = -0.25; // Proportional push term
+  private static final double BOTTOM_STACK_SHIFT_FACTOR = -0.3; // Proportional push term
   private static final double INITIAL_BOTTOM_STACK_POS = 3.0; // Starting stack height
 
   // Falling snow constants
-  private static final double FLAKE_RANDOM_SPEED = -40; // Random part of velocity
+  private static final double FLAKE_RANDOM_SPEED = -30; // Random part of velocity
   private static final double FLAKE_BASE_SPEED = 5; // Base velocity
 
   public ArrayList<Double> snowPositions = new ArrayList<>();
@@ -91,7 +91,7 @@ public class LED extends SubsystemBase {
       // Reset timer
       timeSinceLastSnowflake = 0.0;
       // Pick new random delay
-      nextSnowflakeDelay = (Math.pow(Math.random(), 2.5) * 2) + 0.4;
+      nextSnowflakeDelay = (Math.pow(Math.random(), 3) * 2) + 0.4;
     }
 
     // 2) Update bottom snow stack position
@@ -196,7 +196,9 @@ public class LED extends SubsystemBase {
         // Convert to 8-bit color channels
         int r = (int) (255 * t); // from 0 to 255
         int g = (int) (255 * t); // from 0 to 255
-        int b = 255; // always 255 (blue channel)
+        // int b = 255; // always 255 (blue channel)
+        // int b = 2 + (int)(192*t);
+        int b = g;
 
         // Now set the LED color (no new object allocated)
         writer.setRGB(i, gammaCorrect(r), gammaCorrect(g), gammaCorrect(b));
@@ -222,13 +224,15 @@ public class LED extends SubsystemBase {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
               // Snow:
-              // snowPattern().reversed().applyTo(m_buffer);
+              snowPattern().reversed().applyTo(m_buffer);
               // Blue fire simulation:
               // • Create a new flame and add it to the simulation.
               // • Update all flames (each flame’s length and position evolve over time).
               // • Remove any flames that have “died.”
               // • Build a fire-intensity list (one intensity value per LED).
               // • Map the intensity values into RGB colors for each LED.
+
+              /*
               Flame newFlame = buildFlame(simulationBarLength);
               flames.add(newFlame);
 
@@ -241,6 +245,8 @@ public class LED extends SubsystemBase {
               }
               makeFireList(fires, flames);
               updateLEDs(fires, notActuallyMaxIntensity);
+
+                 */
             }
           }
           // Update the LED strip with the new data.
@@ -323,9 +329,9 @@ public class LED extends SubsystemBase {
         // When intensity is very high, use a bright blue color.
         m_buffer.setLED(i, new Color(100, 200, 255));
       } else {
-        int red = Math.round(fire * 75 / (float) maxIntensity);
-        int green = Math.round(fire * 135 / (float) maxIntensity);
-        int blue = Math.round(fire * 255 / (float) maxIntensity);
+        int red = gammaCorrect(Math.round(fire * 75 / (float) maxIntensity));
+        int green = gammaCorrect(Math.round(fire * 135 / (float) maxIntensity));
+        int blue = gammaCorrect(Math.round(fire * 255 / (float) maxIntensity));
         m_buffer.setLED(i, new Color(red, green, blue));
       }
     }
