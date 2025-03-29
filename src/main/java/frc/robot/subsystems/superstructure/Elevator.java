@@ -43,7 +43,7 @@ public class Elevator {
   // Other things
   private static final double STALL_DETECT_TORQUE = -9.5;
   private static final double VELOCITY_DETECT_THRESHOLD = 0.08;
-  private static final double ELEVATOR_ZEROING_VELOCITY = -0.5;
+  private static final double ELEVATOR_ZEROING_VELOCITY = -0.4;
   private static final double ALGAE_LAUNCHING_VELOCITY = 1.5;
 
   // Motors
@@ -92,10 +92,13 @@ public class Elevator {
     var config = new TalonFXConfiguration();
 
     // From SysID (in theoretical analysis mode): max pos error 0.005, vel 0.05, control 7
-    config.Slot0.kP = 96.838;
-    config.Slot0.kD = 7.459;
-    config.Slot0.kG = 0.6076;
-    config.Slot0.kS = 0.15813;
+    double kgHigh = 0.75;
+    double kgLow = 0.38;
+
+    config.Slot0.kP = 100;
+    config.Slot0.kD = 2; // kD was having a skill issue?
+    config.Slot0.kG = (kgHigh + kgLow) / 2;
+    config.Slot0.kS = (kgHigh - kgLow) / 2;
     config.Slot0.kA = config.Slot0.kG / 9.8;
     config.Slot0.kV = 0.124 / 0.043080; // approx 2.88 V*s/m
 
@@ -107,8 +110,8 @@ public class Elevator {
     config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 1.5; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.5; // meters per second
+    config.MotionMagic.MotionMagicAcceleration = 6.0; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 3.6; // meters per second
     // config.MotionMagic.MotionMagicJerk = 20; // meters per second cubed
 
     // Other things
@@ -125,12 +128,16 @@ public class Elevator {
     motor.getConfigurator().apply(config);
 
     // For debugging via hoot logs:
-    motor.getClosedLoopError().setUpdateFrequency(50);
-    motor.getClosedLoopReference().setUpdateFrequency(50);
     // Make SysId a bit more accurate, hopefully
     motorPosition.setUpdateFrequency(200);
     motorVelocity.setUpdateFrequency(200);
     motorVoltage.setUpdateFrequency(200);
+    motor.getClosedLoopError().setUpdateFrequency(50);
+    motor.getClosedLoopReference().setUpdateFrequency(50);
+    motor.getClosedLoopDerivativeOutput().setUpdateFrequency(50);
+    motor.getClosedLoopOutput().setUpdateFrequency(50);
+    motor.getClosedLoopProportionalOutput().setUpdateFrequency(50);
+    motor.getClosedLoopFeedForward().setUpdateFrequency(50);
 
     var followerConfig = new TalonFXConfiguration();
     followerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;

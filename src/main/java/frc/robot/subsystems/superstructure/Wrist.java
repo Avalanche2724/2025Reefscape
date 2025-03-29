@@ -156,7 +156,7 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.55));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.4));
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
