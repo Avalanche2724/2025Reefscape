@@ -53,7 +53,7 @@ public class Wrist {
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
-  private static final double ENCODER_POSITION_RESET_SEC = 0.8;
+  private static final double ENCODER_POSITION_RESET_SEC = 1;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -156,9 +156,9 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.6));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.7));
   final TrapezoidProfile m_profile_accel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.8));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 2.0));
 
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);

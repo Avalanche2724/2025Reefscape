@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -41,7 +42,7 @@ public class Elevator {
   // approx 1/23.212
   private static final double METERS_PER_MOTOR_ROTATION = CIRCUMFERENCE / GEAR_RATIO;
   // Other things
-  private static final double STALL_DETECT_TORQUE = -11;
+  private static final double STALL_DETECT_TORQUE = -9.5;
   private static final double VELOCITY_DETECT_THRESHOLD = 0.07;
 
   // Motors
@@ -55,6 +56,9 @@ public class Elevator {
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Control
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
+  private final VelocityTorqueCurrentFOC velocityControl =
+      new VelocityTorqueCurrentFOC(0).withSlot(1);
+
   // Simulation
   private final ElevatorSim m_elevatorSim =
       new ElevatorSim(
@@ -99,9 +103,16 @@ public class Elevator {
     config.Slot0.kV = 0.124 / 0.043080; // approx 2.88 V*s/m
 
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 6.0; // meters per second squared
-    config.MotionMagic.MotionMagicJerk = 60.0;
-    config.MotionMagic.MotionMagicCruiseVelocity = 3.75; // meters per second
+    config.MotionMagic.MotionMagicAcceleration = 4.5; // meters per second squared
+    config.MotionMagic.MotionMagicJerk = 45.0;
+    config.MotionMagic.MotionMagicCruiseVelocity = 3.5; // meters per second
+
+    // For zeroing sequence
+    config.Slot1.kP = 20;
+    config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
+    // TODO tune me later
+    config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
+    config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
 
     // Other things
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
@@ -184,9 +195,12 @@ public class Elevator {
     motor.set(0);
   }
 
+  private void setMotorVelocity(double v, boolean ignoreLimits) {
+    motor.setControl(velocityControl.withVelocity(v).withIgnoreHardwareLimits(ignoreLimits));
+  }
+
   void setMotorZeroingVelocity() {
-    // setMotorVelocity(ELEVATOR_ZEROING_VELOCITY, true);
-    motor.setControl(new VoltageOut(-0.5).withIgnoreHardwareLimits(true));
+    setMotorVelocity(-0.5, true);
   }
 
   void setMotorLaunchingVelocityUp() {
