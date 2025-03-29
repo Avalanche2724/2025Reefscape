@@ -58,15 +58,15 @@ public class LED extends SubsystemBase {
 
   // Example constants you can tweak
   private static final double TIME_STEP = 0.02; // Called ~50x/sec if periodic
-  private static final double SNOW_START_POSITION = 18.0; // Where new snow spawns
+  private static final double SNOW_START_POSITION = 19.0; // Where new snow spawns
 
   // Bottom stack constants
   private static final double BOTTOM_STACK_SHIFT_FACTOR = -0.25; // Proportional push term
   private static final double INITIAL_BOTTOM_STACK_POS = 3.0; // Starting stack height
 
   // Falling snow constants
-  private static final double FLAKE_RANDOM_SPEED = -25; // Random part of velocity
-  private static final double FLAKE_BASE_SPEED = 3; // Base velocity
+  private static final double FLAKE_RANDOM_SPEED = -28; // Random part of velocity
+  private static final double FLAKE_BASE_SPEED = 8; // Base velocity
 
   public ArrayList<Double> snowPositions = new ArrayList<>();
   public double bottomSnowStackPosition = INITIAL_BOTTOM_STACK_POS;
@@ -84,7 +84,7 @@ public class LED extends SubsystemBase {
       // Reset timer
       timeSinceLastSnowflake = 0.0;
       // Pick new random delay
-      nextSnowflakeDelay = Math.pow((Math.random() + 1), 1.5) - 0.5;
+      nextSnowflakeDelay = (Math.pow(Math.random(), 2.5) * 2) + 0.7;
     }
 
     // 2) Update bottom snow stack position
