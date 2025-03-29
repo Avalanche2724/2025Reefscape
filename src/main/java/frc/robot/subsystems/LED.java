@@ -24,8 +24,7 @@ public class LED extends SubsystemBase {
     m_led.setLength(kLength);
     m_led.start();
 
-    // Set the default command to netchecker, which now includes our alternating white-blue
-    // animation.
+    // Set the default command to netchecker, which now includes our falling snow-like pattern.
     setDefaultCommand(netchecker().withName("ledchanger"));
   }
 
@@ -54,6 +53,12 @@ public class LED extends SubsystemBase {
     return runPattern(LEDPattern.solid(Color.kBlack));
   }
 
+  /**
+   * The netchecker command evaluates robot state and applies different LED patterns. - If near a
+   * target position, display solid red. - If holding a game piece, display solid green. -
+   * Otherwise, if coral mode is off, display solid blue. - If coral mode is on, display a falling
+   * repeating pattern (blue, white, blank) like falling snow.
+   */
   public Command netchecker() {
     return run(() -> {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
@@ -71,20 +76,25 @@ public class LED extends SubsystemBase {
             if (!coralMode) {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
-              // Create a base alternating pattern: even indices are white, odd indices are blue.
-              LEDPattern alternating =
+              // Create a base repeating pattern:
+              // Index mod 3 == 0 -> Blue, mod 3 == 1 -> White, mod 3 == 2 -> Off.
+              LEDPattern fallingPattern =
                   (reader, writer) -> {
                     int len = reader.getLength();
                     for (int i = 0; i < len; i++) {
-                      if (i % 3 == 0) {
+                      int mod = i % 3;
+                      if (mod == 0) {
+                        writer.setLED(i, Color.kBlue);
+                      } else if (mod == 1) {
                         writer.setLED(i, Color.kWhite);
                       } else {
-                        writer.setLED(i, Color.kBlue);
+                        writer.setLED(i, Color.kBlack);
                       }
                     }
                   };
-              // Animate the pattern by scrolling it slowly. Adjust the speed here as desired.
-              alternating.scrollAtRelativeSpeed(Percent.per(Second).of(-40)).applyTo(m_buffer);
+              // Animate the pattern by scrolling it downward.
+              // A negative speed value scrolls the pattern in the "falling" direction.
+              fallingPattern.scrollAtRelativeSpeed(Percent.per(Second).of(-10)).applyTo(m_buffer);
             }
           }
           // Update the LED strip with the new data.
