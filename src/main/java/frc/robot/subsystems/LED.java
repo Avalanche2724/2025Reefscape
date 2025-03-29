@@ -65,7 +65,7 @@ public class LED extends SubsystemBase {
   private static final double INITIAL_BOTTOM_STACK_POS = 3.0; // Starting stack height
 
   // Falling snow constants
-  private static final double FLAKE_RANDOM_SPEED = -20; // Random part of velocity
+  private static final double FLAKE_RANDOM_SPEED = -25; // Random part of velocity
   private static final double FLAKE_BASE_SPEED = 3; // Base velocity
 
   public ArrayList<Double> snowPositions = new ArrayList<>();
