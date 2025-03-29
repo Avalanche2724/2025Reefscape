@@ -24,18 +24,18 @@ public class LED extends SubsystemBase {
     m_led.setLength(kLength);
     m_led.start();
 
-    // Set the default command to netchecker, which now includes our falling snow-like pattern.
+    // Set the default command to netchecker which now includes blue fire animation
     setDefaultCommand(netchecker().withName("ledchanger"));
   }
 
   @Override
   public void periodic() {
-    // Continuously update the LED strip with the current buffer data.
+    // Continuously update the LED strip with the current buffer data
     m_led.setData(m_buffer);
   }
 
   /**
-   * Creates a command that runs a given LED pattern on the entire LED strip.
+   * Creates a command that runs a given LED pattern on the entire LED strip
    *
    * @param pattern the LED pattern to run
    * @return a command that applies the pattern
@@ -53,11 +53,42 @@ public class LED extends SubsystemBase {
     return runPattern(LEDPattern.solid(Color.kBlack));
   }
 
+  /** Command that creates a blue fire animation with flickering effects */
+  public Command blueFire() {
+    return run(() -> {
+          // Blue fire animation
+          for (int i = 0; i < kLength; i++) {
+            int baseBlue = 255;
+            int red = (int) (Math.random() * 60);
+            int green = (int) (Math.random() * 100);
+            int blue = baseBlue - (int) (Math.random() * 80);
+
+            if (i < kLength / 3) {
+              blue = Math.min(255, blue + 50);
+              green = Math.min(255, green + 30);
+            }
+
+            if (Math.random() > 0.7) {
+              blue = Math.min(255, blue + (int) (Math.random() * 50));
+            }
+
+            m_buffer.setLED(i, new Color(red, green, blue));
+          }
+
+          if (Math.random() > 0.9) {
+            int sparkPos = (int) (Math.random() * kLength);
+            m_buffer.setLED(sparkPos, Color.kWhite);
+          }
+
+          m_led.setData(m_buffer);
+        })
+        .ignoringDisable(true);
+  }
+
   /**
-   * The netchecker command evaluates robot state and applies different LED patterns. - If near a
-   * target position, display solid red. - If holding a game piece, display solid green. -
-   * Otherwise, if coral mode is off, display solid blue. - If coral mode is on, display a falling
-   * repeating pattern (blue, white, blank) like falling snow.
+   * The netchecker command evaluates robot state and applies different LED patterns: - If near
+   * target position: solid red - If holding game piece: solid green - Otherwise if coral mode off:
+   * solid blue - If coral mode on: blue fire animation
    */
   public Command netchecker() {
     return run(() -> {
@@ -76,28 +107,31 @@ public class LED extends SubsystemBase {
             if (!coralMode) {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
-              // Create a base repeating pattern:
-              // Index mod 3 == 0 -> Blue, mod 3 == 1 -> White, mod 3 == 2 -> Off.
-              LEDPattern fallingPattern =
-                  (reader, writer) -> {
-                    int len = reader.getLength();
-                    for (int i = 0; i < len; i++) {
-                      int mod = i % 3;
-                      if (mod == 0) {
-                        writer.setLED(i, Color.kBlue);
-                      } else if (mod == 1) {
-                        writer.setLED(i, Color.kWhite);
-                      } else {
-                        writer.setLED(i, Color.kBlack);
-                      }
-                    }
-                  };
-              // Animate the pattern by scrolling it downward.
-              // A negative speed value scrolls the pattern in the "falling" direction.
-              fallingPattern.scrollAtRelativeSpeed(Percent.per(Second).of(-10)).applyTo(m_buffer);
+              // Blue fire animation
+              for (int i = 0; i < kLength; i++) {
+                int baseBlue = 255;
+                int red = (int) (Math.random() * 60);
+                int green = (int) (Math.random() * 100);
+                int blue = baseBlue - (int) (Math.random() * 80);
+
+                if (i < kLength / 3) {
+                  blue = Math.min(255, blue + 50);
+                  green = Math.min(255, green + 30);
+                }
+
+                if (Math.random() > 0.7) {
+                  blue = Math.min(255, blue + (int) (Math.random() * 50));
+                }
+
+                m_buffer.setLED(i, new Color(red, green, blue));
+              }
+
+              if (Math.random() > 0.9) {
+                int sparkPos = (int) (Math.random() * kLength);
+                m_buffer.setLED(sparkPos, Color.kWhite);
+              }
             }
           }
-          // Update the LED strip with the new data.
           m_led.setData(m_buffer);
         })
         .ignoringDisable(true);
