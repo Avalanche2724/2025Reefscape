@@ -47,7 +47,8 @@ public class Wrist {
    */
   public static final double ZERO_OFFSET = 0.206; // rotations
   public static final double ARM_OFFSET = -0.049;
-  private double motorPositionToAbsOffset = 0;
+  private double positionControlMotorPosToAbsOffset = 0;
+  private double actualMotorPositionToAbsOffset = 0;
   public static final double ARM_OFFSET_DEG = Degrees.convertFrom(ARM_OFFSET, Rotations);
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
@@ -150,6 +151,8 @@ public class Wrist {
     Robot.instance.addPeriodic(absoluteEncoderResetter(), ENCODER_POSITION_RESET_SEC);
     if (Robot.isSimulation()) {
       motor.setPosition(ARM_OFFSET);
+    } else {
+      motor.setPosition(getAbsoluteEncoderPosition() + ARM_OFFSET);
     }
   }
 
@@ -187,7 +190,7 @@ public class Wrist {
 
       var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
 
-      positionControl.Position = m_setpoint.position - motorPositionToAbsOffset;
+      positionControl.Position = m_setpoint.position - positionControlMotorPosToAbsOffset;
       if (m_profile_decel.timeLeftUntil(lastPositionSet) > 0.1) {
         positionControl.Velocity = m_setpoint.velocity;
       } else {
@@ -209,7 +212,7 @@ public class Wrist {
   }
 
   public double getWristRotations() {
-    return motorPosition.getValueAsDouble();
+    return motorPosition.getValueAsDouble() + actualMotorPositionToAbsOffset;
   }
 
   public double getWristDegrees() {
@@ -246,7 +249,7 @@ public class Wrist {
     return () -> {
       if (Robot.isSimulation()) return; // Conflicts with simulationPeriodic setRawRotorPosition
 
-      double pos = getAbsoluteEncoderPosition();
+      double pos = getAbsoluteEncoderPosition() + ARM_OFFSET;
       double motorPos = getWristRotations();
       double vel = absoluteEncoder.getVelocity();
       double motorVel = getVelocity();
@@ -254,8 +257,9 @@ public class Wrist {
         // TODO implement better alerting
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
+        actualMotorPositionToAbsOffset = pos - motorPos;
         if (Math.abs(motorVel) < 0.8) {
-          motorPositionToAbsOffset = motorPos - pos;
+          positionControlMotorPosToAbsOffset = actualMotorPositionToAbsOffset;
         }
       }
     };
