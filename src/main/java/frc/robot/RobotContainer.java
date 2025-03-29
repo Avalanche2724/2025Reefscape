@@ -53,6 +53,8 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
     // Set up controls
     controls.configureBindings();
+
+    // var userButton = new Trigger(RobotController::getUserButton);
   }
 
   public Command getAutonomousCommand() {

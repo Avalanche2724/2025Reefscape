@@ -244,10 +244,13 @@ public class Wrist {
   // Controls and stuff
 
   private void setMotorRotations(double pos) {
+    // TODO UNCOMMENT ME TO ENABLE WRIST
+
     setPosition = true;
     lastPositionSet = pos;
 
     m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
+
     // let periodic do the pid thingy
 
     // motor.setControl(positionControl.withPosition(lastPositionSet));

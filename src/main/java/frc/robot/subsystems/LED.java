@@ -54,11 +54,6 @@ public class LED extends SubsystemBase {
     return runPattern(LEDPattern.solid(Color.kBlack));
   }
 
-  /**
-   * This command checks various robot states and applies different LED patterns. When no special
-   * condition is met and coral mode is off, it displays an alternating white-blue pattern that
-   * scrolls down the LED strip.
-   */
   public Command netchecker() {
     return run(() -> {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
@@ -73,7 +68,7 @@ public class LED extends SubsystemBase {
             Robot.instance.robotContainer.controls.driver.rumble.accept(0.2);
           } else {
             Robot.instance.robotContainer.controls.driver.rumble.accept(0);
-            if (coralMode) {
+            if (!coralMode) {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
               // Create a base alternating pattern: even indices are white, odd indices are blue.
@@ -81,7 +76,7 @@ public class LED extends SubsystemBase {
                   (reader, writer) -> {
                     int len = reader.getLength();
                     for (int i = 0; i < len; i++) {
-                      if (i % 2 == 0) {
+                      if (i % 3 == 0) {
                         writer.setLED(i, Color.kWhite);
                       } else {
                         writer.setLED(i, Color.kBlue);
@@ -89,7 +84,7 @@ public class LED extends SubsystemBase {
                     }
                   };
               // Animate the pattern by scrolling it slowly. Adjust the speed here as desired.
-              alternating.scrollAtRelativeSpeed(Percent.per(Second).of(10)).applyTo(m_buffer);
+              alternating.scrollAtRelativeSpeed(Percent.per(Second).of(-40)).applyTo(m_buffer);
             }
           }
           // Update the LED strip with the new data.
