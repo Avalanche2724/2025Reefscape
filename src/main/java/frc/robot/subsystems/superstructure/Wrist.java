@@ -5,10 +5,8 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.DeviceIdentifier;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -49,11 +47,12 @@ public class Wrist {
    */
   public static final double ZERO_OFFSET = 0.206; // rotations
   public static final double ARM_OFFSET = -0.049;
+  private double motorPositionToAbsOffset = 0;
   public static final double ARM_OFFSET_DEG = Degrees.convertFrom(ARM_OFFSET, Rotations);
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
-  private static final double ENCODER_POSITION_RESET_SEC = 1;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.02;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -156,9 +155,9 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.7));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
   final TrapezoidProfile m_profile_accel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 2.0));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.5));
 
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
@@ -188,7 +187,7 @@ public class Wrist {
 
       var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
 
-      positionControl.Position = m_setpoint.position;
+      positionControl.Position = m_setpoint.position - motorPositionToAbsOffset;
       if (m_profile_decel.timeLeftUntil(lastPositionSet) > 0.1) {
         positionControl.Velocity = m_setpoint.velocity;
       } else {
@@ -233,23 +232,31 @@ public class Wrist {
     return motorVoltage.getValueAsDouble();
   }
 
-  // this is probably a horrible idea and I apologize to anybody looking at this in the future
   private Runnable absoluteEncoderResetter() {
+    /*
+    this was probably a horrible idea and I apologize to anybody looking at this in the future
     var setter =
         new TalonFXConfigurator(new DeviceIdentifier(WRIST_ID, "talon fx", "")) {
           @Override
           protected void reportIfFrequent() {}
         };
 
+     */
+
     return () -> {
       if (Robot.isSimulation()) return; // Conflicts with simulationPeriodic setRawRotorPosition
+
       double pos = getAbsoluteEncoderPosition();
+      double motorPos = getWristRotations();
       double vel = absoluteEncoder.getVelocity();
+      double motorVel = getVelocity();
       if (pos == 0 && vel == 0) {
-        // TODO fix me later and implement better alerting
+        // TODO implement better alerting
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
-        setter.setPosition(pos + ARM_OFFSET, 0);
+        if (Math.abs(motorVel) < 0.8) {
+          motorPositionToAbsOffset = motorPos - pos;
+        }
       }
     };
   }
@@ -262,14 +269,6 @@ public class Wrist {
 
     m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
     // let periodic do the pid thingy
-
-    // motor.setControl(positionControl.withPosition(lastPositionSet));
-
-    /* if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
-      motor.setControl(positionControl.withPosition(lastPositionSet));
-    } else {
-      motor.setControl(motionMagicControl.withPosition(pos));
-    }*/
   }
 
   void setMotorDegreesOffset(double deg) {
