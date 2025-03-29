@@ -53,7 +53,7 @@ public class Wrist {
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
-  private static final double ENCODER_POSITION_RESET_SEC = 1;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.005;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -155,11 +155,8 @@ public class Wrist {
   }
 
   // Trapezoid profile
-  final TrapezoidProfile profile_accel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.0));
-  final TrapezoidProfile profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
-
+  final TrapezoidProfile m_profile =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.55));
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
@@ -176,19 +173,19 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
 
-    var chosen_profile = profile_decel;
-
     if (setPosition) {
-      var last_setpoint = m_setpoint;
-      var m_setpoint = chosen_profile.calculate(0.020, last_setpoint, m_goal);
-
+      m_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
+      var next_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
       positionControl.Position = m_setpoint.position;
-      positionControl.Velocity = m_setpoint.velocity;
+      if (m_profile.timeLeftUntil(lastPositionSet) > 0.15) {
+        positionControl.Velocity = m_setpoint.velocity;
+      } else {
+        positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
+      }
       // acceleration
-      var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
-
       double accel = (next_setpoint.velocity - m_setpoint.velocity) / 0.020;
-      positionControl.FeedForward = kA * accel;
+      double arbff = kA * accel;
+      positionControl.FeedForward = arbff;
       motor.setControl(positionControl);
     }
   }
@@ -239,9 +236,7 @@ public class Wrist {
         // TODO fix me later and implement better alerting
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
-        if (Math.abs(vel) < 1) {
-          setter.setPosition(pos + ARM_OFFSET, 0);
-        }
+        setter.setPosition(pos + ARM_OFFSET, 0);
       }
     };
   }
@@ -253,9 +248,9 @@ public class Wrist {
     lastPositionSet = pos;
 
     m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
-    motor.setControl(positionControl.withPosition(lastPositionSet));
-
     // let periodic do the pid thingy
+
+    // motor.setControl(positionControl.withPosition(lastPositionSet));
 
     /* if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));
