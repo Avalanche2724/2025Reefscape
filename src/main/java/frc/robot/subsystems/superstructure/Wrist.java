@@ -158,7 +158,7 @@ public class Wrist {
   final TrapezoidProfile profile_accel =
       new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.0));
   final TrapezoidProfile profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.35));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
 
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
@@ -176,21 +176,14 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
 
+    var chosen_profile = profile_decel;
+
     if (setPosition) {
       var last_setpoint = m_setpoint;
-      var chosen_profile = profile_decel;
       var m_setpoint = chosen_profile.calculate(0.020, last_setpoint, m_goal);
-      if (m_setpoint.velocity > last_setpoint.velocity) {
-        chosen_profile = profile_accel;
-        m_setpoint = chosen_profile.calculate(0.020, last_setpoint, m_goal);
-      }
 
       positionControl.Position = m_setpoint.position;
-      // if (chosen_profile.timeLeftUntil(lastPositionSet) > 0.1) {
       positionControl.Velocity = m_setpoint.velocity;
-      // } else {
-      //  positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
-      // }
       // acceleration
       var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
 
@@ -256,16 +249,13 @@ public class Wrist {
   // Controls and stuff
 
   private void setMotorRotations(double pos) {
-    // TODO UNCOMMENT ME TO ENABLE WRIST
-
     setPosition = true;
     lastPositionSet = pos;
 
     m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
+    motor.setControl(positionControl.withPosition(lastPositionSet));
 
     // let periodic do the pid thingy
-
-    // motor.setControl(positionControl.withPosition(lastPositionSet));
 
     /* if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
       motor.setControl(positionControl.withPosition(lastPositionSet));

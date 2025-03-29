@@ -69,15 +69,14 @@ public class RobotContainer {
         Stream.concat(
                 Stream.of(11, 12, 13, 14, 21, 22, 23, 24)
                     .map(id -> new DeviceIdentifier(id, "talon fx", "CANivore")),
-                Stream.of(41, 42, 51, 55, 56, 61)
-                    .map(id -> new DeviceIdentifier(id, "talon fx", "")))
+                Stream.of(41, 42, 51, 55, 56).map(id -> new DeviceIdentifier(id, "talon fx", "")))
             .map(TalonFXConfigurator::new)
             .toList();
 
     var userButton =
         new Trigger(RobotController::getUserButton)
             .and(DriverStation::isDisabled)
-            .debounce(1.5, Debouncer.DebounceType.kRising)
+            .debounce(0.1, Debouncer.DebounceType.kRising)
             .debounce(6, Debouncer.DebounceType.kFalling);
 
     userButton.whileTrue(
@@ -93,6 +92,7 @@ public class RobotContainer {
       var retval = conf.refresh(motorOutputConfigs);
       if (retval.isOK()) {
         motorOutputConfigs.NeutralMode = brake ? NeutralModeValue.Brake : NeutralModeValue.Coast;
+        conf.apply(motorOutputConfigs, 0);
       }
     }
   }

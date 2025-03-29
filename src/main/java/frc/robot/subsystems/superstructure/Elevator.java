@@ -113,8 +113,8 @@ public class Elevator {
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
     config.MotionMagic.MotionMagicExpo_kV = 0.13; // decrease = faster
-    config.MotionMagic.MotionMagicExpo_kA = 0.065; // this should be good enough, right?
-
+    // config.MotionMagic.MotionMagicExpo_kA = 0.065; // this should be good enough, right?
+    config.MotionMagic.MotionMagicExpo_kA = 0.4;
     // config.MotionMagic.MotionMagicExpo_kA = 0.
     // config.MotionMagic.MotionMagicAcceleration = 6.0; // meters per second squared
     // config.MotionMagic.MotionMagicCruiseVelocity = 3.6; // meters per second
