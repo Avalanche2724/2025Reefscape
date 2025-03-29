@@ -79,7 +79,7 @@ public class Vision {
           "Arducam_fl_swerve",
           new Transform3d(
               new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
-              new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
+              new Rotation3d(Degrees.of(0), Degrees.of(-10), Degrees.of(-15))));
 
   /*
     public Camera cameraFlSwerve =

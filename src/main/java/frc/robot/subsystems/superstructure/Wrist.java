@@ -53,7 +53,7 @@ public class Wrist {
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
-  private static final double ENCODER_POSITION_RESET_SEC = 1;
+  private static final double ENCODER_POSITION_RESET_SEC = 0.8;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -107,7 +107,7 @@ public class Wrist {
     var config = new TalonFXConfiguration();
 
     config.Slot0.kP = 25;
-    config.Slot0.kI = 0;
+    config.Slot0.kI = 0.01;
     config.Slot0.kD = 3.6;
     config.Slot0.kS = (0.49 - 0.38) / 2;
     config.Slot0.kV = 7.94;
@@ -155,8 +155,11 @@ public class Wrist {
   }
 
   // Trapezoid profile
-  final TrapezoidProfile m_profile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.55));
+  final TrapezoidProfile m_profile_decel =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.6));
+  final TrapezoidProfile m_profile_accel =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.8));
+
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
@@ -174,14 +177,24 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
 
     if (setPosition) {
-      m_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
-      var next_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
+      var last_setpoint = m_setpoint;
+      var chosen_profile = m_profile_decel;
+      m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+
+      if (m_setpoint.velocity > last_setpoint.velocity) {
+        chosen_profile = m_profile_accel;
+        m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+      }
+
+      var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+
       positionControl.Position = m_setpoint.position;
-      if (m_profile.timeLeftUntil(lastPositionSet) > 0.15) {
+      if (m_profile_decel.timeLeftUntil(lastPositionSet) > 0.1) {
         positionControl.Velocity = m_setpoint.velocity;
       } else {
         positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
       }
+
       // acceleration
       double accel = (next_setpoint.velocity - m_setpoint.velocity) / 0.020;
       double arbff = kA * accel;
