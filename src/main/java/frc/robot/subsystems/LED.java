@@ -84,7 +84,7 @@ public class LED extends SubsystemBase {
       // Reset timer
       timeSinceLastSnowflake = 0.0;
       // Pick new random delay
-      nextSnowflakeDelay = Math.random() + 0.5;
+      nextSnowflakeDelay = Math.pow((Math.random() + 1), 2) - 0.4;
     }
 
     // 2) Update bottom snow stack position
@@ -105,6 +105,15 @@ public class LED extends SubsystemBase {
       snowPositions.remove(0);
       bottomSnowStackPosition += 1.0;
     }
+  }
+
+  static final double GAMMA = 2.2;
+
+  private int gammaCorrect(int value) {
+    // Convert [0..255] to [0..1], raise to 1/gamma, then convert back.
+    double normalized = value / 255.0;
+    double corrected = Math.pow(normalized, GAMMA);
+    return (int) (corrected * 255.0 + 0.5);
   }
 
   public LEDPattern snowPattern() {
@@ -180,10 +189,10 @@ public class LED extends SubsystemBase {
         // Convert to 8-bit color channels
         int r = (int) (255 * t); // from 0 to 255
         int g = (int) (255 * t); // from 0 to 255
-        int b = (int) (128 * t) + 127; // always 255 (blue channel)
+        int b = 255; // always 255 (blue channel)
 
         // Now set the LED color (no new object allocated)
-        writer.setRGB(i, r, g, b);
+        writer.setRGB(i, gammaCorrect(r), gammaCorrect(g), gammaCorrect(b));
       }
     };
   }

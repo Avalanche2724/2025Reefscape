@@ -8,23 +8,12 @@ import static edu.wpi.first.units.Units.*;
 
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.hardware.DeviceIdentifier;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.*;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.superstructure.Superstructure;
-import java.util.List;
-import java.util.stream.Stream;
 
 public class RobotContainer {
   // Subsystems
@@ -65,36 +54,7 @@ public class RobotContainer {
     // Set up controls
     controls.configureBindings();
 
-    var canMotors =
-        Stream.concat(
-                Stream.of(11, 12, 13, 14, 21, 22, 23, 24)
-                    .map(id -> new DeviceIdentifier(id, "talon fx", "CANivore")),
-                Stream.of(41, 42, 51, 55, 56).map(id -> new DeviceIdentifier(id, "talon fx", "")))
-            .map(TalonFXConfigurator::new)
-            .toList();
-
-    var userButton =
-        new Trigger(RobotController::getUserButton)
-            .and(DriverStation::isDisabled)
-            .debounce(0.1, Debouncer.DebounceType.kRising)
-            .debounce(6, Debouncer.DebounceType.kFalling);
-
-    userButton.whileTrue(
-        Commands.startEnd(
-                () -> setMotorBrake(canMotors, false), () -> setMotorBrake(canMotors, true))
-            .withTimeout(5)
-            .ignoringDisable(true));
-  }
-
-  private void setMotorBrake(List<TalonFXConfigurator> configurator, boolean brake) {
-    for (var conf : configurator) {
-      var motorOutputConfigs = new MotorOutputConfigs();
-      var retval = conf.refresh(motorOutputConfigs);
-      if (retval.isOK()) {
-        motorOutputConfigs.NeutralMode = brake ? NeutralModeValue.Brake : NeutralModeValue.Coast;
-        conf.apply(motorOutputConfigs, 0);
-      }
-    }
+    Util.configureUserButton();
   }
 
   public Command getAutonomousCommand() {

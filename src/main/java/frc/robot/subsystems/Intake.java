@@ -14,8 +14,11 @@ import java.util.function.DoubleSupplier;
 
 public class Intake extends SubsystemBase {
   public static final double intakeVolts = 12;
-  private final TalonFX leftMotor = new TalonFX(55);
-  private final TalonFX rightMotor = new TalonFX(56);
+  public static final int LEFTMOTOR_ID = 55;
+  public static final int RIGHTMOTOR_ID = 56;
+
+  private final TalonFX leftMotor = new TalonFX(LEFTMOTOR_ID);
+  private final TalonFX rightMotor = new TalonFX(RIGHTMOTOR_ID);
   private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(true);
   public Trigger hasGamePieceTrigger = new Trigger(this::hasGamePiece).debounce(0.2);
   DutyCycleOut fullSend = new DutyCycleOut(-1.0);
