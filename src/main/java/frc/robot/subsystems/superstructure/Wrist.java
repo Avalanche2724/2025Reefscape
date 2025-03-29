@@ -155,8 +155,11 @@ public class Wrist {
   }
 
   // Trapezoid profile
-  final TrapezoidProfile m_profile =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.4));
+  final TrapezoidProfile profile_accel =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.0));
+  final TrapezoidProfile profile_decel =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.35));
+
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
@@ -174,18 +177,25 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
 
     if (setPosition) {
-      m_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
-      var next_setpoint = m_profile.calculate(0.020, m_setpoint, m_goal);
-      positionControl.Position = m_setpoint.position;
-      if (m_profile.timeLeftUntil(lastPositionSet) > 0.15) {
-        positionControl.Velocity = m_setpoint.velocity;
-      } else {
-        positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
+      var last_setpoint = m_setpoint;
+      var chosen_profile = profile_decel;
+      var m_setpoint = chosen_profile.calculate(0.020, last_setpoint, m_goal);
+      if (m_setpoint.velocity > last_setpoint.velocity) {
+        chosen_profile = profile_accel;
+        m_setpoint = chosen_profile.calculate(0.020, last_setpoint, m_goal);
       }
+
+      positionControl.Position = m_setpoint.position;
+      // if (chosen_profile.timeLeftUntil(lastPositionSet) > 0.1) {
+      positionControl.Velocity = m_setpoint.velocity;
+      // } else {
+      //  positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
+      // }
       // acceleration
+      var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+
       double accel = (next_setpoint.velocity - m_setpoint.velocity) / 0.020;
-      double arbff = kA * accel;
-      positionControl.FeedForward = arbff;
+      positionControl.FeedForward = kA * accel;
       motor.setControl(positionControl);
     }
   }

@@ -39,6 +39,7 @@ public class Elevator {
   private static final double DRUM_RADIUS =
       Meters.convertFrom(0.25 / (2.0 * Math.sin(Math.toRadians(180.0 / 18.0))), Inches) * 2;
   private static final double CIRCUMFERENCE = 2 * Math.PI * DRUM_RADIUS;
+  // approx 1/23.212
   private static final double METERS_PER_MOTOR_ROTATION = CIRCUMFERENCE / GEAR_RATIO;
   // Other things
   private static final double STALL_DETECT_TORQUE = -9.5;
@@ -56,7 +57,7 @@ public class Elevator {
   Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.25);
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Control
-  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
+  private final MotionMagicExpoVoltage control = new MotionMagicExpoVoltage(0);
   private final VelocityTorqueCurrentFOC velocityControl =
       new VelocityTorqueCurrentFOC(0).withSlot(1);
   // Simulation
@@ -102,6 +103,7 @@ public class Elevator {
     config.Slot0.kA = config.Slot0.kG / 9.8;
     config.Slot0.kV = 0.124 / 0.043080; // approx 2.88 V*s/m
 
+    // TODO we need to do something else here imo
     // For zeroing sequence and algae launching
     config.Slot1.kP = 15;
     config.Slot1.kS = 4.5; // Estimated from voltage kS
@@ -110,12 +112,15 @@ public class Elevator {
     config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
     config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 6.0; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 3.6; // meters per second
-    // config.MotionMagic.MotionMagicJerk = 20; // meters per second cubed
+    config.MotionMagic.MotionMagicExpo_kV = 0.13; // decrease = faster
+    config.MotionMagic.MotionMagicExpo_kA = 0.065; // this should be good enough, right?
+
+    // config.MotionMagic.MotionMagicExpo_kA = 0.
+    // config.MotionMagic.MotionMagicAcceleration = 6.0; // meters per second squared
+    // config.MotionMagic.MotionMagicCruiseVelocity = 3.6; // meters per second
+    // config.MotionMagic.MotionMagicJerk = 20;
 
     // Other things
-    config.CurrentLimits.StatorCurrentLimit = 200; // TODO tuning go brr?
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     // Forward/reverse limits
