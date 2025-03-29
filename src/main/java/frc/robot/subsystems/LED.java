@@ -65,8 +65,8 @@ public class LED extends SubsystemBase {
   private static final double INITIAL_BOTTOM_STACK_POS = 3.0; // Starting stack height
 
   // Falling snow constants
-  private static final double FLAKE_RANDOM_SPEED = -28; // Random part of velocity
-  private static final double FLAKE_BASE_SPEED = 8; // Base velocity
+  private static final double FLAKE_RANDOM_SPEED = -40; // Random part of velocity
+  private static final double FLAKE_BASE_SPEED = 5; // Base velocity
 
   public ArrayList<Double> snowPositions = new ArrayList<>();
   public double bottomSnowStackPosition = INITIAL_BOTTOM_STACK_POS;
@@ -84,7 +84,7 @@ public class LED extends SubsystemBase {
       // Reset timer
       timeSinceLastSnowflake = 0.0;
       // Pick new random delay
-      nextSnowflakeDelay = (Math.pow(Math.random(), 2.5) * 2) + 0.7;
+      nextSnowflakeDelay = (Math.pow(Math.random(), 2.5) * 2) + 0.4;
     }
 
     // 2) Update bottom snow stack position
