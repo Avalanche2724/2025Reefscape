@@ -8,7 +8,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -42,10 +41,8 @@ public class Elevator {
   // approx 1/23.212
   private static final double METERS_PER_MOTOR_ROTATION = CIRCUMFERENCE / GEAR_RATIO;
   // Other things
-  private static final double STALL_DETECT_TORQUE = -9.5;
-  private static final double VELOCITY_DETECT_THRESHOLD = 0.08;
-  private static final double ELEVATOR_ZEROING_VELOCITY = -0.4;
-  private static final double ALGAE_LAUNCHING_VELOCITY = 1.5;
+  private static final double STALL_DETECT_TORQUE = -11;
+  private static final double VELOCITY_DETECT_THRESHOLD = 0.07;
 
   // Motors
   private final TalonFX motor = new TalonFX(ELEVATOR_ID);
@@ -57,9 +54,7 @@ public class Elevator {
   Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.25);
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Control
-  private final MotionMagicExpoVoltage control = new MotionMagicExpoVoltage(0);
-  private final VelocityTorqueCurrentFOC velocityControl =
-      new VelocityTorqueCurrentFOC(0).withSlot(1);
+  private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   // Simulation
   private final ElevatorSim m_elevatorSim =
       new ElevatorSim(
@@ -96,29 +91,16 @@ public class Elevator {
     double kgHigh = 0.75;
     double kgLow = 0.38;
 
-    config.Slot0.kP = 100;
-    config.Slot0.kD = 2; // kD was having a skill issue?
+    config.Slot0.kP = 125;
+    config.Slot0.kD = 1; // kD was having a skill issue?
     config.Slot0.kG = (kgHigh + kgLow) / 2;
     config.Slot0.kS = (kgHigh - kgLow) / 2;
     config.Slot0.kA = config.Slot0.kG / 9.8;
     config.Slot0.kV = 0.124 / 0.043080; // approx 2.88 V*s/m
 
-    // TODO we need to do something else here imo
-    // For zeroing sequence and algae launching
-    config.Slot1.kP = 15;
-    config.Slot1.kS = 4.5; // Estimated from voltage kS
-    config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
-    // TODO tune me later
-    config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
-    config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
     // Motion magic parameters
-    config.MotionMagic.MotionMagicExpo_kV = 0.13; // decrease = faster
-    // config.MotionMagic.MotionMagicExpo_kA = 0.065; // this should be good enough, right?
-    config.MotionMagic.MotionMagicExpo_kA = 0.4;
-    // config.MotionMagic.MotionMagicExpo_kA = 0.
-    // config.MotionMagic.MotionMagicAcceleration = 6.0; // meters per second squared
-    // config.MotionMagic.MotionMagicCruiseVelocity = 3.6; // meters per second
-    // config.MotionMagic.MotionMagicJerk = 20;
+    config.MotionMagic.MotionMagicAcceleration = 7.5; // meters per second squared
+    config.MotionMagic.MotionMagicCruiseVelocity = 3.75; // meters per second
 
     // Other things
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
@@ -201,12 +183,9 @@ public class Elevator {
     motor.set(0);
   }
 
-  private void setMotorVelocity(double v, boolean ignoreLimits) {
-    motor.setControl(velocityControl.withVelocity(v).withIgnoreHardwareLimits(ignoreLimits));
-  }
-
   void setMotorZeroingVelocity() {
-    setMotorVelocity(ELEVATOR_ZEROING_VELOCITY, true);
+    // setMotorVelocity(ELEVATOR_ZEROING_VELOCITY, true);
+    motor.setControl(new VoltageOut(-0.5).withIgnoreHardwareLimits(true));
   }
 
   void setMotorLaunchingVelocityUp() {

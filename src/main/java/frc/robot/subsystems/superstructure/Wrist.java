@@ -53,7 +53,7 @@ public class Wrist {
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
-  private static final double ENCODER_POSITION_RESET_SEC = 0.005;
+  private static final double ENCODER_POSITION_RESET_SEC = 1;
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
