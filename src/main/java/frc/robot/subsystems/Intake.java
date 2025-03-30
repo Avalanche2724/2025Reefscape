@@ -94,6 +94,14 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  public Command miniSend() {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(-1.65));
+          rightMotor.setControl(voltageOut.withOutput(-1.65));
+        });
+  }
+
   public Command spinny() {
     return run(
         () -> {
@@ -140,11 +148,11 @@ public class Intake extends SubsystemBase {
         () -> a[0]++,
         () -> {
           if (a[0] % 2 == 1) {
-            leftMotor.setControl(voltageOut.withOutput(4));
-            rightMotor.setControl(voltageOut.withOutput(2));
+            leftMotor.setControl(voltageOut.withOutput(12));
+            rightMotor.setControl(voltageOut.withOutput(6));
           } else {
-            leftMotor.setControl(voltageOut.withOutput(2));
-            rightMotor.setControl(voltageOut.withOutput(4));
+            leftMotor.setControl(voltageOut.withOutput(6));
+            rightMotor.setControl(voltageOut.withOutput(12));
           }
         });
   }

@@ -107,9 +107,9 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 25;
+    config.Slot0.kP = 45;
     config.Slot0.kI = 0;
-    config.Slot0.kD = 3.6;
+    config.Slot0.kD = 2.5;
     config.Slot0.kS = (0.49 - 0.38) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = kA;
@@ -157,9 +157,9 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.35));
   final TrapezoidProfile m_profile_accel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.5));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.2));
 
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
@@ -249,14 +249,18 @@ public class Wrist {
       double pos = getAbsoluteEncoderPosition();
       double vel = absoluteEncoder.getVelocity();
       double motorVel = motorVelocity.getValueAsDouble();
+      double motorPos = getWristRotations();
       if (pos == 0 && vel == 0) {
         // TODO fix me later and implement better alerting
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
-        if (Timer.getFPGATimestamp() - lastSetTime > 0.5) {
-          if (Math.abs(motorVel) < 1.1) {
-            setter.setPosition(pos + ARM_OFFSET, 0);
-            lastSetTime = Timer.getFPGATimestamp();
+        double diffy = getWristRotations() - (pos + ARM_OFFSET);
+        if (Math.abs(diffy) < Rotations.convertFrom(0.5, Degree)) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.8) {
+            if (Math.abs(motorVel) < 0.01) {
+              setter.setPosition(pos + ARM_OFFSET, 0);
+              lastSetTime = Timer.getFPGATimestamp();
+            }
           }
         }
       }
@@ -266,9 +270,12 @@ public class Wrist {
   // Controls and stuff
 
   private void setMotorRotations(double pos) {
+    if (!setPosition) {
+      m_setpoint =
+          new TrapezoidProfile.State(getWristRotations(), motorVelocity.getValueAsDouble());
+    }
     setPosition = true;
     lastPositionSet = pos;
-
     m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
     // let periodic do the pid thingy
 

@@ -94,10 +94,13 @@ public class Controls {
     configureSysidBindings();
 
     driver.y.whileTrue(intake.fullSend());
-    driver.b.whileTrue(intake.run(2));
-    driver.a.whileTrue(intake.runIntake());
+    /*driver.b.whileTrue(intake.run(2));
+    driver.a.whileTrue(intake.runIntake());*/
 
-    coralAlgaeActivePresets(driver.b, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
+    coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
+    coralAlgaeSettingPresets(driver.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
+    driver.a.whileTrue(intake.miniSend());
+    // coralAlgaeActivePresets(driver.a, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();
@@ -124,7 +127,7 @@ public class Controls {
 
     wantingToAutoAlignRn
         .and(atTargetPositionTrigger)
-        .and(superstructure::atTargetPosition)
+        .and(new Trigger(superstructure::atTargetPosition).debounce(0.4))
         .onTrue(
             intake
                 .semiSend()
@@ -133,28 +136,16 @@ public class Controls {
                     startEnd(() -> driver.rumble.accept(0.2), () -> driver.rumble.accept(0))
                         .withTimeout(0.2)));
 
-    // var atTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.05, () ->
-    // 2));
-    // var nearTargetPositionTrigger = new Trigger(createAtTargetPositionSupplier(() -> 0.5, () ->
-    // 5));
-    /*
-        // When we are kinda near the target position while auto aligning, set superstructure position
-        wantingToAutoAlignRn
-            .and(nearTargetPositionTrigger)
-            .whileTrue(
-                Commands.print("AT TARG POS SET POS")
-                    .andThen(superstructure.goToPosition(() -> nextTargetPosition)));
+    var nearTargetPositionTrigger =
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(18, Inch), () -> 8));
 
-        // When we reach the target position while auto-aligning, eject intake
-        wantingToAutoAlignRn
-            .and(atTargetPositionTrigger)
-            .and(() -> superstructure.atPosition(nextTargetPosition))
-            .whileTrue(
-                intake
-                    .fullSend()
-                    .withTimeout(1)
-                    .andThen(superstructure.goToPositionOnce(Position.STOW)));
-    */
+    // When we are kinda near the target position while auto aligning, set superstructure position
+    wantingToAutoAlignRn
+        .and(nearTargetPositionTrigger)
+        .whileTrue(
+            Commands.print("AT TARG POS SET POS")
+                .andThen(superstructure.goToPosition(() -> nextTargetPosition)));
+
     // operator.leftJoystickPushed.whileTrue(
     //    superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
 

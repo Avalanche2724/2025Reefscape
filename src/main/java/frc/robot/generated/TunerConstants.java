@@ -61,7 +61,7 @@ public class TunerConstants {
   private static final SteerFeedbackType kSteerFeedbackType = SteerFeedbackType.FusedCANcoder;
   // The stator current at which the wheels start to slip;
   // This needs to be tuned to your individual robot
-  private static final Current kSlipCurrent = Amps.of(65);
+  private static final Current kSlipCurrent = Amps.of(55);
   // Initial configs for the drive and steer motors and the azimuth encoder; these cannot be null.
   // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
   private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();

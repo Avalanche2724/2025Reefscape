@@ -42,13 +42,14 @@ public class Util {
 
     var userButton =
         new Trigger(RobotController::getUserButton)
-            .and(DriverStation::isDisabled)
-            .debounce(0.1, Debouncer.DebounceType.kRising);
+            .debounce(0.1, Debouncer.DebounceType.kRising)
+            .debounce(5, Debouncer.DebounceType.kFalling)
+            .and(DriverStation::isDisabled);
 
     userButton.whileTrue(
         Commands.startEnd(
                 () -> setMotorBrake(canMotors, false), () -> setMotorBrake(canMotors, true))
-            .withTimeout(5)
+            .withTimeout(5) // todo: necessary?
             .ignoringDisable(true));
   }
 
