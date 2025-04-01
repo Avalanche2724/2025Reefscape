@@ -70,8 +70,8 @@ public class Vision {
       new Camera(
           "Arducam_fr_elev",
           new Transform3d(
-              // TODO this translation seems way off on the Z and maybe X/Y revise later
-              new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.85), Inches.of(8.55)),
+              // TODO this translation seems way off maybe revise later
+              new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.95), Inches.of(7.9)),
               new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(15))));
 
   public Camera cameraFlSwerve =
@@ -116,8 +116,8 @@ public class Vision {
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
     // Standard deviations for vision estimations:
-    private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(2, 2, 4);
-    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.7, 0.7, 1.4);
+    private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(2, 2, 1000);
+    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 4);
     // PNP params
     private static final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> pnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));

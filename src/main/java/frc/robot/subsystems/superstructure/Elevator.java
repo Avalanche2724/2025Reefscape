@@ -103,8 +103,8 @@ public class Elevator {
     config.Slot0.kV = 0.124 / 0.043080; // approx 2.88 V*s/m
 
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 5.0; // meters per second squared
-    config.MotionMagic.MotionMagicJerk = 40.0;
+    config.MotionMagic.MotionMagicAcceleration = 5.5; // meters per second squared
+    config.MotionMagic.MotionMagicJerk = 50.0;
     config.MotionMagic.MotionMagicCruiseVelocity = 3.5; // meters per second
 
     // For zeroing sequence
