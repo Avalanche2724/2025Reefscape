@@ -104,7 +104,7 @@ public class Elevator {
 
     // Motion magic parameters
     config.MotionMagic.MotionMagicAcceleration = 5.0; // meters per second squared
-    config.MotionMagic.MotionMagicJerk = 45.0;
+    config.MotionMagic.MotionMagicJerk = 40.0;
     config.MotionMagic.MotionMagicCruiseVelocity = 3.5; // meters per second
 
     // For zeroing sequence

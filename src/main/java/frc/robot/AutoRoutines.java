@@ -142,6 +142,47 @@ public class AutoRoutines {
     return routine; // TODO
   }
 
+  private AutoRoutine makeCoolPath2(
+      AutoRoutine routine,
+      AutoTrajectory START_TO_BRANCH1,
+      AutoTrajectory BRANCH1_TO_HP,
+      AutoTrajectory HP_TO_BRANCH2,
+      AutoTrajectory BRANCH2_TO_HP,
+      AutoTrajectory HP_TO_BRANCH3) {
+    routine
+        .active()
+        .onTrue(
+            (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
+                .andThen(START_TO_BRANCH1.cmd()));
+    routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+
+    START_TO_BRANCH1
+        .atTimeBeforeEnd(0.4)
+        .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
+
+    BRANCH1_TO_HP.active().onTrue(waitAndCoralStation());
+    BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
+
+    HP_TO_BRANCH2.active().onTrue(waitAndL2());
+    HP_TO_BRANCH2
+        .atTimeBeforeEnd(0.4)
+        .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
+
+    BRANCH2_TO_HP.active().onTrue(waitAndCoralStation());
+    BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
+
+    HP_TO_BRANCH3.active().onTrue(waitAndL2());
+    HP_TO_BRANCH3
+        .atTimeBeforeEnd(0.4)
+        .onTrue(
+            sequence(
+                driveToL2BranchAndScore(false),
+                Commands.print("Complete!"),
+                superstructure.goToPositionOnce(Position.STOW)));
+
+    return routine; // TODO
+  }
+
   public AutoRoutine l1forauto_LEFT() {
     var routine = m_factory.newRoutine("l1forauto_LEFT");
     var l1forauto = routine.trajectory("NEW_FORGO_L1_LEFT");
