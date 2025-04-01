@@ -99,8 +99,8 @@ public class Controls {
 
     coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
     coralAlgaeSettingPresets(driver.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
-    driver.a.whileTrue(intake.miniSend());
-    // coralAlgaeActivePresets(driver.a, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
+    // driver.a.whileTrue(intake.miniSend());
+    coralAlgaeActivePresets(driver.a, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();

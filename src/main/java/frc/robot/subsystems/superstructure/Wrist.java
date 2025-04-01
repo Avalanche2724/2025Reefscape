@@ -255,7 +255,7 @@ public class Wrist {
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
         double diffy = getWristRotations() - (pos + ARM_OFFSET);
-        if (Math.abs(diffy) < Rotations.convertFrom(0.5, Degree)) {
+        if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
           if (Timer.getFPGATimestamp() - lastSetTime > 0.8) {
             if (Math.abs(motorVel) < 0.01) {
               setter.setPosition(pos + ARM_OFFSET, 0);

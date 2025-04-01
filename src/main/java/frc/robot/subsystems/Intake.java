@@ -97,8 +97,8 @@ public class Intake extends SubsystemBase {
   public Command miniSend() {
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(-1.65));
-          rightMotor.setControl(voltageOut.withOutput(-1.65));
+          leftMotor.setControl(voltageOut.withOutput(-1.8));
+          rightMotor.setControl(voltageOut.withOutput(-1.8));
         });
   }
 

@@ -110,10 +110,6 @@ public class Elevator {
     // For zeroing sequence
     config.Slot1.kP = 20;
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
-    // TODO tune me later
-    config.TorqueCurrent.PeakForwardTorqueCurrent = 20;
-    config.TorqueCurrent.PeakReverseTorqueCurrent = -20;
-
     // Other things
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -204,12 +200,13 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    motor.set(0.7);
+    motor.setControl(new TorqueCurrentFOC(60).withMaxAbsDutyCycle(0.8));
     // setMotorVelocity(ALGAE_LAUNCHING_VELOCITY, false);
   }
 
   void setMotorLaunchingVelocityDown() {
-    motor.set(-0.1);
+    motor.setControl(new TorqueCurrentFOC(-40).withMaxAbsDutyCycle(0.5));
+
     // setMotorVelocity(-ALGAE_LAUNCHING_VELOCITY, false);
   }
 
