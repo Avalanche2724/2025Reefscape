@@ -107,9 +107,9 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 45;
-    config.Slot0.kI = 0.1;
-    config.Slot0.kD = 2.5;
+    config.Slot0.kP = 70;
+    config.Slot0.kI = 0;
+    config.Slot0.kD = 3;
     config.Slot0.kS = (0.5 - 0.37) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = kA;
