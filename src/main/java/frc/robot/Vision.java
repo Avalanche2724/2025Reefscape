@@ -66,6 +66,13 @@ public class Vision {
 
   public VisionSystemSim visionSim = Robot.isSimulation() ? new VisionSystemSim("main") : null;
 
+  public Camera cameraFlSwerve =
+      new Camera(
+          "Arducam_fl_swerve",
+          new Transform3d(
+              new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
+              new Rotation3d(Degrees.of(-90), Degrees.of(-15), Degrees.of(-15))));
+
   public Camera cameraFrElev =
       new Camera(
           "Arducam_fr_elev",
@@ -73,13 +80,6 @@ public class Vision {
               // TODO this translation seems way off maybe revise later
               new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.95), Inches.of(7.9)),
               new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(15))));
-
-  public Camera cameraFlSwerve =
-      new Camera(
-          "Arducam_fl_swerve",
-          new Transform3d(
-              new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
-              new Rotation3d(Degrees.of(0), Degrees.of(-10), Degrees.of(-15))));
 
   /*
     public Camera cameraFlSwerve =

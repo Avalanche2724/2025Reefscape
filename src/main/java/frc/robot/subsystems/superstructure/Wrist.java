@@ -107,7 +107,7 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 40;
+    config.Slot0.kP = 45;
     config.Slot0.kI = 0;
     config.Slot0.kD = 2.5;
     config.Slot0.kS = (0.49 - 0.38) / 2;
@@ -157,9 +157,9 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.3));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
   final TrapezoidProfile m_profile_accel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.3));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
 
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
@@ -190,7 +190,7 @@ public class Wrist {
       var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
 
       positionControl.Position = m_setpoint.position;
-      if (m_profile_decel.timeLeftUntil(lastPositionSet) > 0.1) {
+      if (m_profile_decel.timeLeftUntil(lastPositionSet) > 0.15) {
         positionControl.Velocity = m_setpoint.velocity;
       } else {
         positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);

@@ -44,8 +44,8 @@ public class AutoRoutines {
                 new Trigger(
                         controls.createAtTargetPositionSupplier(
                             () -> Meters.convertFrom(1, Inch), () -> 1))
-                    .debounce(0.5)),
-        intake.semiSend().withTimeout(0.75));
+                    .debounce(0.4)),
+        intake.semiSend().withTimeout(0.5));
   }
 
   public Command intakeUntilGamePiece() {
@@ -58,8 +58,20 @@ public class AutoRoutines {
     return waitSeconds(1).andThen(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
   }
 
+  public Command waitAndStow() {
+    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.STOW));
+  }
+
   public Command waitAndCoralStation() {
     return waitSeconds(1).andThen(superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
+  }
+
+  public Command noWaitAndL2() {
+    return (superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+  }
+
+  public Command noWaitAndCoralStation() {
+    return (superstructure.goToPosition(Position.INTAKE_CORAL_STATION));
   }
 
   public AutoRoutine verycoolpath() {
@@ -71,7 +83,7 @@ public class AutoRoutines {
     var BRANCH2_TO_HP = routine.trajectory("CoolPath", 3);
     var HP_TO_BRANCH3 = routine.trajectory("CoolPath", 4);
 
-    return makeCoolPath(
+    return makeCoolPath2(
         routine, START_TO_BRANCH1, BRANCH1_TO_HP, HP_TO_BRANCH2, BRANCH2_TO_HP, HP_TO_BRANCH3);
   }
 
@@ -154,24 +166,29 @@ public class AutoRoutines {
         .onTrue(
             (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
                 .andThen(START_TO_BRANCH1.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
 
+    START_TO_BRANCH1.atTimeBeforeEnd(2.0).onTrue(noWaitAndL2());
     START_TO_BRANCH1
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
 
-    BRANCH1_TO_HP.active().onTrue(waitAndCoralStation());
+    BRANCH1_TO_HP.active().onTrue(waitAndStow());
+    BRANCH1_TO_HP.atTimeBeforeEnd(1.8).onTrue(noWaitAndCoralStation());
     BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
 
-    HP_TO_BRANCH2.active().onTrue(waitAndL2());
+    HP_TO_BRANCH2.active().onTrue(waitAndStow());
+    HP_TO_BRANCH2.atTimeBeforeEnd(1.8).onTrue(noWaitAndL2());
     HP_TO_BRANCH2
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
-    BRANCH2_TO_HP.active().onTrue(waitAndCoralStation());
+    BRANCH2_TO_HP.active().onTrue(waitAndStow());
+    BRANCH2_TO_HP.atTimeBeforeEnd(1.8).onTrue(noWaitAndCoralStation());
     BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
-    HP_TO_BRANCH3.active().onTrue(waitAndL2());
+    HP_TO_BRANCH3.active().onTrue(waitAndStow());
+    HP_TO_BRANCH3.atTimeBeforeEnd(1.8).onTrue(noWaitAndL2());
     HP_TO_BRANCH3
         .atTimeBeforeEnd(0.4)
         .onTrue(
