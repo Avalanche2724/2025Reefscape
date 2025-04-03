@@ -86,6 +86,7 @@ public class Controls {
   public void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
     driver.rightMiddle.onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+    // TODO add to op
     driver.leftMiddle.whileTrue(superstructure.zeroElevatorCommand());
 
     driver.leftBumper.whileTrue(intake.leftMajority());
@@ -148,6 +149,7 @@ public class Controls {
 
     // operator.leftJoystickPushed.whileTrue(
     //    superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
+    // TODO add operator to intake
 
     operator
         .rightJoystickPushed
@@ -248,6 +250,7 @@ public class Controls {
     button.whileTrue(
         coralAlgaeCommand(
             runOnce(() -> nextTargetPosition = coral), runOnce(() -> nextTargetPosition = algae)));
+    coralAlgaeActivePresets(button.and(operator.leftBumper), coral, algae);
   }
 
   // Commands

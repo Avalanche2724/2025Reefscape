@@ -20,7 +20,7 @@ public class Intake extends SubsystemBase {
   private final TalonFX leftMotor = new TalonFX(LEFTMOTOR_ID);
   private final TalonFX rightMotor = new TalonFX(RIGHTMOTOR_ID);
   private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(true);
-  public Trigger hasGamePieceTrigger = new Trigger(this::hasGamePiece).debounce(0.2);
+  public Trigger hasGamePieceTrigger = new Trigger(this::hasGamePiece).debounce(0.1);
   DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
   public Intake() {

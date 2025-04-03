@@ -106,11 +106,9 @@ public class Elevator {
 
     // Motion magic parameters
     config.MotionMagic.MotionMagicAcceleration = 7; // meters per second squared
-    config.MotionMagic.MotionMagicCruiseVelocity = 3.5; // meters per second
+    config.MotionMagic.MotionMagicCruiseVelocity =
+        3.0; // meters per second; running somewhat lower than free speed
     config.MotionMagic.MotionMagicJerk = 40;
-
-    // config.ClosedLoopRamps.VoltageClosedLoopRampPeriod =
-    //    0.1; // introduce fun unlinearities or something
 
     // For zeroing sequence
     config.Slot1.kP = 20;
