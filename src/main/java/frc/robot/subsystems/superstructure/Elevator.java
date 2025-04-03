@@ -9,6 +9,7 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -21,6 +22,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Robot;
 
 @SuppressWarnings("FieldCanBeLocal") // Stop intellij complaints
 public class Elevator {
@@ -95,17 +97,20 @@ public class Elevator {
     double kgHigh = 0.75;
     double kgLow = 0.38;
 
-    config.Slot0.kP = 125;
-    config.Slot0.kD = 1; // kD was having a skill issue?
+    config.Slot0.kP = Robot.isSimulation() ? 20 : 125;
+    config.Slot0.kD = Robot.isSimulation() ? 0.1 : 1; // kD was having a skill issue?
     config.Slot0.kG = (kgHigh + kgLow) / 2;
     config.Slot0.kS = (kgHigh - kgLow) / 2;
     config.Slot0.kA = config.Slot0.kG / 9.8;
     config.Slot0.kV = 0.124 / 0.043080; // approx 2.88 V*s/m
 
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 5.5; // meters per second squared
-    config.MotionMagic.MotionMagicJerk = 50.0;
+    config.MotionMagic.MotionMagicAcceleration = 7; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity = 3.5; // meters per second
+    config.MotionMagic.MotionMagicJerk = 40;
+
+    // config.ClosedLoopRamps.VoltageClosedLoopRampPeriod =
+    //    0.1; // introduce fun unlinearities or something
 
     // For zeroing sequence
     config.Slot1.kP = 20;
@@ -226,6 +231,9 @@ public class Elevator {
     elevatorMechanism.setLength(getElevatorHeight());
   }
 
+  double lastVel = 0;
+  LinearFilter accelFilter = LinearFilter.movingAverage(8);
+
   public void simulationPeriodic(double dt) {
     var motorSim = motor.getSimState();
     m_elevatorSim.setInput(motorSim.getMotorVoltage());
@@ -233,7 +241,10 @@ public class Elevator {
 
     motorSim.setRawRotorPosition(
         (m_elevatorSim.getPositionMeters() - MIN_HEIGHT) / METERS_PER_MOTOR_ROTATION);
+    double rotorVel = m_elevatorSim.getVelocityMetersPerSecond() / METERS_PER_MOTOR_ROTATION;
     motorSim.setRotorVelocity(
         m_elevatorSim.getVelocityMetersPerSecond() / METERS_PER_MOTOR_ROTATION);
+    motorSim.setRotorAcceleration(accelFilter.calculate((lastVel - rotorVel) / dt));
+    lastVel = rotorVel;
   }
 }

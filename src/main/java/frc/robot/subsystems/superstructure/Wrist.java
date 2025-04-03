@@ -6,7 +6,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.DeviceIdentifier;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -64,7 +64,9 @@ public class Wrist {
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Controls
   // private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
-  private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(0);
+  // private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(0);
+  private final MotionMagicVoltage positionControl = new MotionMagicVoltage(0).withSlot(0);
+
   // Absolute encoder reading
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
@@ -107,7 +109,7 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 70;
+    config.Slot0.kP = 100;
     config.Slot0.kI = 0;
     config.Slot0.kD = 3;
     config.Slot0.kS = (0.5 - 0.37) / 2;
@@ -119,6 +121,8 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimit = 40;
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.4;
+    config.MotionMagic.MotionMagicAcceleration = 1.0;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -131,13 +135,22 @@ public class Wrist {
 
     motor.getConfigurator().apply(config);
 
+    motorPosition.setUpdateFrequency(200);
+    motorVelocity.setUpdateFrequency(200);
+    motorVoltage.setUpdateFrequency(200);
     // for phoenix tuner x tuning:
-    motor.getClosedLoopError().setUpdateFrequency(50);
-    motor.getClosedLoopReference().setUpdateFrequency(50);
-    motor.getClosedLoopDerivativeOutput().setUpdateFrequency(50);
-    motor.getClosedLoopOutput().setUpdateFrequency(50);
-    motor.getClosedLoopProportionalOutput().setUpdateFrequency(50);
-    motor.getClosedLoopFeedForward().setUpdateFrequency(50);
+    double updateFreq = 50;
+    if (Robot.isSimulation()) {
+      updateFreq = 200;
+    }
+
+    motor.getClosedLoopError().setUpdateFrequency(updateFreq);
+    motor.getClosedLoopReference().setUpdateFrequency(updateFreq);
+    motor.getClosedLoopReferenceSlope().setUpdateFrequency(updateFreq);
+    motor.getClosedLoopDerivativeOutput().setUpdateFrequency(updateFreq);
+    motor.getClosedLoopOutput().setUpdateFrequency(updateFreq);
+    motor.getClosedLoopProportionalOutput().setUpdateFrequency(updateFreq);
+    motor.getClosedLoopFeedForward().setUpdateFrequency(updateFreq);
 
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(ZERO_OFFSET).inverted(false);
@@ -157,9 +170,9 @@ public class Wrist {
 
   // Trapezoid profile
   final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
-  final TrapezoidProfile m_profile_accel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.0));
+  // final TrapezoidProfile m_profile_accel =
+  //    new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
 
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
@@ -178,29 +191,21 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
 
     if (setPosition) {
-      var last_setpoint = m_setpoint;
+      /*
       var chosen_profile = m_profile_decel;
       m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
-
-      if (m_setpoint.velocity > last_setpoint.velocity) {
-        chosen_profile = m_profile_accel;
-        m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
-      }
 
       var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
 
       positionControl.Position = m_setpoint.position;
-      if (m_profile_decel.timeLeftUntil(lastPositionSet) > 0.15) {
-        positionControl.Velocity = m_setpoint.velocity;
-      } else {
-        positionControl.Velocity = Math.copySign(0.01, m_setpoint.velocity);
-      }
+      positionControl.Velocity = m_setpoint.velocity;
 
       // acceleration
       double accel = (next_setpoint.velocity - m_setpoint.velocity) / 0.020;
       double arbff = kA * accel;
       positionControl.FeedForward = arbff;
-      motor.setControl(positionControl);
+      motor.setControl(positionControl);*/
+      motor.setControl(positionControl.withPosition(lastPositionSet));
     }
   }
 

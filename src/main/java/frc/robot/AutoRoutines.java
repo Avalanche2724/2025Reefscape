@@ -168,7 +168,7 @@ public class AutoRoutines {
                 .andThen(START_TO_BRANCH1.cmd()));
     routine.active().onTrue(superstructure.goToPosition(Position.STOW));
 
-    START_TO_BRANCH1.atTimeBeforeEnd(2.0).onTrue(noWaitAndL2());
+    START_TO_BRANCH1.active().onTrue(noWaitAndL2());
     START_TO_BRANCH1
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
