@@ -138,7 +138,7 @@ public class Controls {
                         .withTimeout(0.2)));
 
     var nearTargetPositionTrigger =
-        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(18, Inch), () -> 8));
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(24, Inch), () -> 8));
 
     // When we are kinda near the target position while auto aligning, set superstructure position
     wantingToAutoAlignRn
@@ -147,8 +147,8 @@ public class Controls {
             Commands.print("AT TARG POS SET POS")
                 .andThen(superstructure.goToPosition(() -> nextTargetPosition)));
 
-    // operator.leftJoystickPushed.whileTrue(
-    //    superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
+    operator.leftJoystickPushed.whileTrue(
+        superstructure.incrementWrist(() -> -1 * operator.getLeftY()));
     // TODO add operator to intake
 
     operator
@@ -175,8 +175,8 @@ public class Controls {
     coralAlgaeActivePresets(operator.a, Position.OUTTAKE_L1, Position.ALG_PROC);
     // operator.a().whileTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
 
-    coralAlgaeActivePresets(operator.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
-    coralAlgaeActivePresets(operator.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
+    coralAlgaeSettingPresets(operator.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
+    coralAlgaeSettingPresets(operator.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
     coralAlgaeActivePresets(operator.y, Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
     // operator.leftTriggerB.whileTrue(superstructure.getToPositionThenHold(() ->
     // nextTargetPosition));
@@ -250,7 +250,7 @@ public class Controls {
     button.whileTrue(
         coralAlgaeCommand(
             runOnce(() -> nextTargetPosition = coral), runOnce(() -> nextTargetPosition = algae)));
-    coralAlgaeActivePresets(button.and(operator.leftBumper), coral, algae);
+    coralAlgaeActivePresets(button.and(operator.dpadUp), coral, algae);
   }
 
   // Commands
@@ -374,12 +374,12 @@ public class Controls {
 
       double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
       double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
-      // Also move the robot position one inch to the robot's left
+      // Also move the robot position inch to the robot's left
       // because the intake is offset :cry:
       offsetX +=
-          Meters.convertFrom(1, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(-1.25, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
       offsetY +=
-          Meters.convertFrom(1, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(-1.25, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
 
       // Create the robot scoring position: offset from branch and facing toward the branch
       return new Pose2d(

@@ -109,9 +109,9 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 100;
+    config.Slot0.kP = 80;
     config.Slot0.kI = 0;
-    config.Slot0.kD = 3;
+    config.Slot0.kD = 1.5;
     config.Slot0.kS = (0.5 - 0.37) / 2;
     config.Slot0.kV = 7.94;
     config.Slot0.kA = kA;
@@ -122,7 +122,8 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4;
-    config.MotionMagic.MotionMagicAcceleration = 1.0;
+    config.MotionMagic.MotionMagicAcceleration = 0.9;
+    config.MotionMagic.MotionMagicJerk = 3.5;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -169,11 +170,6 @@ public class Wrist {
   }
 
   // Trapezoid profile
-  final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.0));
-  // final TrapezoidProfile m_profile_accel =
-  //    new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
-
   TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
   TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
@@ -257,12 +253,13 @@ public class Wrist {
       double motorPos = getWristRotations();
       if (pos == 0 && vel == 0) {
         // TODO fix me later and implement better alerting
+        // TODO rev will report last val if none detected; fix
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
         double diffy = motorPos - (pos + ARM_OFFSET);
         if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.5) {
-            if (Math.abs(motorVel) < 0.01) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.4) {
+            if (Math.abs(motorVel) < 0.02) {
               setter.setPosition(pos + ARM_OFFSET, 0);
               lastSetTime = Timer.getFPGATimestamp();
             }

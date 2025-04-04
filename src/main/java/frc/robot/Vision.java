@@ -71,7 +71,7 @@ public class Vision {
           "Arducam_fl_swerve",
           new Transform3d(
               new Translation3d(Inches.of(14 - 1.6), Inches.of(14 - 5.3), Inches.of(8.7)),
-              new Rotation3d(Degrees.of(-90), Degrees.of(-15), Degrees.of(-15))));
+              new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
 
   public Camera cameraFrElev =
       new Camera(
@@ -117,7 +117,7 @@ public class Vision {
   public class Camera {
     // Standard deviations for vision estimations:
     private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(2, 2, 1000);
-    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 4);
+    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 30);
     // PNP params
     private static final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> pnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));

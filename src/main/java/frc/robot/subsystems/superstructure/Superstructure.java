@@ -25,12 +25,12 @@ public class Superstructure extends SubsystemBase {
     ALG_INTAKE_GROUND(0.34, 0),
     ALG_PROC(0.65, 0),
 
-    STOW(Elevator.MIN_HEIGHT, 93),
+    STOW(Elevator.MIN_HEIGHT, 91.5),
     SEMISTOW(Elevator.MIN_HEIGHT + 0.05, 0),
 
     INTAKE_CORAL_STATION(0.83, 35),
     // Straight outtake:
-    OUTTAKE_L1(0.8, 0),
+    OUTTAKE_L1(0.75, 0),
     /*OUTTAKE_L2(0.927, -35),
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
@@ -43,7 +43,7 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
     INTAKE_ALGAE_L2(1.08, 0),
-    INTAKE_ALGAE_L3(1.47, 0),
+    INTAKE_ALGAE_L3(1.42, 0),
     OUTTAKE_NET(1.15, 45);
 
     // Meters
