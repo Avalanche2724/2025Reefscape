@@ -122,7 +122,7 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4;
-    config.MotionMagic.MotionMagicAcceleration = 0.9;
+    config.MotionMagic.MotionMagicAcceleration = 1.1;
     config.MotionMagic.MotionMagicJerk = 3.5;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -258,8 +258,8 @@ public class Wrist {
       } else {
         double diffy = motorPos - (pos + ARM_OFFSET);
         if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.4) {
-            if (Math.abs(motorVel) < 0.02) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.5) {
+            if (Math.abs(motorVel) < 0.03) {
               setter.setPosition(pos + ARM_OFFSET, 0);
               lastSetTime = Timer.getFPGATimestamp();
             }

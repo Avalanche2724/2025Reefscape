@@ -239,7 +239,7 @@ public class Superstructure extends SubsystemBase {
     return run(
         () ->
             setPositions(
-                currentElevatorTargetPosition, currentWristTargetPosition + d.getAsDouble()));
+                elevator.getElevatorHeight(), currentWristTargetPosition + d.getAsDouble()));
   }
 
   // Mechanism + simulation stuff
