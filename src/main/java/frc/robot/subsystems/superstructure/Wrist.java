@@ -30,7 +30,6 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 
@@ -109,7 +108,7 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 80;
+    config.Slot0.kP = 75;
     config.Slot0.kI = 0;
     config.Slot0.kD = 1.5;
     config.Slot0.kS = (0.5 - 0.37) / 2;
@@ -121,9 +120,9 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimit = 40;
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.4;
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.0;
     config.MotionMagic.MotionMagicAcceleration = 1.2;
-    config.MotionMagic.MotionMagicJerk = 7;
+    config.MotionMagic.MotionMagicJerk = 5;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -240,12 +239,16 @@ public class Wrist {
       } else {
         double diffy = motorPos - (pos + ARM_OFFSET);
         if (needToResetPosNow) {
-          setter.setPosition(pos + ARM_OFFSET, 0);
-          needToResetPosNow = false;
-          lastSetTime = Timer.getFPGATimestamp();
+          double absVel = Math.abs(vel) / 60;
+          double absMotorVel = Math.abs(motorVel);
+          if (absVel > 0.1 && absMotorVel > 0.1) {
+            setter.setPosition(pos + ARM_OFFSET, 0);
+            needToResetPosNow = false;
+            lastSetTime = Timer.getFPGATimestamp();
+          }
         } else if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
           if (Timer.getFPGATimestamp() - lastSetTime > 0.5) {
-            if (Math.abs(motorVel) < 0.03) {
+            if (Math.abs(motorVel) < 0.035) {
               setter.setPosition(pos + ARM_OFFSET, 0);
               lastSetTime = Timer.getFPGATimestamp();
             }
@@ -259,14 +262,13 @@ public class Wrist {
 
   private void setMotorRotations(double pos) {
     double originalLastPositionSet = lastPositionSet;
+    if (originalLastPositionSet != pos) {
+      needToResetPosNow = true;
+    }
 
     setPosition = true;
     lastPositionSet = pos;
     motor.setControl(positionControl.withPosition(lastPositionSet));
-
-    if (originalLastPositionSet != lastPositionSet) {
-      Commands.waitSeconds(0.3).andThen(() -> needToResetPosNow = true).schedule();
-    }
   }
 
   void setMotorDegreesOffset(double deg) {

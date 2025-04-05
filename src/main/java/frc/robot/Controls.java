@@ -94,10 +94,7 @@ public class Controls {
 
     configureSysidBindings();
 
-    driver.y.whileTrue(intake.fullSend());
-    /*driver.b.whileTrue(intake.run(2));
-    driver.a.whileTrue(intake.runIntake());*/
-
+    driver.y.whileTrue(intake.spinny());
     coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
     coralAlgaeSettingPresets(driver.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
     // driver.a.whileTrue(intake.miniSend());
