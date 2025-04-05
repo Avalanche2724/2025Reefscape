@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.superstructure.Elevator;
 import frc.robot.subsystems.superstructure.Wrist;
@@ -35,7 +36,8 @@ public class Util {
                         Elevator.ELEVATOR2_ID,
                         Wrist.WRIST_ID,
                         Intake.LEFTMOTOR_ID,
-                        Intake.RIGHTMOTOR_ID)
+                        Intake.RIGHTMOTOR_ID,
+                        Climber.MOTOR_ID)
                     .map(id -> new DeviceIdentifier(id, "talon fx", "")))
             .map(TalonFXConfigurator::new)
             .toList();
@@ -43,7 +45,7 @@ public class Util {
     var userButton =
         new Trigger(RobotController::getUserButton)
             .debounce(0.1, Debouncer.DebounceType.kRising)
-            .debounce(5, Debouncer.DebounceType.kFalling)
+            .debounce(10, Debouncer.DebounceType.kFalling)
             .and(DriverStation::isDisabled);
 
     userButton.whileTrue(

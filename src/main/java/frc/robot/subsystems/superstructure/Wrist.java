@@ -121,8 +121,8 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.2;
-    config.MotionMagic.MotionMagicAcceleration = 0.6;
-    config.MotionMagic.MotionMagicJerk = 3;
+    config.MotionMagic.MotionMagicAcceleration = 0.8;
+    config.MotionMagic.MotionMagicJerk = 4;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -241,9 +241,11 @@ public class Wrist {
         if (needToResetPosNow) {
           // double absVel = Math.abs(vel) / 60;
           double absMotorVel = Math.abs(motorVel);
-          if (absMotorVel > 0.25) {
+          if (absMotorVel > 0.26) {
+            // this is really cursed
+            double wristyOffset = Math.copySign(Rotations.convertFrom(15, Degrees), motorVel);
             System.out.println("set a");
-            setter.setPosition(pos + ARM_OFFSET, 0);
+            setter.setPosition(pos + ARM_OFFSET + wristyOffset, 0);
             needToResetPosNow = false;
             lastSetTime = Timer.getFPGATimestamp();
           }

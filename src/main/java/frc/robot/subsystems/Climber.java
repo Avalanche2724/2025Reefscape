@@ -10,8 +10,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 
 public class Climber extends SubsystemBase {
-
-  private final TalonFX motor = new TalonFX(61);
+  public static final int MOTOR_ID = 61;
+  private final TalonFX motor = new TalonFX(MOTOR_ID);
   private final VoltageOut control = new VoltageOut(0);
   private final PositionVoltage positionControl = new PositionVoltage(0);
 
