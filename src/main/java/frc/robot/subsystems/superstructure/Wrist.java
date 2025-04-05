@@ -242,8 +242,8 @@ public class Wrist {
           // double absVel = Math.abs(vel) / 60;
           double absMotorVel = Math.abs(motorVel);
           if (absMotorVel > 0.26) {
-            // this is really cursed
-            double wristyOffset = Math.copySign(Rotations.convertFrom(15, Degrees), motorVel);
+            // backlash compensate
+            double wristyOffset = Math.copySign(Rotations.convertFrom(10, Degrees), motorVel);
             System.out.println("set a");
             setter.setPosition(pos + ARM_OFFSET + wristyOffset, 0);
             needToResetPosNow = false;

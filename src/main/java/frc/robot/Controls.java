@@ -97,7 +97,11 @@ public class Controls {
     driver.y.whileTrue(intake.spinny());
     coralAlgaeSettingPresets(driver.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
     coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
-    // driver.a.whileTrue(intake.miniSend());
+
+    coralAlgaeActivePresets(
+        driver.dpadLeft, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
+
+    driver.dpadLeft.whileTrue(intake.leftMajority());
 
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();

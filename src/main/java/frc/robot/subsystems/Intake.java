@@ -89,8 +89,8 @@ public class Intake extends SubsystemBase {
   public Command semiSend() {
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(-2.0));
-          rightMotor.setControl(voltageOut.withOutput(-2.0));
+          leftMotor.setControl(voltageOut.withOutput(-1.9));
+          rightMotor.setControl(voltageOut.withOutput(-1.9));
         });
   }
 
@@ -148,11 +148,11 @@ public class Intake extends SubsystemBase {
         () -> a[0]++,
         () -> {
           if (a[0] % 2 == 1) {
-            leftMotor.setControl(voltageOut.withOutput(12));
-            rightMotor.setControl(voltageOut.withOutput(6));
+            leftMotor.setControl(voltageOut.withOutput(7));
+            rightMotor.setControl(voltageOut.withOutput(3.5));
           } else {
-            leftMotor.setControl(voltageOut.withOutput(6));
-            rightMotor.setControl(voltageOut.withOutput(12));
+            leftMotor.setControl(voltageOut.withOutput(3.5));
+            rightMotor.setControl(voltageOut.withOutput(7));
           }
         });
   }
