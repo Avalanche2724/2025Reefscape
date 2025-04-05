@@ -19,7 +19,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -31,6 +30,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 
@@ -122,8 +122,8 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.4;
-    config.MotionMagic.MotionMagicAcceleration = 1.1;
-    config.MotionMagic.MotionMagicJerk = 3.5;
+    config.MotionMagic.MotionMagicAcceleration = 1.2;
+    config.MotionMagic.MotionMagicJerk = 7;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -170,9 +170,6 @@ public class Wrist {
   }
 
   // Trapezoid profile
-  TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
-  TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
-
   public void periodic() {
     motorPosition.refresh();
     motorVelocity.refresh();
@@ -185,24 +182,6 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
-
-    if (setPosition) {
-      /*
-      var chosen_profile = m_profile_decel;
-      m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
-
-      var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
-
-      positionControl.Position = m_setpoint.position;
-      positionControl.Velocity = m_setpoint.velocity;
-
-      // acceleration
-      double accel = (next_setpoint.velocity - m_setpoint.velocity) / 0.020;
-      double arbff = kA * accel;
-      positionControl.FeedForward = arbff;
-      motor.setControl(positionControl);*/
-      motor.setControl(positionControl.withPosition(lastPositionSet));
-    }
   }
 
   // Signals
@@ -237,6 +216,8 @@ public class Wrist {
 
   double lastSetTime = 0;
 
+  private boolean needToResetPosNow = true;
+
   // this is probably a horrible idea and I apologize to anybody looking at this in the future
   private Runnable absoluteEncoderResetter() {
     var setter =
@@ -251,13 +232,18 @@ public class Wrist {
       double vel = absoluteEncoder.getVelocity();
       double motorVel = motorVelocity.getValueAsDouble();
       double motorPos = getWristRotations();
+
       if (pos == 0 && vel == 0) {
         // TODO fix me later and implement better alerting
         // TODO rev will report last val if none detected; fix
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
         double diffy = motorPos - (pos + ARM_OFFSET);
-        if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
+        if (needToResetPosNow) {
+          setter.setPosition(pos + ARM_OFFSET, 0);
+          needToResetPosNow = false;
+          lastSetTime = Timer.getFPGATimestamp();
+        } else if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
           if (Timer.getFPGATimestamp() - lastSetTime > 0.5) {
             if (Math.abs(motorVel) < 0.03) {
               setter.setPosition(pos + ARM_OFFSET, 0);
@@ -272,22 +258,15 @@ public class Wrist {
   // Controls and stuff
 
   private void setMotorRotations(double pos) {
-    if (!setPosition) {
-      m_setpoint =
-          new TrapezoidProfile.State(getWristRotations(), motorVelocity.getValueAsDouble());
-    }
+    double originalLastPositionSet = lastPositionSet;
+
     setPosition = true;
     lastPositionSet = pos;
-    m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
-    // let periodic do the pid thingy
+    motor.setControl(positionControl.withPosition(lastPositionSet));
 
-    // motor.setControl(positionControl.withPosition(lastPositionSet));
-
-    /* if (Math.abs(getWristRotations() - pos) < THRESHOLD_SWITCHING_PID_GAINS) {
-      motor.setControl(positionControl.withPosition(lastPositionSet));
-    } else {
-      motor.setControl(motionMagicControl.withPosition(pos));
-    }*/
+    if (originalLastPositionSet != lastPositionSet) {
+      Commands.waitSeconds(0.3).andThen(() -> needToResetPosNow = true).schedule();
+    }
   }
 
   void setMotorDegreesOffset(double deg) {

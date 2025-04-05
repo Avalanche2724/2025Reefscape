@@ -1,9 +1,11 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
@@ -12,6 +14,7 @@ public class Climber extends SubsystemBase {
 
   private final TalonFX motor = new TalonFX(61);
   private final VoltageOut control = new VoltageOut(0);
+  private final PositionVoltage positionControl = new PositionVoltage(0);
 
   public Climber() {
     TalonFXConfiguration config = new TalonFXConfiguration();
@@ -25,17 +28,36 @@ public class Climber extends SubsystemBase {
     config.CurrentLimits.SupplyCurrentLowerTime = 4;
     config.CurrentLimits.SupplyCurrentLowerLimit = 40;
 
-    motor.getConfigurator().apply(config);
-    setDefaultCommand(runVoltage(() -> 0));
-    // the following lines of code were mentor written so I commented them out
-    // import robot;
+    config.Feedback.SensorToMechanismRatio = 100;
+    config.Slot0.kP = 500;
+    config.Slot0.kS = 0.25;
+    config.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
+    motor.getConfigurator().apply(config);
   }
 
   public Command runVoltage(DoubleSupplier arg) {
-    return run(
-        () -> {
-          motor.setControl(control.withOutput(arg.getAsDouble()));
-        });
+    return runEnd(
+        () -> motor.setControl(control.withOutput(arg.getAsDouble())), this::stayAtPosition);
+  }
+
+  private void stayAtPosition() {
+    motor.setControl(positionControl.withPosition(motor.getPosition().getValueAsDouble()));
+  }
+
+  private Command goToPosition(double arg) {
+    return run(() -> motor.setControl(positionControl.withPosition(arg)));
+  }
+
+  public Command zeroPos() {
+    return goToPosition(0);
+  }
+
+  public Command preClimbPos() {
+    return goToPosition(1.85);
+  }
+
+  public Command postClimbPos() {
+    return goToPosition(-0.87);
   }
 }

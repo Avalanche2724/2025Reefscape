@@ -294,11 +294,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     if (Math.abs(
             MathUtil.angleModulus(
                 curPose.getRotation().getRadians() - target.getRotation().getRadians()))
-        < Radians.convertFrom(0.55, Degrees)) {
+        < Radians.convertFrom(0.7, Degrees)) {
       thetaSpeed = 0;
     }
 
-    if (currentDistance < Meters.convertFrom(0.6, Inches)) {
+    if (currentDistance < Meters.convertFrom(0.8, Inches)) {
       ySpeed = 0;
       xSpeed = 0;
     }
