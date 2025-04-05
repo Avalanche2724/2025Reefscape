@@ -121,8 +121,8 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.2;
-    config.MotionMagic.MotionMagicAcceleration = 0.6;
-    config.MotionMagic.MotionMagicJerk = 3;
+    config.MotionMagic.MotionMagicAcceleration = 0.4;
+    config.MotionMagic.MotionMagicJerk = 10;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -239,11 +239,12 @@ public class Wrist {
       } else {
         double diffy = motorPos - (pos + ARM_OFFSET);
 
+        /*
         if (needToResetPosNow) {
           double absMotorVel = Math.abs(motorVel);
           if (absMotorVel > 0.26) {
             // backlash compensate
-            double wristyOffset = Math.copySign(Rotations.convertFrom(10, Degrees), motorVel);
+            double wristyOffset = Math.copySign(Rotations.convertFrom(14, Degrees), motorVel);
             System.out.println("set a");
             setter.setPosition(pos + ARM_OFFSET + wristyOffset, 0);
             needToResetPosNow = false;
@@ -251,13 +252,24 @@ public class Wrist {
           }
         }
         if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.6) {
-            if (Math.abs(motorVel) < 0.025) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.4) {
+            if (Math.abs(motorVel) < 0.03) {
               System.out.println("set b");
 
               setter.setPosition(pos + ARM_OFFSET, 0);
               lastSetTime = Timer.getFPGATimestamp();
             }
+          }
+        }
+         */
+        if (Math.abs(diffy) > Rotations.convertFrom(1.0, Degree)) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.05) {
+            // if (Math.abs(motorVel) < 0.03) {
+            // System.out.println("set b");
+
+            setter.setPosition(pos + ARM_OFFSET, 0);
+            lastSetTime = Timer.getFPGATimestamp();
+            // }
           }
         }
       }
