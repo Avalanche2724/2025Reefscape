@@ -125,8 +125,7 @@ public class Controls {
     // Auto align bindings with automatic ejection when aligned
     var wantingToAutoAlignRn = driver.leftTriggerB.or(driver.rightTriggerB);
     var atTargetPositionTrigger =
-        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(1.1, Inch), () -> 1.1))
-            .debounce(0.45);
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(1.1, Inch), () -> 1.1));
 
     wantingToAutoAlignRn
         .and(atTargetPositionTrigger)
@@ -136,11 +135,11 @@ public class Controls {
                 .semiSend()
                 .withTimeout(0.6)
                 .alongWith(
-                    startEnd(() -> driver.rumble.accept(0.2), () -> driver.rumble.accept(0))
-                        .withTimeout(0.2)));
+                    startEnd(() -> driver.rumble.accept(0.4), () -> driver.rumble.accept(0))
+                        .withTimeout(0.5)));
 
     var nearTargetPositionTrigger =
-        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(24, Inch), () -> 8));
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(30, Inch), () -> 8));
 
     // When we are kinda near the target position while auto aligning, set superstructure position
     wantingToAutoAlignRn
