@@ -162,7 +162,7 @@ public class Controls {
                 () -> -0.01 * MathUtil.applyDeadband(operator.getRightY(), 0.7)));
 
     operator.rightJoystickPushed.whileTrue(
-        climber.runVoltage(() -> -6 * MathUtil.applyDeadband(operator.getRightX(), 0.25)));
+        climber.runVoltage(() -> -12 * MathUtil.applyDeadband(operator.getRightX(), 0.25)));
 
     operator.leftMiddle // left squares
         .onTrue(runOnce(() -> isOnCoralBindings = false));
