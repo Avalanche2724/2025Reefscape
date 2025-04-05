@@ -37,6 +37,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -78,7 +79,7 @@ public class Vision {
           "Arducam_fr_elev",
           new Transform3d(
               // TODO this translation seems way off maybe revise later
-              new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.95), Inches.of(7.9)),
+              new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.95), Inches.of(7.8)),
               new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(15))));
 
   /*
@@ -116,8 +117,8 @@ public class Vision {
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
     // Standard deviations for vision estimations:
-    private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(2, 2, 1000);
-    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 30);
+    private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(4, 4, 1000);
+    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 15);
     // PNP params
     private static final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> pnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
@@ -221,6 +222,9 @@ public class Vision {
         var estStdDevs = numTags == 1 ? singleTagDevs : multiTagDevs;
         // Just taken from the photonvision example
         estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
+        if (DriverStation.isEnabled()) {
+          estStdDevs.set(0, 2, Double.MAX_VALUE);
+        }
 
         if (numTags == 0) {
           // This should not happen:
