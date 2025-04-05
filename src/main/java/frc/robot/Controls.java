@@ -95,10 +95,9 @@ public class Controls {
     configureSysidBindings();
 
     driver.y.whileTrue(intake.spinny());
-    coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
     coralAlgaeSettingPresets(driver.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
+    coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
     // driver.a.whileTrue(intake.miniSend());
-    coralAlgaeActivePresets(driver.a, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();
@@ -368,7 +367,7 @@ public class Controls {
       Rotation2d branchRotation = nearestBranch.getRotation();
       // Calculate a position that is away from the branch
       // in the direction opposite to the branch's orientation
-      double scoringDistance = Meters.convertFrom(33, Inches);
+      double scoringDistance = Meters.convertFrom(33.5, Inches);
       if (level == ReefLevel.L4) {
         scoringDistance = Meters.convertFrom(25, Inches);
       }
@@ -379,9 +378,9 @@ public class Controls {
       // because the intake is offset :cry:
       // NVM: this seemed to do worse; fix in code later?i
       offsetX +=
-          Meters.convertFrom(0, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(0.5, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
       offsetY +=
-          Meters.convertFrom(0, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(0.5, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
 
       // Create the robot scoring position: offset from branch and facing toward the branch
       return new Pose2d(

@@ -120,9 +120,9 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimit = 40;
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.0;
-    config.MotionMagic.MotionMagicAcceleration = 1.2;
-    config.MotionMagic.MotionMagicJerk = 5;
+    config.MotionMagic.MotionMagicCruiseVelocity = 1.2;
+    config.MotionMagic.MotionMagicAcceleration = 0.6;
+    config.MotionMagic.MotionMagicJerk = 3;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
@@ -215,7 +215,7 @@ public class Wrist {
 
   double lastSetTime = 0;
 
-  private boolean needToResetPosNow = true;
+  private boolean needToResetPosNow = false;
 
   // this is probably a horrible idea and I apologize to anybody looking at this in the future
   private Runnable absoluteEncoderResetter() {
@@ -239,16 +239,20 @@ public class Wrist {
       } else {
         double diffy = motorPos - (pos + ARM_OFFSET);
         if (needToResetPosNow) {
-          double absVel = Math.abs(vel) / 60;
+          // double absVel = Math.abs(vel) / 60;
           double absMotorVel = Math.abs(motorVel);
-          if (absVel > 0.1 && absMotorVel > 0.1) {
+          if (absMotorVel > 0.25) {
+            System.out.println("set a");
             setter.setPosition(pos + ARM_OFFSET, 0);
             needToResetPosNow = false;
             lastSetTime = Timer.getFPGATimestamp();
           }
-        } else if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.5) {
-            if (Math.abs(motorVel) < 0.035) {
+        }
+        if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.6) {
+            if (Math.abs(motorVel) < 0.025) {
+              System.out.println("set b");
+
               setter.setPosition(pos + ARM_OFFSET, 0);
               lastSetTime = Timer.getFPGATimestamp();
             }

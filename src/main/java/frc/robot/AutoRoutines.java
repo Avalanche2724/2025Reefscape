@@ -97,7 +97,7 @@ public class AutoRoutines {
     var BRANCH2_TO_HP = routine.trajectory("CoolPathTwoBack", 3);
     var HP_TO_BRANCH3 = routine.trajectory("CoolPathTwoBack", 4);
 
-    return makeCoolPath(
+    return makeCoolPath2(
         routine, START_TO_BRANCH1, BRANCH1_TO_HP, HP_TO_BRANCH2, BRANCH2_TO_HP, HP_TO_BRANCH3);
   }
 
@@ -110,7 +110,7 @@ public class AutoRoutines {
     var BRANCH2_TO_HP = routine.trajectory("CoolPathTwoBack_SameCage", 3);
     var HP_TO_BRANCH3 = routine.trajectory("CoolPathTwoBack_SameCage", 4);
 
-    return makeCoolPath(
+    return makeCoolPath2(
         routine, START_TO_BRANCH1, BRANCH1_TO_HP, HP_TO_BRANCH2, BRANCH2_TO_HP, HP_TO_BRANCH3);
   }
 

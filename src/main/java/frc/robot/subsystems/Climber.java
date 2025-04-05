@@ -53,10 +53,10 @@ public class Climber extends SubsystemBase {
   }
 
   public Command preClimbPos() {
-    return goToPosition(1.2);
+    return goToPosition(1.1);
   }
 
   public Command postClimbPos() {
-    return goToPosition(-1.2);
+    return goToPosition(-1.25);
   }
 }
