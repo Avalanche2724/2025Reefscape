@@ -376,10 +376,11 @@ public class Controls {
       double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
       // Also move the robot position inch to the robot's left
       // because the intake is offset :cry:
+      // NVM: this seemed to do worse; fix in code later?
       offsetX +=
-          Meters.convertFrom(-1.25, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(0, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
       offsetY +=
-          Meters.convertFrom(-1.25, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(0, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
 
       // Create the robot scoring position: offset from branch and facing toward the branch
       return new Pose2d(
