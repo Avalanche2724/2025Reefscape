@@ -128,27 +128,27 @@ public class AutoRoutines {
                 .andThen(START_TO_BRANCH1.cmd()));
     routine.active().onTrue(superstructure.goToPosition(Position.STOW));
 
-    START_TO_BRANCH1.atTimeBeforeEnd(1.0).onTrue(noWaitAndCoralStation());
+    START_TO_BRANCH1.atTimeBeforeEnd(1.4).onTrue(noWaitAndCoralStation());
     START_TO_BRANCH1
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
 
     BRANCH1_TO_HP.active().onTrue(waitAndStow());
-    BRANCH1_TO_HP.atTimeBeforeEnd(1.0).onTrue(noWaitAndCoralStation());
+    BRANCH1_TO_HP.atTimeBeforeEnd(1.4).onTrue(noWaitAndCoralStation());
     BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
 
     HP_TO_BRANCH2.active().onTrue(waitAndStow());
-    HP_TO_BRANCH2.atTimeBeforeEnd(1.0).onTrue(noWaitAndL2());
+    HP_TO_BRANCH2.atTimeBeforeEnd(1.4).onTrue(noWaitAndL2());
     HP_TO_BRANCH2
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
     BRANCH2_TO_HP.active().onTrue(waitAndStow());
-    BRANCH2_TO_HP.atTimeBeforeEnd(1.0).onTrue(noWaitAndCoralStation());
+    BRANCH2_TO_HP.atTimeBeforeEnd(1.4).onTrue(noWaitAndCoralStation());
     BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
     HP_TO_BRANCH3.active().onTrue(waitAndStow());
-    HP_TO_BRANCH3.atTimeBeforeEnd(1.0).onTrue(noWaitAndL2());
+    HP_TO_BRANCH3.atTimeBeforeEnd(1.4).onTrue(noWaitAndL2());
     HP_TO_BRANCH3
         .atTimeBeforeEnd(0.4)
         .onTrue(

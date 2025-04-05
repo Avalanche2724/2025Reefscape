@@ -238,12 +238,12 @@ public class Wrist {
         DriverStation.reportError("Check absolute encoder reset", false);
       } else {
         double diffy = motorPos - (pos + ARM_OFFSET);
+
         if (needToResetPosNow) {
-          // double absVel = Math.abs(vel) / 60;
           double absMotorVel = Math.abs(motorVel);
           if (absMotorVel > 0.26) {
             // backlash compensate
-            double wristyOffset = Math.copySign(Rotations.convertFrom(15, Degrees), motorVel);
+            double wristyOffset = Math.copySign(Rotations.convertFrom(10, Degrees), motorVel);
             System.out.println("set a");
             setter.setPosition(pos + ARM_OFFSET + wristyOffset, 0);
             needToResetPosNow = false;
@@ -269,7 +269,9 @@ public class Wrist {
   private void setMotorRotations(double pos) {
     double originalLastPositionSet = lastPositionSet;
     if (originalLastPositionSet != pos) {
-      needToResetPosNow = true;
+      if (Math.abs(pos - ARM_OFFSET_DEG) < Rotation.convertFrom(5, Degrees)) {
+        needToResetPosNow = true;
+      }
     }
 
     setPosition = true;
