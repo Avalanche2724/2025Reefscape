@@ -29,8 +29,6 @@ public class Climber extends SubsystemBase {
 
     config.Feedback.SensorToMechanismRatio = 100;
     config.Slot0.kP = 500;
-    // config.Slot0.kS = 0.25;
-    // config.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
     motor.getConfigurator().apply(config);
   }

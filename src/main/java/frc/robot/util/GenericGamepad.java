@@ -122,7 +122,7 @@ public class GenericGamepad {
 
     dpadUp = controller.povUp();
     dpadLeft = controller.povLeft();
-    dpadRight = controller.povLeft();
+    dpadRight = controller.povRight();
     dpadDown = controller.povDown();
 
     leftMiddle = controller.back();
