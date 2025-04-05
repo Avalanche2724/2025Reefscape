@@ -220,7 +220,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
   public void integrateVisionCorrection(
       EstimatedRobotPose estimation, Matrix<N3, N1> standardDeviations) {
     var pose2d = estimation.estimatedPose.toPose2d();
-    // logPose2d("Vision_Estimation", pose2d);
+    logPose2d("Vision_Estimation", pose2d);
     // TODO log
 
     addVisionMeasurement(

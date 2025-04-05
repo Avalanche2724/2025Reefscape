@@ -37,7 +37,6 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -222,9 +221,13 @@ public class Vision {
         var estStdDevs = numTags == 1 ? singleTagDevs : multiTagDevs;
         // Just taken from the photonvision example
         estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
+
+        /*
         if (DriverStation.isEnabled()) {
-          estStdDevs.set(0, 2, Double.MAX_VALUE);
+          estStdDevs.set(2, 0, Double.MAX_VALUE);
         }
+         */
+        // TODO caused some issue; fix later
 
         if (numTags == 0) {
           // This should not happen:

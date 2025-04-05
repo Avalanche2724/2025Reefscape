@@ -184,9 +184,9 @@ public class Controls {
 
     operator.rightTriggerB.whileTrue(algaeLaunchSequence());
 
+    operator.dpadLeft.onTrue(climber.postClimbPos());
     operator.dpadRight.onTrue(climber.preClimbPos());
     operator.dpadDown.onTrue(climber.zeroPos());
-    operator.dpadLeft.onTrue(climber.postClimbPos());
   }
 
   private SwerveRequest driveBasedOnJoystick() {

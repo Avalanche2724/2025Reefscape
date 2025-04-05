@@ -5,7 +5,6 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
@@ -30,8 +29,8 @@ public class Climber extends SubsystemBase {
 
     config.Feedback.SensorToMechanismRatio = 100;
     config.Slot0.kP = 500;
-    config.Slot0.kS = 0.25;
-    config.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
+    // config.Slot0.kS = 0.25;
+    // config.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
     motor.getConfigurator().apply(config);
   }
@@ -54,10 +53,10 @@ public class Climber extends SubsystemBase {
   }
 
   public Command preClimbPos() {
-    return goToPosition(1.85);
+    return goToPosition(1.2);
   }
 
   public Command postClimbPos() {
-    return goToPosition(-0.87);
+    return goToPosition(-1.2);
   }
 }
