@@ -117,7 +117,7 @@ public class Vision {
   public class Camera {
     // Standard deviations for vision estimations:
     private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(4, 4, 1000);
-    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.5, 0.5, 15);
+    private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.4, 0.4, 15);
     // PNP params
     private static final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> pnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));

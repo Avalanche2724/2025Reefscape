@@ -26,7 +26,8 @@ public class Superstructure extends SubsystemBase {
     ALG_PROC(0.65, 0),
 
     STOW(Elevator.MIN_HEIGHT, 91.5),
-    SEMISTOW(Elevator.MIN_HEIGHT + 0.05, 0),
+    SEMISTOW(Elevator.MIN_HEIGHT, 35),
+    SCORYSTOW(Elevator.MIN_HEIGHT, 0),
 
     INTAKE_CORAL_STATION(0.83, 35),
     // Straight outtake:
@@ -97,9 +98,13 @@ public class Superstructure extends SubsystemBase {
     isStowed =
         new Trigger(
             () ->
-                lastSetPosition == Position.STOW
+                (lastSetPosition == Position.STOW
+                        || lastSetPosition == Position.SEMISTOW
+                        || lastSetPosition == Position.SCORYSTOW)
                     && (atWristPositionApprox(currentWristTargetPosition)
-                        || currentWristTargetPosition == Position.STOW.wristAngle)
+                        || currentWristTargetPosition == Position.STOW.wristAngle
+                        || currentWristTargetPosition == Position.SEMISTOW.wristAngle
+                        || currentWristTargetPosition == Position.SCORYSTOW.wristAngle)
                     && atMostElevatorPosition(0.4)
                     && atLeastElevatorPosition(0.25)
                     && getCurrentCommand() == null);

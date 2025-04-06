@@ -37,23 +37,23 @@ public class AutoRoutines {
   }
 
   public Command driveToL2BranchAndScore(boolean leftSide) {
-    return sequence(
-        controls
-            .driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, leftSide)
-            .until(
+    return race(
+        controls.driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, leftSide),
+        sequence(
+            waitUntil(
                 new Trigger(
                         controls.createAtTargetPositionSupplier(
                             () -> Meters.convertFrom(1, Inch), () -> 1))
                     .and(superstructure::atTargetPosition)
-                    .debounce(1.0)),
-        intake.semiSend().withTimeout(0.5));
+                    .debounce(0.6)),
+            intake.semiSend().withTimeout(0.5)));
   }
 
   public Command intakeUntilGamePiece() {
-    return drivetrain
-        .brakeOnce()
-        .andThen(
-            race(intake.leftMajority().withTimeout(1.9), waitUntil(intake.hasGamePieceTrigger)));
+    return /*drivetrain
+           .brakeOnce()
+           .andThen(*/ (race(
+        intake.leftMajority().withTimeout(2.3), waitUntil(intake.hasGamePieceTrigger)));
   }
 
   public Command waitAndL2() {
@@ -62,6 +62,14 @@ public class AutoRoutines {
 
   public Command waitAndStow() {
     return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.STOW));
+  }
+
+  public Command waitAndSemiStow() {
+    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.SEMISTOW));
+  }
+
+  public Command waitAndScoryStow() {
+    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.SEMISTOW));
   }
 
   public Command waitAndCoralStation() {
@@ -127,28 +135,36 @@ public class AutoRoutines {
         .onTrue(
             (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
                 .andThen(START_TO_BRANCH1.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
+    routine.active().onTrue(superstructure.goToPosition(Position.SCORYSTOW));
 
     START_TO_BRANCH1.atTimeBeforeEnd(1.3).onTrue(noWaitAndL2());
     START_TO_BRANCH1
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
 
-    BRANCH1_TO_HP.active().onTrue(waitAndStow());
-    BRANCH1_TO_HP.atTimeBeforeEnd(1.6).onTrue(noWaitAndCoralStation());
-    BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
+    BRANCH1_TO_HP.active().onTrue(waitAndSemiStow());
+    BRANCH1_TO_HP.atTimeBeforeEnd(1.3).onTrue(noWaitAndCoralStation());
+    BRANCH1_TO_HP
+        .atTimeBeforeEnd(0.5)
+        .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
 
-    HP_TO_BRANCH2.active().onTrue(waitAndStow());
+    BRANCH1_TO_HP.done().onTrue(drivetrain.brakeOnce());
+
+    HP_TO_BRANCH2.active().onTrue(waitAndScoryStow());
     HP_TO_BRANCH2.atTimeBeforeEnd(1.3).onTrue(noWaitAndL2());
     HP_TO_BRANCH2
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
-    BRANCH2_TO_HP.active().onTrue(waitAndStow());
-    BRANCH2_TO_HP.atTimeBeforeEnd(1.6).onTrue(noWaitAndCoralStation());
-    BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
+    BRANCH2_TO_HP.active().onTrue(waitAndSemiStow());
+    BRANCH2_TO_HP.atTimeBeforeEnd(1.3).onTrue(noWaitAndCoralStation());
+    BRANCH2_TO_HP
+        .atTimeBeforeEnd(0.5)
+        .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
-    HP_TO_BRANCH3.active().onTrue(waitAndStow());
+    BRANCH2_TO_HP.done().onTrue(drivetrain.brakeOnce());
+
+    HP_TO_BRANCH3.active().onTrue(waitAndScoryStow());
     HP_TO_BRANCH3.atTimeBeforeEnd(1.3).onTrue(noWaitAndL2());
     HP_TO_BRANCH3
         .atTimeBeforeEnd(0.4)
@@ -221,6 +237,7 @@ public class AutoRoutines {
                 superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
                 waitSeconds(2.5),
                 l1forauto.cmd(),
+                drivetrain.brakeOnce(),
                 waitSeconds(1.0),
                 intake.ejectL1intake().withTimeout(1),
                 superstructure.goToPosition(Position.STOW)));
@@ -408,6 +425,7 @@ public class AutoRoutines {
     return routine;
   }
 
+  /// DO NOT USE ME
   private AutoRoutine makeCoolPath(
       AutoRoutine routine,
       AutoTrajectory START_TO_BRANCH1,
