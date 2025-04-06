@@ -145,6 +145,14 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  public Command ejectL1intake() {
+    return run(
+        () -> {
+          leftMotor.setControl(voltageOut.withOutput(-3.5));
+          rightMotor.setControl(voltageOut.withOutput(-3.5));
+        });
+  }
+
   public Command leftMajority() {
     int[] a = new int[1];
     return startRun(

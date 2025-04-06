@@ -123,6 +123,8 @@ public class Elevator {
     // does this fix things?
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
+    config.CurrentLimits.StatorCurrentLimit = 100;
+
     motor.getConfigurator().apply(config);
 
     // For debugging via hoot logs:
@@ -203,12 +205,12 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    motor.setControl(new TorqueCurrentFOC(60).withMaxAbsDutyCycle(0.8));
+    motor.setControl(new TorqueCurrentFOC(56).withMaxAbsDutyCycle(0.8));
     // setMotorVelocity(ALGAE_LAUNCHING_VELOCITY, false);
   }
 
   void setMotorLaunchingVelocityDown() {
-    motor.setControl(new TorqueCurrentFOC(-40).withMaxAbsDutyCycle(0.5));
+    motor.setControl(new TorqueCurrentFOC(-20).withMaxAbsDutyCycle(0.5));
 
     // setMotorVelocity(-ALGAE_LAUNCHING_VELOCITY, false);
   }
