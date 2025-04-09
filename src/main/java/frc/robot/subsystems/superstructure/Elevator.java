@@ -205,12 +205,12 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    motor.setControl(new TorqueCurrentFOC(55).withMaxAbsDutyCycle(0.65));
+    motor.setControl(new TorqueCurrentFOC(55).withMaxAbsDutyCycle(0.8));
     // setMotorVelocity(ALGAE_LAUNCHING_VELOCITY, false);
   }
 
   void setMotorLaunchingVelocityDown() {
-    motor.setControl(new TorqueCurrentFOC(-20).withMaxAbsDutyCycle(0.5));
+    motor.setControl(new TorqueCurrentFOC(-25).withMaxAbsDutyCycle(0.5));
 
     // setMotorVelocity(-ALGAE_LAUNCHING_VELOCITY, false);
   }
