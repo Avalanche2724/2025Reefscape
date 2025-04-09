@@ -61,15 +61,15 @@ public class AutoRoutines {
   }
 
   public Command waitAndStow() {
-    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.STOW));
+    return waitSeconds(0.4).andThen(superstructure.goToPosition(Position.STOW));
   }
 
   public Command waitAndSemiStow() {
-    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.SEMISTOW));
+    return waitSeconds(0.4).andThen(superstructure.goToPosition(Position.SEMISTOW));
   }
 
   public Command waitAndScoryStow() {
-    return waitSeconds(0.5).andThen(superstructure.goToPosition(Position.SEMISTOW));
+    return waitSeconds(0.4).andThen(superstructure.goToPosition(Position.SCORYSTOW));
   }
 
   public Command waitAndCoralStation() {
@@ -78,6 +78,13 @@ public class AutoRoutines {
 
   public Command noWaitAndL2() {
     return (superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+  }
+
+  public Command noWaitAndStowWhileOuttakeThenSemiStow() {
+    return (superstructure.goToPosition(Position.STOW))
+        .alongWith(intake.semiSend())
+        .withTimeout(0.4)
+        .andThen(superstructure.goToPosition(Position.SEMISTOW));
   }
 
   public Command noWaitAndCoralStation() {
@@ -137,13 +144,13 @@ public class AutoRoutines {
                 .andThen(START_TO_BRANCH1.cmd()));
     routine.active().onTrue(superstructure.goToPosition(Position.SCORYSTOW));
 
-    START_TO_BRANCH1.atTimeBeforeEnd(1.3).onTrue(noWaitAndL2());
+    START_TO_BRANCH1.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
     START_TO_BRANCH1
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
 
-    BRANCH1_TO_HP.active().onTrue(waitAndSemiStow());
-    BRANCH1_TO_HP.atTimeBeforeEnd(1.3).onTrue(noWaitAndCoralStation());
+    BRANCH1_TO_HP.active().onTrue(noWaitAndStowWhileOuttakeThenSemiStow());
+    BRANCH1_TO_HP.atTimeBeforeEnd(1.1).onTrue(noWaitAndCoralStation());
     BRANCH1_TO_HP
         .atTimeBeforeEnd(0.5)
         .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
@@ -151,13 +158,13 @@ public class AutoRoutines {
     BRANCH1_TO_HP.done().onTrue(drivetrain.brakeOnce());
 
     HP_TO_BRANCH2.active().onTrue(waitAndScoryStow());
-    HP_TO_BRANCH2.atTimeBeforeEnd(1.3).onTrue(noWaitAndL2());
+    HP_TO_BRANCH2.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
     HP_TO_BRANCH2
         .atTimeBeforeEnd(0.4)
         .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
-    BRANCH2_TO_HP.active().onTrue(waitAndSemiStow());
-    BRANCH2_TO_HP.atTimeBeforeEnd(1.3).onTrue(noWaitAndCoralStation());
+    BRANCH2_TO_HP.active().onTrue(noWaitAndStowWhileOuttakeThenSemiStow());
+    BRANCH2_TO_HP.atTimeBeforeEnd(1.1).onTrue(noWaitAndCoralStation());
     BRANCH2_TO_HP
         .atTimeBeforeEnd(0.5)
         .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
@@ -165,7 +172,7 @@ public class AutoRoutines {
     BRANCH2_TO_HP.done().onTrue(drivetrain.brakeOnce());
 
     HP_TO_BRANCH3.active().onTrue(waitAndScoryStow());
-    HP_TO_BRANCH3.atTimeBeforeEnd(1.3).onTrue(noWaitAndL2());
+    HP_TO_BRANCH3.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
     HP_TO_BRANCH3
         .atTimeBeforeEnd(0.4)
         .onTrue(
