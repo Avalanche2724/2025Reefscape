@@ -37,7 +37,6 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -223,9 +222,9 @@ public class Vision {
         // Just taken from the photonvision example
         estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
 
-        if (DriverStation.isEnabled()) {
-          estStdDevs.set(2, 0, 99999999);
-        }
+        // if (DriverStation.isEnabled()) {
+        //  estStdDevs.set(2, 0, 99999999);
+        // }
 
         // TODO caused some issue; fix later
 
