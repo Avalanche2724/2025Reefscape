@@ -121,7 +121,7 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.2;
-    config.MotionMagic.MotionMagicAcceleration = 0.5;
+    config.MotionMagic.MotionMagicAcceleration = 0.44;
     config.MotionMagic.MotionMagicJerk = 10;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 

@@ -201,9 +201,9 @@ public class Superstructure extends SubsystemBase {
 
   public Command elevatorAlgaeLaunchSetup() {
     return sequence(
-        setWristPositionCommand(66),
+        setWristPositionCommand(58),
         runOnce(elevator::setMotorLaunchingVelocityUp),
-        waitUntil(() -> atLeastElevatorPosition(0.95)));
+        waitUntil(() -> atLeastElevatorPosition(1.0)));
   }
 
   public Command elevatorAlgaeLaunchPostscript() {
@@ -211,6 +211,15 @@ public class Superstructure extends SubsystemBase {
         runOnce(elevator::setMotorLaunchingVelocityDown),
         waitSeconds(0.6),
         runOnce(() -> setPositions(Position.STOW)));
+  }
+
+  public Command protectCommand(Command t) {
+    return t.finallyDo(
+        (intr) -> {
+          if (!t.isFinished() || intr) {
+            setPositions(Position.STOW);
+          }
+        });
   }
 
   public Command goToPosition(Position pos) {

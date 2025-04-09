@@ -265,12 +265,13 @@ public class Controls {
   }
 
   public Command algaeLaunchSequence() {
-    return sequence(
-        intake.holdIntake().raceWith(superstructure.elevatorAlgaeLaunchSetup()),
-        Commands.print("Algae launch sequence done 1"),
-        intake.fullSend().withTimeout(0.19),
-        Commands.print("Algae launch sequence done 2"),
-        superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend()));
+    return superstructure.protectCommand(
+        sequence(
+            intake.holdIntake().raceWith(superstructure.elevatorAlgaeLaunchSetup()),
+            Commands.print("Algae launch sequence done 1"),
+            intake.fullSend().withTimeout(0.19),
+            Commands.print("Algae launch sequence done 2"),
+            superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend())));
   }
 
   public BooleanSupplier createAtTargetPositionSupplier(
