@@ -22,7 +22,7 @@ public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
     MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7),
-    ALG_INTAKE_GROUND(0.34, 0),
+    ALG_INTAKE_GROUND(0.33, 0),
     ALG_PROC(0.65, 0),
 
     STOW(Elevator.MIN_HEIGHT, 91.5),
@@ -44,7 +44,7 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L4_VERT_P1(1.52, 60),
     OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
-    INTAKE_ALGAE_L2(1.08, 0),
+    INTAKE_ALGAE_L2(1.04, 0),
     INTAKE_ALGAE_L3(1.42, 0),
     OUTTAKE_NET(1.15, 45);
 

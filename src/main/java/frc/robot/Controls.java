@@ -146,7 +146,7 @@ public class Controls {
                         .withTimeout(0.5)));
 
     var nearTargetPositionTrigger =
-        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(30, Inch), () -> 8));
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(40, Inch), () -> 8));
 
     // When we are kinda near the target position while auto aligning, set superstructure position
     wantingToAutoAlignRn
