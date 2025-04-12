@@ -246,7 +246,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
 
     private final TrapezoidProfile autoAlignProfile =
-        new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 4.4));
+        new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 3.1));
     private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
     private TrapezoidProfile.State autoAlignGoal;
     private Rotation2d autoAlignHeading;
