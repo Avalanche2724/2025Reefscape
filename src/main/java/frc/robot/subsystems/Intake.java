@@ -55,7 +55,8 @@ public class Intake extends SubsystemBase {
     return (leftMotor.getTorqueCurrent().getValueAsDouble() > 10
         && rightMotor.getTorqueCurrent().getValueAsDouble() > 10
         && leftMotor.getVelocity().getValueAsDouble() < 2
-        && rightMotor.getVelocity().getValueAsDouble() < 2);
+        && rightMotor.getVelocity().getValueAsDouble() < 2
+        && getCurrentCommand() != getDefaultCommand());
   }
 
   private void setVoltages(double left, double right) {

@@ -95,11 +95,11 @@ public class Controls {
 
     configureSysidBindings();
 
-    //driver.y.whileTrue(intake.fixy());
-    //driver.x.whileTrue(intake.semiSpinny());
+    // driver.y.whileTrue(intake.fixy());
+    // driver.x.whileTrue(intake.semiSpinny());
     driver.b.whileTrue(intake.limitedSpeedIntake());
     driver.a.whileTrue(intake.limitedTorqueIntake());
-    driver.x.whileTrue(intake.alternatingSpinny()
+    driver.x.whileTrue(intake.alternatingSpinny());
     // driver.b.wh
     // coralAlgaeSettingPresets(driver.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
     // coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
