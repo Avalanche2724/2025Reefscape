@@ -206,13 +206,17 @@ public class LED extends SubsystemBase {
     };
   }
 
+  public static double getXNetScore() {
+    return AllianceFlipUtil.applyX(6.7);
+  }
+
   public Command netchecker() {
     return run(() -> {
           var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
           var coralMode = Robot.instance.robotContainer.controls.isOnCoralBindings;
 
-          if (Math.abs(position - AllianceFlipUtil.applyX(6.7)) < Meters.convertFrom(1, Inch)) {
+          if (Math.abs(position - getXNetScore()) < Meters.convertFrom(1, Inch)) {
             LEDPattern.solid(Color.kRed).applyTo(m_buffer);
             Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
           } else if (hasGamePiece) {

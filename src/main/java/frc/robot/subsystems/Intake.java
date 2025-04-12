@@ -80,7 +80,7 @@ public class Intake extends SubsystemBase {
   // used during algae launch
   // todo: lower voltages so consistent?
   public Command fullSend() {
-    return run(() -> setVoltages(-12, -12));
+    return run(() -> setVoltages(-11, -11));
   }
 
   // general outtake command
@@ -169,7 +169,7 @@ public class Intake extends SubsystemBase {
     return run(
         () -> {
           leftMotor.setControl(torqueCurrent.withOutput(25).withMaxAbsDutyCycle(0.5));
-          leftMotor.setControl(torqueCurrent.withOutput(20).withMaxAbsDutyCycle(0.5));
+          rightMotor.setControl(torqueCurrent.withOutput(20).withMaxAbsDutyCycle(0.5));
         });
   }
 
@@ -180,7 +180,7 @@ public class Intake extends SubsystemBase {
     return run(
         () -> {
           leftMotor.setControl(velocityControl.withVelocity(50));
-          leftMotor.setControl(velocityControl.withVelocity(50));
+          rightMotor.setControl(velocityControl.withVelocity(50));
         });
   }
 }

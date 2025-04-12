@@ -104,15 +104,18 @@ public class Controls {
     // coralAlgaeSettingPresets(driver.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
     // coralAlgaeSettingPresets(driver.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
 
-    coralAlgaeActivePresets(
-        driver.dpadLeft, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
+    coralAlgaeActivePresets(driver.povLeft, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
 
-    driver.dpadLeft.whileTrue(intake.leftMajority());
+    driver.povLeft.whileTrue(intake.leftMajority());
 
     // driver.povLeft.whileTrue(tuneDrivetrainStaticFriction());
     // configureDriveTuningBindings();
     driver.povUp.whileTrue(drivetrain.wheelCharacterization());
+    driver.povRight.whileTrue(driveToAlgaeLaunchCmd());
 
+    new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(30, Inch), () -> 8))
+        .and(driver.povRight)
+        .onTrue(algaeLaunchSequence());
     // configureSysidBindings();
 
     // AUTO ALIGN
@@ -189,9 +192,9 @@ public class Controls {
 
     operator.rightTriggerB.whileTrue(algaeLaunchSequence());
 
-    operator.dpadLeft.onTrue(climber.postClimbPos());
-    operator.dpadRight.onTrue(climber.preClimbPos());
-    operator.dpadDown.onTrue(climber.zeroPos());
+    operator.povLeft.onTrue(climber.postClimbPos());
+    operator.povRight.onTrue(climber.preClimbPos());
+    operator.povDown.onTrue(climber.zeroPos());
   }
 
   private SwerveRequest driveBasedOnJoystick() {
@@ -259,7 +262,7 @@ public class Controls {
     button.whileTrue(
         coralAlgaeCommand(
             runOnce(() -> nextTargetPosition = coral), runOnce(() -> nextTargetPosition = algae)));
-    coralAlgaeActivePresets(button.and(operator.dpadUp), coral, algae);
+    coralAlgaeActivePresets(button.and(operator.povUp), coral, algae);
   }
 
   // Commands
@@ -326,6 +329,16 @@ public class Controls {
   public Command driveToNearestReefBranchCommand(Supplier<ReefLevel> level, boolean leftSide) {
     return drivetrain.driveToPosition(
         () -> lastPoseForAutoAlign = findNearestReefBranch(level.get(), leftSide));
+  }
+
+  public Command driveToAlgaeLaunchCmd() {
+    return drivetrain.driveToPosition(
+        () ->
+            lastPoseForAutoAlign =
+                new Pose2d(
+                    LED.getXNetScore(),
+                    drivetrain.getState().Pose.getY(),
+                    AllianceFlipUtil.apply(Rotation2d.kZero)));
   }
 
   /**

@@ -29,11 +29,6 @@ public class GenericGamepad {
   public DoubleSupplier leftTrigger;
   public DoubleSupplier rightTrigger;
 
-  public Trigger dpadUp;
-  public Trigger dpadLeft;
-  public Trigger dpadRight;
-  public Trigger dpadDown;
-
   // Warning: leftY is -1 when up
   public DoubleSupplier leftY;
   public DoubleSupplier leftX;
@@ -80,11 +75,6 @@ public class GenericGamepad {
     leftJoystickPushed = controller.L3();
     rightJoystickPushed = controller.R3();
 
-    dpadUp = controller.povUp();
-    dpadLeft = controller.povLeft();
-    dpadRight = controller.povRight();
-    dpadDown = controller.povDown();
-
     leftMiddle = controller.share();
     rightMiddle = controller.options();
 
@@ -119,11 +109,6 @@ public class GenericGamepad {
 
     leftJoystickPushed = controller.leftStick();
     rightJoystickPushed = controller.rightStick();
-
-    dpadUp = controller.povUp();
-    dpadLeft = controller.povLeft();
-    dpadRight = controller.povRight();
-    dpadDown = controller.povDown();
 
     leftMiddle = controller.back();
     rightMiddle = controller.start();
