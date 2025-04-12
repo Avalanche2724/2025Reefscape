@@ -11,7 +11,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Controls;
 import frc.robot.Robot;
 
 public class Intake extends SubsystemBase {
@@ -112,7 +111,8 @@ public class Intake extends SubsystemBase {
   public Command stopIntake() {
     return run(
         () -> {
-          double thing = Controls.isOnCoralBindings ? 0 : 0.5;
+          // TODO fixy
+          double thing = Robot.instance.robotContainer.controls.isOnCoralBindings ? 0 : 0.5;
           setVoltages(thing, thing);
         });
   }

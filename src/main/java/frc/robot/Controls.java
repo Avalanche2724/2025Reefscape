@@ -63,7 +63,7 @@ public class Controls {
   public boolean currentlyAutoAligning = false;
   // Internal state for controls
   // this is static to make it easier to access fix later
-  public static boolean isOnCoralBindings = true;
+  publicg boolean isOnCoralBindings = true;
   public Position nextTargetPosition = Position.OUTTAKE_L1;
   public Pose2d lastPoseForAutoAlign = null;
 
