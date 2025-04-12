@@ -341,6 +341,63 @@ public class AutoRoutines {
     return routine; // TODO
   }
 
+  public AutoRoutine BestMiddlePathLOL() {
+    var routine = m_factory.newRoutine("BestMiddlePathFR");
+
+    var START_TO_BRANCH5 = routine.trajectory("Extremely_Cool_Middle_Path", 0);
+    var BRANCH5_TO_ALGAE = routine.trajectory("Extremely_Cool_Middle_Path", 1);
+    var ALGAE_TO_NET = routine.trajectory("Extremely_Cool_Middle_Path", 2);
+    var NET_TO_NEARALGAE = routine.trajectory("Extremely_Cool_Middle_Path", 3);
+    var NEARALGAE_TO_ALGAE2 = routine.trajectory("Extremely_Cool_Middle_Path", 4);
+    var ALGAE2_TO_NET2 = routine.trajectory("Extremely_Cool_Middle_Path", 5);
+
+    routine
+        .active()
+        .onTrue(Commands.sequence(START_TO_BRANCH5.resetOdometry(), START_TO_BRANCH5.cmd()));
+    START_TO_BRANCH5
+        .done()
+        .onTrue(
+            sequence(
+                Commands.print("Reached Reef"),
+                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
+                intake.ejectIntake().withTimeout(0.5),
+                Commands.print("Ejecting Intake"),
+                BRANCH5_TO_ALGAE.spawnCmd()));
+
+    BRANCH5_TO_ALGAE
+        .done()
+        .onTrue(
+            sequence(
+                Commands.print("Reached Lollipop"),
+                superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L2),
+                intake.runIntake().withTimeout(0.5),
+                Commands.print("Running Intake"),
+                ALGAE_TO_NET.spawnCmd()));
+
+    ALGAE_TO_NET
+        .done()
+        .onTrue(
+            sequence(
+                Commands.print("Reached Lollipop"),
+                controls.algaeLaunchSequence(),
+                NET_TO_NEARALGAE.spawnCmd()));
+
+    NET_TO_NEARALGAE
+        .done()
+        .onTrue(
+            sequence(
+                Commands.print("Reached Lollipop"),
+                superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3),
+                intake.runIntake().withTimeout(0.5),
+                Commands.print("Running Intake"),
+                NEARALGAE_TO_ALGAE2.spawnCmd()));
+
+    NEARALGAE_TO_ALGAE2
+        .done()
+        .onTrue(sequence(controls.algaeLaunchSequence(), ALGAE2_TO_NET2.spawnCmd()));
+    return routine;
+  }
+
   public AutoRoutine StartToHumanStation() {
     var routine = m_factory.newRoutine("test auto");
     if (routine == null) {

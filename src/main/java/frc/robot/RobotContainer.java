@@ -34,10 +34,10 @@ public class RobotContainer {
 
   public RobotContainer() {
     // Register autos
-    autoChooser.addRoutine("SimplePath (ONLY FORWARD)", autoRoutines::simplePathAuto);
-    autoChooser.addRoutine("NOT SIMPLE PATH", autoRoutines::simplePathAuto2);
-    autoChooser.addRoutine("StartToHumanStation", autoRoutines::StartToHumanStation);
-    autoChooser.addRoutine("BRR FORWARD", autoRoutines::brrforward);
+    autoChooser.addRoutine("Start Left - SimplePath (ONLY FORWARD)", autoRoutines::simplePathAuto);
+    // autoChooser.addRoutine("NOT SIMPLE PATH", autoRoutines::simplePathAuto2);
+    // autoChooser.addRoutine("StartToHumanStation", autoRoutines::StartToHumanStation);
+    //  autoChooser.addRoutine("BRR FORWARD", autoRoutines::brrforward);
     autoChooser.addRoutine("verycoolpath", autoRoutines::verycoolpath);
     autoChooser.addRoutine("coolpath2back", autoRoutines::coolpath2back);
     autoChooser.addRoutine("coolpath2backsamecage", autoRoutines::coolpath2backsamecage);
