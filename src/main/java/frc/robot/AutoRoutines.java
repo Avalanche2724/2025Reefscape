@@ -342,10 +342,22 @@ public class AutoRoutines {
                 .andThen(controls.algaeLaunchSequence())
                 .andThen(NET_TO_SideAlgae.spawnCmd()));
 
-    NET_TO_SideAlgae
+    NET_TO_SideAlgae.done()
+        .onTrue(
+            sequence(
+                Commands.print("Reached Lollipop"),
+                superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3),
+                intake.runIntake().withTimeout(0.5),
+                Commands.print("Running Intake"),
+                SIDEALGAE_TO_NET.spawnCmd()));
+
+    SIDEALGAE_TO_NET
         .done()
-        .onTrue(sequence(superstructure.goToPositionOnce(Position.INTAKE_ALGAE_L3))
-            .andThen(intake.semiSend().withTimeout(0.5)));
+        .onTrue(
+            waitUntil(
+                    controls.createAtTargetPositionSupplier(
+                        () -> Meters.convertFrom(15, Inch), () -> 8))
+                .andThen(controls.algaeLaunchSequence()));
 
     return routine;
   }
