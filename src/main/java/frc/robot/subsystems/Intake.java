@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -26,10 +27,13 @@ public class Intake extends SubsystemBase {
   DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
   // TODO
-  private boolean everControlledSinceDisable = false;
+  // private boolean everControlledSinceDisable = false;
 
   public Intake() {
     var config = new TalonFXConfiguration();
+
+    config.Slot0.kP = 10;
+
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     config.CurrentLimits.StatorCurrentLimit = 200;
@@ -155,6 +159,27 @@ public class Intake extends SubsystemBase {
           } else {
             setVoltages(-1, 12);
           }
+        });
+  }
+
+  // experiment 2
+
+  public Command limitedTorqueIntake() {
+    return run(
+        () -> {
+          leftMotor.setControl(torqueCurrent.withOutput(25).withMaxAbsDutyCycle(0.5));
+          leftMotor.setControl(torqueCurrent.withOutput(20).withMaxAbsDutyCycle(0.5));
+        });
+  }
+
+  // experiment 3
+  public VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
+
+  public Command limitedSpeedIntake() {
+    return run(
+        () -> {
+          leftMotor.setControl(velocityControl.withVelocity(50));
+          leftMotor.setControl(velocityControl.withVelocity(50));
         });
   }
 }
