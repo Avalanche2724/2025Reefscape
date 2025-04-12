@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -9,8 +10,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Controls;
 import frc.robot.Robot;
-import java.util.function.DoubleSupplier;
 
 public class Intake extends SubsystemBase {
   public static final double intakeVolts = 12;
@@ -19,7 +20,8 @@ public class Intake extends SubsystemBase {
 
   private final TalonFX leftMotor = new TalonFX(LEFTMOTOR_ID);
   private final TalonFX rightMotor = new TalonFX(RIGHTMOTOR_ID);
-  private final VoltageOut voltageOut = new VoltageOut(0).withEnableFOC(true);
+  private final VoltageOut voltageOut = new VoltageOut(0);
+  private final TorqueCurrentFOC torqueCurrent = new TorqueCurrentFOC(0);
   public Trigger hasGamePieceTrigger = new Trigger(this::hasGamePiece).debounce(0.1);
   DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
@@ -50,64 +52,38 @@ public class Intake extends SubsystemBase {
         && rightMotor.getVelocity().getValueAsDouble() < 2);
   }
 
+  private void setVoltages(double left, double right) {
+    leftMotor.setControl(voltageOut.withOutput(left));
+    rightMotor.setControl(voltageOut.withOutput(right));
+  }
+
   public Command runIntake() {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(intakeVolts));
-          rightMotor.setControl(voltageOut.withOutput(intakeVolts));
-        });
+    return run(() -> setVoltages(intakeVolts, intakeVolts));
   }
 
   public Command run(double d) {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(d));
-          rightMotor.setControl(voltageOut.withOutput(d));
-        });
+    return run(() -> setVoltages(d, d));
   }
 
+  // used during algae launch sequence to keep algae in
   public Command holdIntake() {
     return run(3);
   }
 
-  public Command fullSend2() {
-    return run(
-        () -> {
-          leftMotor.setControl(fullSend);
-          rightMotor.setControl(fullSend);
-        });
-  }
-
+  // used during algae launch
+  // todo: lower voltages so consistent?
   public Command fullSend() {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(-12));
-          rightMotor.setControl(voltageOut.withOutput(-12));
-        });
+    return run(() -> setVoltages(-12, -12));
   }
 
+  // general outtake command
   public Command semiSend() {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(-2.5));
-          rightMotor.setControl(voltageOut.withOutput(-2.5));
-        });
+    return run(() -> setVoltages(-2.5, -2.5));
   }
 
+  // outtake command in algae mode
   public Command algSend() {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(-1.1));
-          rightMotor.setControl(voltageOut.withOutput(-1.1));
-        });
-  }
-
-  public Command miniSend() {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(-1.8));
-          rightMotor.setControl(voltageOut.withOutput(-1.8));
-        });
+    return run(() -> setVoltages(-1.1, -1.1));
   }
 
   public Command fixy() {
@@ -115,36 +91,26 @@ public class Intake extends SubsystemBase {
     return startRun(
         () -> a[0]++,
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(12 * (((a[0] % 4) / 2 == 1) ? 1 : -1)));
-
-          rightMotor.setControl(voltageOut.withOutput(12 * ((a[0] % 2 == 0 ? 1 : -1))));
+          // what even is this??
+          setVoltages(12 * (((a[0] % 4) / 2 == 1) ? 1 : -1), 12 * ((a[0] % 2 == 0 ? 1 : -1)));
         });
   }
 
+  // for L1 outtake maybe?
   public Command semiSpinny() {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(12));
-          rightMotor.setControl(voltageOut.withOutput(0));
-        });
+    return run(() -> setVoltages(12, 0));
   }
 
-  public Command runVariable(DoubleSupplier d) {
-    return run(
-        () -> {
-          leftMotor.setControl(voltageOut.withOutput(d.getAsDouble()));
-          rightMotor.setControl(voltageOut.withOutput(d.getAsDouble()));
-        });
-  }
-
+  // used for default command
   public Command stopIntake() {
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(0));
-          rightMotor.setControl(voltageOut.withOutput(0));
+          double thing = Controls.isOnCoralBindings ? 0 : 0.5;
+          setVoltages(thing, thing);
         });
   }
 
+  // used in some auto routines except none of them are being used rn?
   public Command ejectIntake() {
     return run(
         () -> {
@@ -153,6 +119,7 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  // used in l1forauto orig and it should probably be used in some others too
   public Command ejectL1intake() {
     return run(
         () -> {
@@ -161,6 +128,7 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  // current bound to intake command driver
   public Command leftMajority() {
     int[] a = new int[1];
     return startRun(
@@ -172,6 +140,23 @@ public class Intake extends SubsystemBase {
           } else {
             leftMotor.setControl(voltageOut.withOutput(4));
             rightMotor.setControl(voltageOut.withOutput(8));
+          }
+        });
+  }
+
+  // experiment 1
+  public Command alternatingSpinny() {
+    int[] a = new int[1];
+    return startRun(
+        () -> a[0] = 0,
+        () -> {
+          a[0]++;
+          if (a[0] % 50 < 25) {
+            leftMotor.setControl(voltageOut.withOutput(12));
+            rightMotor.setControl(voltageOut.withOutput(-1));
+          } else {
+            leftMotor.setControl(voltageOut.withOutput(-1));
+            rightMotor.setControl(voltageOut.withOutput(12));
           }
         });
   }
