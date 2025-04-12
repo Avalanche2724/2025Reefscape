@@ -95,7 +95,7 @@ public class Controls {
 
     configureSysidBindings();
 
-    // driver.y.whileTrue(intake.fixy());
+    driver.y.whileTrue(intake.fixy());
     // driver.x.whileTrue(intake.semiSpinny());
     driver.b.whileTrue(intake.limitedSpeedIntake());
     driver.a.whileTrue(intake.limitedTorqueIntake());
@@ -401,9 +401,9 @@ public class Controls {
       // because the intake is offset :cry:
       // NVM: this seemed to do worse; fix in code later?
       offsetX +=
-          Meters.convertFrom(0, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(2.0, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
       offsetY +=
-          Meters.convertFrom(0, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
+          Meters.convertFrom(2.0, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
 
       // Create the robot scoring position: offset from branch and facing toward the branch
       return new Pose2d(

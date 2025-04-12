@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
-    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -7),
+    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -14),
     ALG_INTAKE_GROUND(0.33, 0),
     ALG_PROC(0.65, 0),
 
@@ -37,7 +37,7 @@ public class Superstructure extends SubsystemBase {
     OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
     OUTTAKE_L2_LAUNCH(0.95, 0),
-    OUTTAKE_L3_LAUNCH(1.38, 0),
+    OUTTAKE_L3_LAUNCH(1.36, 0),
     OUTTAKE_L4_LAUNCH(1.47, 85),
     // Vertical outtake:
     // OUTTAKE_L1_VERTICAL(0.875, -45),

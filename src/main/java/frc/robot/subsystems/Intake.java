@@ -31,7 +31,7 @@ public class Intake extends SubsystemBase {
   public Intake() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 10;
+    config.Slot0.kP = 20;
 
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -80,7 +80,7 @@ public class Intake extends SubsystemBase {
   // used during algae launch
   // todo: lower voltages so consistent?
   public Command fullSend() {
-    return run(() -> setVoltages(-11, -11));
+    return run(() -> setVoltages(-12, -12));
   }
 
   // general outtake command
@@ -104,7 +104,7 @@ public class Intake extends SubsystemBase {
   }
 
   // for L1 outtake maybe?
-  public Command semiSpinny() {
+  public Command semiSpinnyL1Outtake() {
     return run(() -> setVoltages(-12, 0));
   }
 
@@ -179,8 +179,8 @@ public class Intake extends SubsystemBase {
   public Command limitedSpeedIntake() {
     return run(
         () -> {
-          leftMotor.setControl(velocityControl.withVelocity(50));
-          rightMotor.setControl(velocityControl.withVelocity(50));
+          leftMotor.setControl(velocityControl.withVelocity(10));
+          rightMotor.setControl(velocityControl.withVelocity(10));
         });
   }
 }

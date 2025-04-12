@@ -37,8 +37,12 @@ public class AutoRoutines {
   }
 
   public Command driveToL2BranchAndScore(boolean leftSide) {
+    return driveToBranchAndScore(leftSide, FieldConstants.ReefLevel.L2);
+  }
+
+  public Command driveToBranchAndScore(boolean leftSide, FieldConstants.ReefLevel level) {
     return race(
-        controls.driveToNearestReefBranchCommand(() -> FieldConstants.ReefLevel.L2, leftSide),
+        controls.driveToNearestReefBranchCommand(() -> level, leftSide),
         sequence(
             waitUntil(
                 new Trigger(
@@ -50,10 +54,18 @@ public class AutoRoutines {
   }
 
   public Command intakeUntilGamePiece() {
+    return intakeUntilGamepieceForever().withTimeout(2.0);
+  }
+
+  public Command intakeUntilGamepieceForever() {
     return /*drivetrain
            .brakeOnce()
            .andThen(*/ (race(
-        intake.leftMajority().withTimeout(2.3), waitUntil(intake.hasGamePieceTrigger)));
+        intake.leftMajority(), waitUntil(intake.hasGamePieceTrigger)));
+  }
+
+  public Command intakeForever() {
+    return intake.leftMajority();
   }
 
   public Command waitAndL2() {
@@ -78,6 +90,10 @@ public class AutoRoutines {
 
   public Command noWaitAndL2() {
     return (superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+  }
+
+  public Command noWaitAndL3() {
+    return (superstructure.goToPosition(Position.OUTTAKE_L3_LAUNCH));
   }
 
   public Command noWaitAndStowWhileOuttakeThenSemiStow() {
@@ -284,249 +300,44 @@ public class AutoRoutines {
     return routine;
   }
 
-  public AutoRoutine yesPathAuto() {
-    var routine = m_factory.newRoutine("yes auto");
-    var simplePath = routine.trajectory("!Start to reef");
-    var nextPath = routine.trajectory("!reef to hp");
-
-    routine
-        .active()
-        .onTrue(
-            Commands.print("RUNNING AUTO ROUTINE")
-                .andThen(simplePath.resetOdometry().andThen(simplePath.cmd())));
-
-    simplePath.done().onTrue(nextPath.cmd());
-
-    return routine;
-  }
-
-  public AutoRoutine simplePathAuto2() {
-    var routine = m_factory.newRoutine("simple path auto");
-    var _base_l2score = routine.trajectory("Start to F branch");
-
-    routine.active().onTrue(_base_l2score.resetOdometry().andThen(_base_l2score.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
-    _base_l2score
-        .done()
-        .onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
-    _base_l2score
-        .done()
-        .onTrue(
-            sequence(
-                waitUntil(
-                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
-                intake.ejectIntake().withTimeout(0.5)));
-
-    return routine; // TODO
-  }
-
-  public AutoRoutine brrforward() {
-    var routine = m_factory.newRoutine("brr forward");
-    var brrforward = routine.trajectory("NEW_FORWARDGO");
-
-    routine.active().onTrue(brrforward.resetOdometry().andThen(brrforward.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
-    brrforward
-        .done()
-        .onTrue(superstructure.goToPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH));
-    brrforward
-        .done()
-        .onTrue(
-            sequence(
-                waitUntil(
-                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
-                waitSeconds(3.0),
-                intake.ejectIntake().withTimeout(1)));
-
-    return routine; // TODO
-  }
-
   public AutoRoutine BestMiddlePathLOL() {
     var routine = m_factory.newRoutine("BestMiddlePathFR");
 
-    var START_TO_BRANCH5 = routine.trajectory("Extremely_Cool_Middle_Path", 0);
-    var BRANCH5_TO_ALGAE = routine.trajectory("Extremely_Cool_Middle_Path", 1);
+    var START_TO_BRANCH1 = routine.trajectory("Extremely_Cool_Middle_Path", 0);
+    var BRANCH1_TO_TAKEALG = routine.trajectory("Extremely_Cool_Middle_Path", 1);
     var ALGAE_TO_NET = routine.trajectory("Extremely_Cool_Middle_Path", 2);
-    var NET_TO_NEARALGAE = routine.trajectory("Extremely_Cool_Middle_Path", 3);
-    var NEARALGAE_TO_ALGAE2 = routine.trajectory("Extremely_Cool_Middle_Path", 4);
-    // var ALGAE2_TO_NET2 = routine.trajectory("Extremely_Cool_Middle_Path", 5);
-
-    routine
-        .active()
-        .onTrue(Commands.sequence(START_TO_BRANCH5.resetOdometry(), START_TO_BRANCH5.cmd()));
-    START_TO_BRANCH5
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Reef"),
-                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
-                intake.ejectIntake().withTimeout(0.5),
-                Commands.print("Ejecting Intake"),
-                BRANCH5_TO_ALGAE.spawnCmd()));
-
-    BRANCH5_TO_ALGAE
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Lollipop"),
-                superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L2),
-                intake.runIntake().withTimeout(0.5),
-                Commands.print("Running Intake"),
-                ALGAE_TO_NET.spawnCmd()));
-
-    ALGAE_TO_NET
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Lollipop"),
-                controls.algaeLaunchSequence(),
-                NET_TO_NEARALGAE.spawnCmd()));
-
-    NET_TO_NEARALGAE
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Lollipop"),
-                superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3),
-                intake.runIntake().withTimeout(0.5),
-                Commands.print("Running Intake"),
-                NEARALGAE_TO_ALGAE2.spawnCmd()));
-
-    NEARALGAE_TO_ALGAE2.done().onTrue(sequence(controls.algaeLaunchSequence()));
-
-    return routine;
-  }
-
-  public AutoRoutine StartToHumanStation() {
-    var routine = m_factory.newRoutine("test auto");
-    if (routine == null) {
-      throw new RuntimeException("Routine creation failed!");
-    }
-
-    var Start_to_reef = routine.trajectory("Start to reef");
-    var reef_to_HPSS = routine.trajectory("reef to HPSS");
-    var HPSS_to_reef = routine.trajectory("HPSS to reef");
-    // var reef_to_human_player_station = routine.trajectory("reef to human player station");
-
-    if (Start_to_reef == null || HPSS_to_reef == null || reef_to_HPSS == null) {
-      throw new RuntimeException("One or more trajectories are missing!");
-    }
-
-    /*  routine.active().onTrue(Start_to_reef.resetOdometry().andThen(Start_to_reef.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
-    Start_to_reef.done()
-        .onTrue(superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L2_LAUNCH));
-    Start_to_reef.done()
-        .onTrue(
-            sequence(
-                waitUntil(
-                    () -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L2_LAUNCH)),
-                intake.ejectIntake().withTimeout(1),
-                reef_to_lollipop.spawnCmd())); */
-    routine.active().onTrue(Commands.sequence(Start_to_reef.resetOdometry(), Start_to_reef.cmd()));
-    Start_to_reef.done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Reef"),
-                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L2_LAUNCH),
-                intake.ejectIntake().withTimeout(0.5),
-                Commands.print("Ejecting Intake"),
-                reef_to_HPSS.spawnCmd()));
-
-    /*routine.active().onTrue(reef_to_lollipop.cmd());
-    routine.active().onTrue(superstructure.goToPosition(Position.STOW));
-    reef_to_lollipop
-        .done()
-        .onTrue(superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1));
-    reef_to_lollipop
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Lollipop"),
-                waitUntil(() -> superstructure.atPosition(Superstructure.Position.OUTTAKE_L1)),
-                intake.runIntake().withTimeout(0.5),
-                Commands.print("Running Intake"),
-                lollipop_to_reef.spawnCmd())); */
-
-    reef_to_HPSS
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Lollipop"),
-                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
-                intake.runIntake().withTimeout(0.5),
-                Commands.print("Running Intake"),
-                HPSS_to_reef.spawnCmd()));
-
-    /*routine.active().onTrue(lollipop_to_reef.cmd());
-    lollipop_to_reef
-        .done()
-        .onTrue(superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1));
-    lollipop_to_reef
-        .done()
-        .onTrue(
-            sequence(
-                Commands.print("Returning to Reef"),
-                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
-                intake.ejectIntake().withTimeout(0.5),
-                Commands.print("Ejecting Again"))); */
-    HPSS_to_reef.done()
-        .onTrue(
-            sequence(
-                Commands.print("Returning to Reef"),
-                superstructure.goToPositionOnce(Superstructure.Position.OUTTAKE_L1),
-                intake.ejectIntake().withTimeout(0.5),
-                Commands.print("Ejecting Again")));
-    /*reef_to_human_player_station
-    .done()
-    .onTrue(
-        sequence(
-            Commands.print("Heading to Human Player Station"),
-            superstructure.goToPositionOnce(Superstructure.Position.STOW),
-            Commands.print("Auto Routine Complete"))); */
-
-    return routine;
-  }
-
-  /// DO NOT USE ME
-  private AutoRoutine makeCoolPath(
-      AutoRoutine routine,
-      AutoTrajectory START_TO_BRANCH1,
-      AutoTrajectory BRANCH1_TO_HP,
-      AutoTrajectory HP_TO_BRANCH2,
-      AutoTrajectory BRANCH2_TO_HP,
-      AutoTrajectory HP_TO_BRANCH3) {
     routine
         .active()
         .onTrue(
             (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
+                .andThen(waitSeconds(0.2))
                 .andThen(START_TO_BRANCH1.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L2_LAUNCH));
+    routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L3_LAUNCH));
 
     START_TO_BRANCH1
         .atTimeBeforeEnd(0.4)
-        .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
-
-    BRANCH1_TO_HP.active().onTrue(waitAndCoralStation());
-    BRANCH1_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
-
-    HP_TO_BRANCH2.active().onTrue(waitAndL2());
-    HP_TO_BRANCH2
-        .atTimeBeforeEnd(0.4)
-        .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
-
-    BRANCH2_TO_HP.active().onTrue(waitAndCoralStation());
-    BRANCH2_TO_HP.done().onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
-
-    HP_TO_BRANCH3.active().onTrue(waitAndL2());
-    HP_TO_BRANCH3
-        .atTimeBeforeEnd(0.4)
         .onTrue(
             sequence(
-                driveToL2BranchAndScore(false),
-                Commands.print("Complete!"),
-                superstructure.goToPositionOnce(Position.STOW)));
+                driveToBranchAndScore(true, FieldConstants.ReefLevel.L3),
+                superstructure.goToPositionOnce(Position.INTAKE_ALGAE_L2),
+                Commands.waitSeconds(0.3),
+                BRANCH1_TO_TAKEALG.spawnCmd()));
 
-    return routine; // TODO
+    BRANCH1_TO_TAKEALG.active().onTrue(intakeForever());
+    BRANCH1_TO_TAKEALG.done().onTrue(ALGAE_TO_NET.cmd());
+    ALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.SEMISEMISTOW));
+
+    ALGAE_TO_NET
+        .done()
+        .onTrue(sequence(Commands.print("Reached Lollipop"), controls.driveToAlgaeLaunchCmd()));
+    ALGAE_TO_NET
+        .done()
+        .onTrue(
+            waitUntil(
+                    controls.createAtTargetPositionSupplier(
+                        () -> Meters.convertFrom(15, Inch), () -> 8))
+                .andThen(controls.algaeLaunchSequence()));
+
+    return routine;
   }
 }
