@@ -25,6 +25,9 @@ public class Intake extends SubsystemBase {
   public Trigger hasGamePieceTrigger = new Trigger(this::hasGamePiece).debounce(0.1);
   DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
+  // TODO
+  private boolean everControlledSinceDisable = false;
+
   public Intake() {
     var config = new TalonFXConfiguration();
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -114,8 +117,7 @@ public class Intake extends SubsystemBase {
   public Command ejectIntake() {
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(-2));
-          rightMotor.setControl(voltageOut.withOutput(-2));
+          setVoltages(-2, -2);
         });
   }
 
@@ -123,8 +125,7 @@ public class Intake extends SubsystemBase {
   public Command ejectL1intake() {
     return run(
         () -> {
-          leftMotor.setControl(voltageOut.withOutput(-2.6));
-          rightMotor.setControl(voltageOut.withOutput(-2.6));
+          setVoltages(-2.6, -2.6);
         });
   }
 
@@ -135,11 +136,9 @@ public class Intake extends SubsystemBase {
         () -> a[0]++,
         () -> {
           if (a[0] % 2 == 1) {
-            leftMotor.setControl(voltageOut.withOutput(8));
-            rightMotor.setControl(voltageOut.withOutput(4));
+            setVoltages(8, 4);
           } else {
-            leftMotor.setControl(voltageOut.withOutput(4));
-            rightMotor.setControl(voltageOut.withOutput(8));
+            setVoltages(4, 8);
           }
         });
   }
@@ -152,11 +151,9 @@ public class Intake extends SubsystemBase {
         () -> {
           a[0]++;
           if (a[0] % 50 < 25) {
-            leftMotor.setControl(voltageOut.withOutput(12));
-            rightMotor.setControl(voltageOut.withOutput(-1));
+            setVoltages(12, -1);
           } else {
-            leftMotor.setControl(voltageOut.withOutput(-1));
-            rightMotor.setControl(voltageOut.withOutput(12));
+            setVoltages(-1, 12);
           }
         });
   }
