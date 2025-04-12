@@ -212,7 +212,7 @@ public class LED extends SubsystemBase {
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
           var coralMode = Robot.instance.robotContainer.controls.isOnCoralBindings;
 
-          if (Math.abs(position - AllianceFlipUtil.applyX(6.8)) < Meters.convertFrom(1, Inch)) {
+          if (Math.abs(position - AllianceFlipUtil.applyX(6.7)) < Meters.convertFrom(1, Inch)) {
             LEDPattern.solid(Color.kRed).applyTo(m_buffer);
             Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
           } else if (hasGamePiece) {
