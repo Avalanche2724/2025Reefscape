@@ -349,7 +349,7 @@ public class AutoRoutines {
     var ALGAE_TO_NET = routine.trajectory("Extremely_Cool_Middle_Path", 2);
     var NET_TO_NEARALGAE = routine.trajectory("Extremely_Cool_Middle_Path", 3);
     var NEARALGAE_TO_ALGAE2 = routine.trajectory("Extremely_Cool_Middle_Path", 4);
-    var ALGAE2_TO_NET2 = routine.trajectory("Extremely_Cool_Middle_Path", 5);
+    // var ALGAE2_TO_NET2 = routine.trajectory("Extremely_Cool_Middle_Path", 5);
 
     routine
         .active()
@@ -392,9 +392,8 @@ public class AutoRoutines {
                 Commands.print("Running Intake"),
                 NEARALGAE_TO_ALGAE2.spawnCmd()));
 
-    NEARALGAE_TO_ALGAE2
-        .done()
-        .onTrue(sequence(controls.algaeLaunchSequence(), ALGAE2_TO_NET2.spawnCmd()));
+    NEARALGAE_TO_ALGAE2.done().onTrue(sequence(controls.algaeLaunchSequence()));
+
     return routine;
   }
 
