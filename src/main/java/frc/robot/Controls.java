@@ -274,11 +274,16 @@ public class Controls {
   public Command algaeLaunchSequence() {
     return superstructure.protectCommand(
         sequence(
-            intake.holdIntake().raceWith(superstructure.elevatorAlgaeLaunchSetup()),
+            intake
+                .holdIntake()
+                .alongWith(superstructure.elevatorAlgaeLaunchSetup())
+                .withTimeout(1.0),
             Commands.print("Algae launch sequence done 1"),
-            intake.fullSend().withTimeout(0.14),
+            intake.fullSend().withTimeout(0.2),
             Commands.print("Algae launch sequence done 2"),
-            superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend())));
+            parallel(
+                superstructure.elevatorAlgaeLaunchPostscript().withTimeout(0.5),
+                intake.fullSend().withTimeout(0.5))));
   }
 
   public BooleanSupplier createAtTargetPositionSupplier(
