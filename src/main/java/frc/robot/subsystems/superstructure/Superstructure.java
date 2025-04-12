@@ -26,6 +26,7 @@ public class Superstructure extends SubsystemBase {
     ALG_PROC(0.65, 0),
 
     STOW(Elevator.MIN_HEIGHT, 91.5),
+    SEMISEMISTOW(Elevator.MIN_HEIGHT, 64),
     SEMISTOW(Elevator.MIN_HEIGHT, 35),
     SCORYSTOW(Elevator.MIN_HEIGHT, 0),
 
@@ -100,11 +101,13 @@ public class Superstructure extends SubsystemBase {
             () ->
                 (lastSetPosition == Position.STOW
                         || lastSetPosition == Position.SEMISTOW
-                        || lastSetPosition == Position.SCORYSTOW)
+                        || lastSetPosition == Position.SCORYSTOW
+                        || lastSetPosition == Position.SEMISEMISTOW)
                     && (atWristPositionApprox(currentWristTargetPosition)
                         || currentWristTargetPosition == Position.STOW.wristAngle
                         || currentWristTargetPosition == Position.SEMISTOW.wristAngle
-                        || currentWristTargetPosition == Position.SCORYSTOW.wristAngle)
+                        || currentWristTargetPosition == Position.SCORYSTOW.wristAngle
+                        || currentWristTargetPosition == Position.SEMISEMISTOW.wristAngle)
                     && atMostElevatorPosition(0.4)
                     && atLeastElevatorPosition(0.25)
                     && getCurrentCommand() == null);
@@ -210,14 +213,14 @@ public class Superstructure extends SubsystemBase {
     return sequence(
         runOnce(elevator::setMotorLaunchingVelocityDown),
         waitSeconds(0.6),
-        runOnce(() -> setPositions(Position.STOW)));
+        runOnce(() -> setPositions(Position.SEMISEMISTOW)));
   }
 
   public Command protectCommand(Command t) {
     return t.finallyDo(
         (intr) -> {
           if (!t.isFinished() || intr) {
-            setPositions(Position.STOW);
+            setPositions(Position.SEMISEMISTOW);
           }
         });
   }
