@@ -212,7 +212,7 @@ public class Superstructure extends SubsystemBase {
   public Command elevatorAlgaeLaunchPostscript() {
     return sequence(
         runOnce(elevator::setMotorLaunchingVelocityDown),
-        waitSeconds(1.2),
+        waitSeconds(1.0),
         runOnce(() -> setPositions(Position.SEMISEMISTOW)));
   }
 

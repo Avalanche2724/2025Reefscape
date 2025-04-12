@@ -278,7 +278,7 @@ public class Controls {
             Commands.print("Algae launch sequence done 1"),
             intake.fullSend().withTimeout(0.14),
             Commands.print("Algae launch sequence done 2"),
-            superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend())));
+            superstructure.elevatorAlgaeLaunchPostscript().raceWith(intake.fullSend())));
   }
 
   public BooleanSupplier createAtTargetPositionSupplier(

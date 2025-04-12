@@ -11,10 +11,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -33,7 +30,7 @@ public class Elevator {
   public static final int ELEVATOR2_ID = 42;
   // this is a bit wrong now but it's fine™
   public static final double MIN_HEIGHT = Meters.convertFrom(6.5, Inches);
-  public static final double MAX_HEIGHT = 1.56;
+  public static final double MAX_HEIGHT = 1.53;
   // Meters.convertFrom(59.06, Inches); // 1.5 m
   //
   private static final double GEAR_RATIO = 14.0 / tempvar;
@@ -56,10 +53,13 @@ public class Elevator {
   private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
   Trigger isStallingTrigger = new Trigger(this::isStalling).debounce(0.25);
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
+  private final StatusSignal<Voltage> motorSupplyVoltage = motor.getSupplyVoltage();
   // Control
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
-  private final VelocityTorqueCurrentFOC velocityControl =
-      new VelocityTorqueCurrentFOC(0).withSlot(1);
+  private final MotionMagicVelocityTorqueCurrentFOC smoothVelocityControl =
+      new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(1).withOverrideCoastDurNeutral(true);
+  private final TorqueCurrentFOC tcfocControl =
+      new TorqueCurrentFOC(0).withOverrideCoastDurNeutral(true);
 
   // Simulation
   private final ElevatorSim m_elevatorSim =
@@ -111,7 +111,9 @@ public class Elevator {
     config.MotionMagic.MotionMagicJerk = 35;
 
     // For zeroing sequence
-    config.Slot1.kP = 20;
+    config.Slot1.kG = 22.74; // estimate from voltage
+    config.Slot1.kS = 7.44; // estimate from voltage
+    config.Slot1.kP = 60;
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
     // Other things
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
@@ -197,7 +199,7 @@ public class Elevator {
   }
 
   private void setMotorVelocity(double v, boolean ignoreLimits) {
-    motor.setControl(velocityControl.withVelocity(v).withIgnoreHardwareLimits(ignoreLimits));
+    motor.setControl(smoothVelocityControl.withVelocity(v).withIgnoreHardwareLimits(ignoreLimits));
   }
 
   void setMotorZeroingVelocity() {
@@ -205,14 +207,11 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    motor.setControl(new TorqueCurrentFOC(55).withMaxAbsDutyCycle(0.72));
-    // setMotorVelocity(ALGAE_LAUNCHING_VELOCITY, false);
+    setMotorVelocity(3, false);
   }
 
   void setMotorLaunchingVelocityDown() {
-    motor.setControl(new TorqueCurrentFOC(-5).withMaxAbsDutyCycle(0.3));
-
-    // setMotorVelocity(-ALGAE_LAUNCHING_VELOCITY, false);
+    setMotorVelocity(-1, false);
   }
 
   // Mechanism visualization and simulation stuff
