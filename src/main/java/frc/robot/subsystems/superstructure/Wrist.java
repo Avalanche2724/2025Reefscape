@@ -262,8 +262,8 @@ public class Wrist {
           }
         }
          */
-        if (Math.abs(diffy) > Rotations.convertFrom(1.3, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.05) {
+        if (Math.abs(diffy) > Rotations.convertFrom(1.1, Degree)) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.1) {
             // if (Math.abs(motorVel) < 0.03) {
             // System.out.println("set b");
 

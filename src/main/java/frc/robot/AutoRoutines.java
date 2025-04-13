@@ -301,13 +301,21 @@ public class AutoRoutines {
   }
 
   public AutoRoutine BestMiddlePathLOL() {
+    return newbestmiddlepath("Extremely_Cool_Middle_Path");
+  }
+
+  public AutoRoutine BestMiddlePathxD_PROC() {
+    return newbestmiddlepath("Extremely_Cool_Middle_Path_PROCSIDE");
+  }
+
+  public AutoRoutine newbestmiddlepath(String pathname) {
     var routine = m_factory.newRoutine("BestMiddlePathFR");
 
-    var START_TO_BRANCH1 = routine.trajectory("Extremely_Cool_Middle_Path", 0);
-    var BRANCH1_TO_TAKEALG = routine.trajectory("Extremely_Cool_Middle_Path", 1);
-    var ALGAE_TO_NET = routine.trajectory("Extremely_Cool_Middle_Path", 2);
-    var NET_TO_SideAlgae = routine.trajectory("Extremely_Cool_Middle_Path", 3);
-    var SIDEALGAE_TO_NET = routine.trajectory("Extremely_Cool_Middle_Path", 4);
+    var START_TO_BRANCH1 = routine.trajectory(pathname, 0);
+    var BRANCH1_TO_TAKEALG = routine.trajectory(pathname, 1);
+    var ALGAE_TO_NET = routine.trajectory(pathname, 2);
+    var NET_TO_SideAlgae = routine.trajectory(pathname, 3);
+    var SIDEALGAE_TO_NET = routine.trajectory(pathname, 4);
 
     routine
         .active()
