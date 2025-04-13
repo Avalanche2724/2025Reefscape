@@ -348,7 +348,6 @@ public class AutoRoutines {
 
     NET_TO_SideAlgae.done()
         .onTrue(sequence(Commands.print("Reached Lollipop"), SIDEALGAE_TO_NET.spawnCmd()));
-
     SIDEALGAE_TO_NET
         .done()
         .onTrue(
