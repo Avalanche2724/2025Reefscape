@@ -80,7 +80,7 @@ public class Intake extends SubsystemBase {
   // used during algae launch
   // todo: lower voltages so consistent?
   public Command fullSend() {
-    return run(() -> setVoltages(-9, -9));
+    return run(() -> setVoltages(-11, -11));
   }
 
   // general outtake command
