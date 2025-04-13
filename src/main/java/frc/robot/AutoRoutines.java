@@ -342,14 +342,12 @@ public class AutoRoutines {
                 .andThen(controls.algaeLaunchSequence())
                 .andThen(NET_TO_SideAlgae.spawnCmd()));
 
+    NET_TO_SideAlgae.active().onTrue(intakeForever());
+    NET_TO_SideAlgae.atTimeBeforeEnd(1.2)
+        .onTrue(superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3));
+
     NET_TO_SideAlgae.done()
-        .onTrue(
-            sequence(
-                Commands.print("Reached Lollipop"),
-                superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3),
-                intake.runIntake().withTimeout(0.5),
-                Commands.print("Running Intake"),
-                SIDEALGAE_TO_NET.spawnCmd()));
+        .onTrue(sequence(Commands.print("Reached Lollipop"), SIDEALGAE_TO_NET.spawnCmd()));
 
     SIDEALGAE_TO_NET
         .done()

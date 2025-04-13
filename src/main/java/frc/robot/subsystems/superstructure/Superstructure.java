@@ -26,7 +26,7 @@ public class Superstructure extends SubsystemBase {
     ALG_PROC(0.65, 0),
 
     STOW(Elevator.MIN_HEIGHT, 91.5),
-    SEMISEMISTOW(Elevator.MIN_HEIGHT, 64),
+    SEMISEMISTOW(Elevator.MIN_HEIGHT, 55),
     SEMISTOW(Elevator.MIN_HEIGHT, 35),
     SCORYSTOW(Elevator.MIN_HEIGHT, 0),
 
@@ -206,7 +206,7 @@ public class Superstructure extends SubsystemBase {
     return sequence(
         setWristPositionCommand(Position.SEMISEMISTOW.wristAngle),
         runOnce(elevator::setMotorLaunchingVelocityUp),
-        waitUntil(() -> atLeastElevatorPosition(1.05)));
+        waitUntil(() -> atLeastElevatorPosition(1.01)));
   }
 
   public Command elevatorAlgaeLaunchPostscript() {
