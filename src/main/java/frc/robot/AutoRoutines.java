@@ -349,7 +349,7 @@ public class AutoRoutines {
         .onTrue(sequence(Commands.print("Reached Lollipop 2"), SIDEALGAE_TO_NET.spawnCmd()));
 
     SIDEALGAE_TO_NET.active().onTrue(Commands.print("test3"));
-    SIDEALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.SEMISEMISTOW))
+    SIDEALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.SEMISEMISTOW));
 
     SIDEALGAE_TO_NET.done().onTrue(controls.driveToAlgaeLaunchCmd());
     SIDEALGAE_TO_NET
