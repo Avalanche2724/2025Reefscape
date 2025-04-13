@@ -113,7 +113,7 @@ public class Controls {
     driver.povUp.whileTrue(drivetrain.wheelCharacterization());
     driver.povRight.whileTrue(driveToAlgaeLaunchCmd());
 
-    new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(30, Inch), () -> 8))
+    new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(9, Inch), () -> 8))
         .and(driver.povRight)
         .onTrue(algaeLaunchSequence());
     // configureSysidBindings();
@@ -278,7 +278,7 @@ public class Controls {
             Commands.print("Algae launch sequence done 1"),
             intake.fullSend().withTimeout(0.11),
             Commands.print("Algae launch sequence done 2"),
-            superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend())));
+            superstructure.elevatorAlgaeLaunchPostscript().raceWith(intake.fullSend())));
   }
 
   public BooleanSupplier createAtTargetPositionSupplier(

@@ -103,7 +103,7 @@ public class Wrist {
   private double lastPositionSet = 0;
   private boolean setPosition = false;
 
-  private double kA = 0.14;
+  private final double kA = 0.14;
 
   public Wrist() {
     var config = new TalonFXConfiguration();
@@ -121,7 +121,7 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.2;
-    config.MotionMagic.MotionMagicAcceleration = 0.425;
+    config.MotionMagic.MotionMagicAcceleration = 0.4;
     config.MotionMagic.MotionMagicJerk = 10;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 

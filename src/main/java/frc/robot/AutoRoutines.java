@@ -49,7 +49,7 @@ public class AutoRoutines {
                         controls.createAtTargetPositionSupplier(
                             () -> Meters.convertFrom(1, Inch), () -> 1))
                     .and(superstructure::atTargetPosition)
-                    .debounce(0.6)),
+                    .debounce(0.4)),
             intake.semiSend().withTimeout(0.5)));
   }
 
@@ -343,17 +343,21 @@ public class AutoRoutines {
                 .andThen(NET_TO_SideAlgae.spawnCmd()));
 
     NET_TO_SideAlgae.active().onTrue(intakeForever());
-    NET_TO_SideAlgae.atTimeBeforeEnd(1.2)
+    NET_TO_SideAlgae.atTimeBeforeEnd(0.9)
         .onTrue(superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3));
-
     NET_TO_SideAlgae.done()
-        .onTrue(sequence(Commands.print("Reached Lollipop"), SIDEALGAE_TO_NET.spawnCmd()));
+        .onTrue(sequence(Commands.print("Reached Lollipop 2"), SIDEALGAE_TO_NET.spawnCmd()));
+
+    SIDEALGAE_TO_NET.active().onTrue(Commands.print("test3"));
+    SIDEALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.SEMISEMISTOW))
+
+    SIDEALGAE_TO_NET.done().onTrue(controls.driveToAlgaeLaunchCmd());
     SIDEALGAE_TO_NET
         .done()
         .onTrue(
             waitUntil(
                     controls.createAtTargetPositionSupplier(
-                        () -> Meters.convertFrom(15, Inch), () -> 8))
+                        () -> Meters.convertFrom(9, Inch), () -> 8))
                 .andThen(controls.algaeLaunchSequence()));
 
     return routine;
