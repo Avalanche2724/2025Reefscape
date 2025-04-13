@@ -1,13 +1,10 @@
 package frc.robot
 
-import com.pathplanner.lib.auto.NamedCommands
-import edu.wpi.first.math.util.Units
 import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.*
 import edu.wpi.first.wpilibj2.command.FunctionalCommand
 import frc.robot.subsystems.Shooter
-import frc.robot.subsystems.Shooter.ShootingSpeed
 import java.util.function.Supplier
 
 
@@ -85,62 +82,6 @@ class CommonCommands(private val bot: RobotContainer) {
             simpleShoot(speeds)
         )
 
-    private fun teleopPointAtSpeaker(): Command =
-        startEnd(
-            { drivetrain.weShouldBePointingAt = drivetrain.speakerLocation },
-            { drivetrain.weShouldBePointingAt = null })
-
-    private fun getBetterShooterSpeeds() = shooter.speedFromDistance(
-        drivetrain.distanceToSpeaker - Units.inchesToMeters(16.5) // reference point at speaker
-    )
-
-    fun teleopShoot(): Command =
-        race(
-            teleopPointAtSpeaker(),
-            race(
-                shooter.speedCmd(::getBetterShooterSpeeds),
-                sequence(
-                    waitUntil {
-                        shooter.atDesiredSpeeds() && drivetrain.goodPointingToSpeaker && drivetrain.notActivelyMoving
-                    },
-                    race(bothIntake(), waitSeconds(0.4))
-                )
-            )
-        )
-
 
     private val shootDelayTime = if (TimedRobot.isSimulation()) 1.0 else 5.0
-    fun registerAutoCommands() {
-        NamedCommands.registerCommands(
-            mapOf(
-                "shoot" to simpleShoot { ShootingSpeed.SUBWOOFER.speeds }.raceWith(waitSeconds(5.0)),
-                "superShoot" to superShoot { ShootingSpeed.SUBWOOFER.speeds }.raceWith(
-                    waitSeconds(
-                        shootDelayTime
-                    )
-                ),
-                "intake" to superIntake(),
-                // spin up motor shooter
-                "coolSpinShot" to shooter.speedCmdUnending { ShootingSpeed.AUTOSHOT.speeds },
-                "coolShot" to simpleShoot { ShootingSpeed.AUTOSHOT.speeds }.raceWith(
-                    waitSeconds(
-                        shootDelayTime
-                    )
-                ),
-                "subSpinShot" to shooter.speedCmdUnending { ShootingSpeed.SUBWOOFER.speeds },
-                "subShot" to simpleShoot { ShootingSpeed.SUBWOOFER.speeds }.raceWith(
-                    waitSeconds(
-                        shootDelayTime
-                    )
-                ),
-                "intakeAndSpin" to parallel(
-                    superIntake(),
-                    shooter.speedCmdUnending { ShootingSpeed.AUTOSHOT.speeds }),
-                "intakeAndSubSpin" to parallel(
-                    superIntake(),
-                    shooter.speedCmdUnending { ShootingSpeed.SUBWOOFER.speeds })
-
-            )
-        )
-    }
 }
