@@ -315,8 +315,8 @@ public class AutoRoutines {
             (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
                 .andThen(waitSeconds(0.2))
                 .andThen(START_TO_BRANCH1.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.OUTTAKE_L3_LAUNCH));
 
+    START_TO_BRANCH1.atTime(0.25).onTrue(superstructure.goToPosition(Position.OUTTAKE_L3_LAUNCH));
     START_TO_BRANCH1
         .atTimeBeforeEnd(0.4)
         .onTrue(
@@ -341,9 +341,8 @@ public class AutoRoutines {
                         () -> Meters.convertFrom(15, Inch), () -> 8))
                 .andThen(controls.algaeLaunchSequence())
                 .andThen(NET_TO_SideAlgae.spawnCmd()));
-
     NET_TO_SideAlgae.active().onTrue(intakeForever());
-    NET_TO_SideAlgae.atTimeBeforeEnd(0.9)
+    NET_TO_SideAlgae.active()
         .onTrue(superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3));
     NET_TO_SideAlgae.done()
         .onTrue(sequence(Commands.print("Reached Lollipop 2"), SIDEALGAE_TO_NET.spawnCmd()));

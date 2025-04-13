@@ -276,7 +276,7 @@ public class Controls {
         sequence(
             intake.holdIntake().raceWith(superstructure.elevatorAlgaeLaunchSetup()),
             Commands.print("Algae launch sequence done 1"),
-            intake.fullSend().withTimeout(0.11),
+            intake.fullSend().withTimeout(0.09),
             Commands.print("Algae launch sequence done 2"),
             superstructure.elevatorAlgaeLaunchPostscript().raceWith(intake.fullSend())));
   }

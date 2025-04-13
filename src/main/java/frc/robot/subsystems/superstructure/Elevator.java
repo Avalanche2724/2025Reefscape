@@ -219,7 +219,7 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    setMotorVelocitySmooth(2.4, false);
+    setMotorVelocitySmooth(2.5, false);
   }
 
   // technically same as setmotorzeroingvelocity given lack of reverse limit

@@ -121,7 +121,7 @@ public class Wrist {
     // config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1.2;
-    config.MotionMagic.MotionMagicAcceleration = 0.4;
+    config.MotionMagic.MotionMagicAcceleration = 0.5;
     config.MotionMagic.MotionMagicJerk = 10;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -262,8 +262,8 @@ public class Wrist {
           }
         }
          */
-        if (Math.abs(diffy) > Rotations.convertFrom(1.0, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.03) {
+        if (Math.abs(diffy) > Rotations.convertFrom(1.3, Degree)) {
+          if (Timer.getFPGATimestamp() - lastSetTime > 0.05) {
             // if (Math.abs(motorVel) < 0.03) {
             // System.out.println("set b");
 
