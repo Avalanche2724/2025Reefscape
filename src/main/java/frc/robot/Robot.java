@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
@@ -33,6 +34,7 @@ public class Robot extends TimedRobot {
     Threads.setCurrentThreadPriority(false, 0);
     double loopTime = Timer.getFPGATimestamp() - time;
     SmartDashboard.putNumber("Loop Time ms", loopTime * 1000);
+    SignalLogger.writeDouble("loop_time", loopTime * 1000);
   }
 
   @Override

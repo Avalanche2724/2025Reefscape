@@ -57,9 +57,10 @@ public class Elevator {
   // Control
   private final MotionMagicVoltage control = new MotionMagicVoltage(0);
   private final MotionMagicVelocityTorqueCurrentFOC smoothVelocityControl =
-      new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(1).withOverrideCoastDurNeutral(true);
-  private final TorqueCurrentFOC tcfocControl =
-      new TorqueCurrentFOC(0).withOverrideCoastDurNeutral(true);
+      new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(2).withOverrideCoastDurNeutral(false);
+
+  private final VelocityTorqueCurrentFOC unSmoothVelocityControl =
+      new VelocityTorqueCurrentFOC(0).withSlot(1).withOverrideCoastDurNeutral(true);
 
   // Simulation
   private final ElevatorSim m_elevatorSim =
@@ -105,16 +106,22 @@ public class Elevator {
     config.Slot0.kV = 0.124 / 0.043080; // approx 2.88 V*s/m
 
     // Motion magic parameters
-    config.MotionMagic.MotionMagicAcceleration = 6.0; // meters per second squared
+    config.MotionMagic.MotionMagicAcceleration = 6.5; // meters per second squared
     config.MotionMagic.MotionMagicCruiseVelocity =
-        3.0; // meters per second; running somewhat lower than free speed
+        2.4; // meters per second; running somewhat lower than free speed
     config.MotionMagic.MotionMagicJerk = 35;
 
-    // For zeroing sequence
+    // For zeroing sequence and going down
     config.Slot1.kG = 22.74; // estimate from voltage
     config.Slot1.kS = 7.44; // estimate from voltage
     config.Slot1.kP = 60;
     config.Slot1.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
+    // For algae launching
+    config.Slot2.kG = config.Slot1.kG;
+    config.Slot2.kS = config.Slot1.kS;
+    config.Slot2.kP = 100;
+    config.Slot2.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
+
     // Other things
     config.Feedback.SensorToMechanismRatio = 1 / METERS_PER_MOTOR_ROTATION;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -125,7 +132,7 @@ public class Elevator {
     // does this fix things?
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
 
-    config.CurrentLimits.StatorCurrentLimit = 100;
+    config.CurrentLimits.StatorCurrentLimit = 90;
 
     motor.getConfigurator().apply(config);
 
@@ -199,6 +206,11 @@ public class Elevator {
   }
 
   private void setMotorVelocity(double v, boolean ignoreLimits) {
+    motor.setControl(
+        unSmoothVelocityControl.withVelocity(v).withIgnoreHardwareLimits(ignoreLimits));
+  }
+
+  private void setMotorVelocitySmooth(double v, boolean ignoreLimits) {
     motor.setControl(smoothVelocityControl.withVelocity(v).withIgnoreHardwareLimits(ignoreLimits));
   }
 
@@ -207,11 +219,15 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    setMotorVelocity(3, false);
+    setMotorVelocitySmooth(1.0, false);
   }
 
+  // technically same as setmotorzeroingvelocity given lack of reverse limit
   void setMotorLaunchingVelocityDown() {
-    setMotorVelocity(-1, false);
+    motor.setControl(
+        new TorqueCurrentFOC(0).withMaxAbsDutyCycle(0.3).withOverrideCoastDurNeutral(true));
+
+    // setMotorVelocity(-0.5, false);
   }
 
   // Mechanism visualization and simulation stuff

@@ -95,7 +95,10 @@ public class Controls {
 
     configureSysidBindings();
 
-    driver.y.whileTrue(intake.fixy());
+    if (Robot.isSimulation()) {
+      driver.y.whileTrue(algaeLaunchSequence());
+    }
+    // driver.y.whileTrue(intake.fixy());
     // driver.x.whileTrue(intake.semiSpinny());
     driver.b.whileTrue(intake.limitedSpeedIntake());
     driver.a.whileTrue(intake.limitedTorqueIntake());
