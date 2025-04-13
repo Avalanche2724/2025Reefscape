@@ -206,7 +206,7 @@ public class Superstructure extends SubsystemBase {
     return sequence(
         setWristPositionCommand(Position.SEMISEMISTOW.wristAngle),
         runOnce(elevator::setMotorLaunchingVelocityUp),
-        waitUntil(() -> atLeastElevatorPosition(0.85)));
+        waitUntil(() -> atLeastElevatorPosition(0.91)));
   }
 
   public Command elevatorAlgaeLaunchPostscript() {
