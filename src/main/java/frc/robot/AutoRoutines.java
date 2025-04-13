@@ -306,6 +306,9 @@ public class AutoRoutines {
     var START_TO_BRANCH1 = routine.trajectory("Extremely_Cool_Middle_Path", 0);
     var BRANCH1_TO_TAKEALG = routine.trajectory("Extremely_Cool_Middle_Path", 1);
     var ALGAE_TO_NET = routine.trajectory("Extremely_Cool_Middle_Path", 2);
+    var NET_TO_SideAlgae = routine.trajectory("Extremely_Cool_Middle_Path", 3);
+    var SIDEALGAE_TO_NET = routine.trajectory("Extremely_Cool_Middle_Path", 4);
+
     routine
         .active()
         .onTrue(
@@ -331,6 +334,24 @@ public class AutoRoutines {
         .done()
         .onTrue(sequence(Commands.print("Reached Lollipop"), controls.driveToAlgaeLaunchCmd()));
     ALGAE_TO_NET
+        .done()
+        .onTrue(
+            waitUntil(
+                    controls.createAtTargetPositionSupplier(
+                        () -> Meters.convertFrom(15, Inch), () -> 8))
+                .andThen(controls.algaeLaunchSequence())
+                .andThen(NET_TO_SideAlgae.spawnCmd()));
+
+    NET_TO_SideAlgae.done()
+        .onTrue(
+            sequence(
+                Commands.print("Reached Lollipop"),
+                superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3),
+                intake.runIntake().withTimeout(0.5),
+                Commands.print("Running Intake"),
+                SIDEALGAE_TO_NET.spawnCmd()));
+
+    SIDEALGAE_TO_NET
         .done()
         .onTrue(
             waitUntil(

@@ -219,13 +219,13 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    setMotorVelocitySmooth(1.0, false);
+    setMotorVelocitySmooth(2.0, false);
   }
 
   // technically same as setmotorzeroingvelocity given lack of reverse limit
   void setMotorLaunchingVelocityDown() {
     motor.setControl(
-        new TorqueCurrentFOC(0).withMaxAbsDutyCycle(0.3).withOverrideCoastDurNeutral(true));
+        new TorqueCurrentFOC(5).withMaxAbsDutyCycle(0.3).withOverrideCoastDurNeutral(true));
 
     // setMotorVelocity(-0.5, false);
   }

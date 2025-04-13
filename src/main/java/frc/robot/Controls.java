@@ -95,10 +95,7 @@ public class Controls {
 
     configureSysidBindings();
 
-    if (Robot.isSimulation()) {
-      driver.y.whileTrue(algaeLaunchSequence());
-    }
-    // driver.y.whileTrue(intake.fixy());
+    driver.y.whileTrue(intake.fixy());
     // driver.x.whileTrue(intake.semiSpinny());
     driver.b.whileTrue(intake.limitedSpeedIntake());
     driver.a.whileTrue(intake.limitedTorqueIntake());
@@ -279,9 +276,9 @@ public class Controls {
         sequence(
             intake.holdIntake().raceWith(superstructure.elevatorAlgaeLaunchSetup()),
             Commands.print("Algae launch sequence done 1"),
-            intake.fullSend().withTimeout(0.14),
+            intake.fullSend().withTimeout(0.11),
             Commands.print("Algae launch sequence done 2"),
-            superstructure.elevatorAlgaeLaunchPostscript().raceWith(intake.fullSend())));
+            superstructure.elevatorAlgaeLaunchPostscript().alongWith(intake.fullSend())));
   }
 
   public BooleanSupplier createAtTargetPositionSupplier(
