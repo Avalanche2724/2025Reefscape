@@ -350,7 +350,10 @@ public class AutoRoutines {
                 intake.runIntake().withTimeout(0.5),
                 Commands.print("Running Intake"),
                 SIDEALGAE_TO_NET.spawnCmd()));
-
+    SIDEALGAE_TO_NET.atTime(0.5).onTrue(superstructure.goToPositionOnce(Position.SEMISEMISTOW));
+    SIDEALGAE_TO_NET
+        .done()
+        .onTrue(sequence(Commands.print("Reached Lollipop"), controls.driveToAlgaeLaunchCmd()));
     SIDEALGAE_TO_NET
         .done()
         .onTrue(
