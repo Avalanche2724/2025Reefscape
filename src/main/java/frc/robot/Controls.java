@@ -64,7 +64,7 @@ public class Controls {
   // Internal state for controls
   // this is static to make it easier to access fix later
   public boolean isOnCoralBindings = true;
-  public Position nextTargetPosition = Position.OUTTAKE_L1;
+  public Position nextTargetPosition = null;
   public Pose2d lastPoseForAutoAlign = null;
 
   public Controls(RobotContainer robot) {
@@ -83,6 +83,14 @@ public class Controls {
         .andThen(drivetrain.applyRequest(() -> drive.withVelocityX(speed[0] += 0.0005)));
   }
 
+  public boolean isOnCoralBindings() {
+    return isOnCoralBindings;
+  }
+
+  public boolean isOnAlgaeBindings() {
+    return !isOnCoralBindings;
+  }
+
   //
   public void configureBindings() {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::driveBasedOnJoystick));
@@ -90,7 +98,7 @@ public class Controls {
     // TODO add to op
     driver.leftMiddle.whileTrue(superstructure.zeroElevatorCommand());
 
-    driver.leftBumper.whileTrue(intake.leftMajority());
+    driver.leftBumper.whileTrue(intake.limitedSpeedIntake());
     driver.rightBumper.whileTrue(coralAlgaeCommand(intake.semiSend(), intake.algSend()));
 
     configureSysidBindings();
@@ -115,25 +123,57 @@ public class Controls {
     // configureDriveTuningBindings();
     driver.povUp.whileTrue(drivetrain.wheelCharacterization());
     driver.povRight.whileTrue(driveToAlgaeLaunchCmd());
+    driver.povRight.whileTrue(
+        intake.holdIntake().raceWith(superstructure.goToPosition(Position.SEMISEMISTOW)));
 
-    new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(9, Inch), () -> 8))
+    new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(14, Inch), () -> 6))
         .and(driver.povRight)
         .onTrue(algaeLaunchSequence());
     // configureSysidBindings();
 
-    // AUTO ALIGN
+    // AUTO ALIGN ALGAE SIDE
+
+    (driver.leftTriggerB.or(driver.rightTriggerB))
+        .and(this::isOnAlgaeBindings)
+        .and(this::enableAutoAlign)
+        .whileTrue(driveToNearestAlgaeBranch(this::positionToReefLevel));
+
+    var wantingToAlgaeAlignRn =
+        driver.leftTriggerB.or(driver.rightTriggerB).and(this::isOnAlgaeBindings);
+
+    wantingToAlgaeAlignRn.whileTrue(intake.limitedSpeedIntake());
+
+    var nearAlgaeTargetTrigger =
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(90, Inch), () -> 12));
+
+    // When we are kinda near the target position while auto aligning, set superstructure position
+    wantingToAlgaeAlignRn
+        .and(nearAlgaeTargetTrigger)
+        .whileTrue(
+            Commands.print("AT TARG POS SET POS")
+                .andThen(superstructure.goToPosition(() -> nextTargetPosition)));
+
+    wantingToAlgaeAlignRn
+        .and(nearAlgaeTargetTrigger)
+        .onFalse(superstructure.goToPositionOnce(Position.SEMISEMISTOW));
+
+    // AUTO ALIGN CORAL
 
     driver
         .leftTriggerB
+        .and(this::isOnCoralBindings)
         .and(this::enableAutoAlign)
         .whileTrue(driveToNearestReefBranchCommand(this::positionToReefLevel, true)); // Left side
     driver
         .rightTriggerB
+        .and(this::isOnCoralBindings)
         .and(this::enableAutoAlign)
         .whileTrue(driveToNearestReefBranchCommand(this::positionToReefLevel, false)); // Right side
 
     // Auto align bindings with automatic ejection when aligned
-    var wantingToAutoAlignRn = driver.leftTriggerB.or(driver.rightTriggerB);
+    // CORAL SIDE
+    var wantingToAutoAlignRn =
+        driver.leftTriggerB.or(driver.rightTriggerB).and(this::isOnCoralBindings);
     var atTargetPositionTrigger =
         new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(1.1, Inch), () -> 1.1));
 
@@ -149,7 +189,7 @@ public class Controls {
                         .withTimeout(0.5)));
 
     var nearTargetPositionTrigger =
-        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(40, Inch), () -> 8));
+        new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(200, Inch), () -> 8));
 
     // When we are kinda near the target position while auto aligning, set superstructure position
     wantingToAutoAlignRn
@@ -309,6 +349,7 @@ public class Controls {
   }
 
   public ReefLevel positionToReefLevel() {
+    if (nextTargetPosition == null) return null;
     return switch (nextTargetPosition) {
       case OUTTAKE_L1 -> ReefLevel.L1;
       case OUTTAKE_L2_LAUNCH, INTAKE_ALGAE_L2 -> ReefLevel.L2;
@@ -332,6 +373,11 @@ public class Controls {
   public Command driveToNearestReefBranchCommand(Supplier<ReefLevel> level, boolean leftSide) {
     return drivetrain.driveToPosition(
         () -> lastPoseForAutoAlign = findNearestReefBranch(level.get(), leftSide));
+  }
+
+  public Command driveToNearestAlgaeBranch(Supplier<ReefLevel> level) {
+    return drivetrain.driveToPosition(
+        () -> lastPoseForAutoAlign = findNearestAlgaeBranch(level.get()));
   }
 
   public Command driveToAlgaeLaunchCmd() {
@@ -420,9 +466,77 @@ public class Controls {
     return currentPose;
   }
 
+  // Find nearest algae branch by averaging left and right coral branches
+  private Pose2d findNearestAlgaeBranch(ReefLevel level) {
+    Pose2d currentPose = drivetrain.getState().Pose;
+    Pose2d nearestBranch = null;
+    double minAngleDifference = Double.MAX_VALUE;
+    List<Map<ReefLevel, Pose2d>> branchPositions2d =
+        AllianceFlipUtil.shouldFlip()
+            ? FieldConstants.Reef.redBranchPositions2d
+            : FieldConstants.Reef.branchPositions2d;
+    // Based on FieldConstants.java, branches alternate right/left in the list:
+    // Even indexes (0, 2, 4...) are right branches
+    // Odd indexes (1, 3, 5...) are left branches
+    boolean leftSide = true;
+    leftSide = AllianceFlipUtil.shouldFlip() ^ leftSide;
+    for (int i = 0; i < branchPositions2d.size(); i++) {
+      // Skip if this branch is not on the requested side
+      boolean isBranchOnLeftSide = (i % 2 == 1); // Odd indexes are left branches
+      if (isBranchOnLeftSide != leftSide) {
+        continue;
+      }
+      Map<ReefLevel, Pose2d> branchMap = branchPositions2d.get(i);
+      Pose2d branchPose = branchMap.get(level);
+      if (branchPose != null) {
+        // Calculate the angle robot needs to have when facing the branch (180° from branch angle)
+        Rotation2d branchRotation = branchPose.getRotation();
+        Rotation2d targetRobotRotation = branchRotation.plus(Rotation2d.fromDegrees(180));
+
+        // Calculate the angle difference between robot's current rotation and target rotation
+        double angleDifference =
+            Math.abs(currentPose.getRotation().minus(targetRobotRotation).getDegrees());
+
+        // Check if this branch requires less turning than the current best
+        if (angleDifference < minAngleDifference) {
+          minAngleDifference = angleDifference;
+          nearestBranch = branchPose;
+        }
+      }
+    }
+
+    // If we found a branch, calculate the proper scoring position
+    if (nearestBranch != null) {
+      // The branch poses face outward, so we need to face the opposite direction to face the branch
+      Rotation2d branchRotation = nearestBranch.getRotation();
+      // Calculate a position that is away from the branch
+      // in the direction opposite to the branch's orientation
+      double scoringDistance = Meters.convertFrom(25, Inches);
+
+      double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
+      double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
+
+      // POSITIVE IS RIGHT
+      offsetX +=
+          Meters.convertFrom(6.5, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
+      offsetY +=
+          Meters.convertFrom(6.5, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
+
+      // Create the robot scoring position: offset from branch and facing toward the branch
+      return new Pose2d(
+          nearestBranch.getX() + offsetX,
+          nearestBranch.getY() + offsetY,
+          branchRotation.plus(Rotation2d.fromDegrees(180)) // Face toward the branch
+          );
+    }
+    // If we didn't find a branch, return the current pose
+    System.out.println("Warning: could not find nearest reef branch");
+    return currentPose;
+  }
+
   // Periodic stuff
   private void periodic() {
-    Pose2d targetPose = findNearestReefBranch(ReefLevel.L1, true);
+    Pose2d targetPose = findNearestAlgaeBranch(ReefLevel.L2);
     nearestBranchPose.set(targetPose);
   }
 

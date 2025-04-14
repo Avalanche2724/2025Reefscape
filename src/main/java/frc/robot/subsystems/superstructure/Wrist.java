@@ -6,11 +6,9 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.DeviceIdentifier;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
@@ -18,13 +16,14 @@ import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -64,7 +63,7 @@ public class Wrist {
   // Controls
   // private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
   // private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(0);
-  private final MotionMagicVoltage positionControl = new MotionMagicVoltage(0).withSlot(0);
+  private final VoltageOut voltageControl = new VoltageOut(0).withUpdateFreqHz(0);
 
   // Absolute encoder reading
   private final SparkMax absoluteEncoderSparkMax =
@@ -103,54 +102,27 @@ public class Wrist {
   private double lastPositionSet = 0;
   private boolean setPosition = false;
 
-  private final double kA = 0.14;
+  private final PIDController pid = new PIDController(12, 0, 2);
+  private final ArmFeedforward feedforward =
+      new ArmFeedforward((0.5 - 0.37) / 2, (0.5 + 0.37) / 2, 7.94, 0.14);
 
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    config.Slot0.kP = 75;
-    config.Slot0.kI = 0;
-    config.Slot0.kD = 1.5;
-    config.Slot0.kS = (0.5 - 0.37) / 2;
-    config.Slot0.kV = 7.94;
-    config.Slot0.kA = kA;
-    config.Slot0.kG = (0.5 + 0.37) / 2;
-    config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
-
-    // config.CurrentLimits.StatorCurrentLimit = 40;
-    // config.CurrentLimits.StatorCurrentLimitEnable = true;
-
-    config.MotionMagic.MotionMagicCruiseVelocity = 1.2;
-    config.MotionMagic.MotionMagicAcceleration = 0.5;
-    config.MotionMagic.MotionMagicJerk = 10;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
-
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT + ARM_OFFSET;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT + ARM_OFFSET;
 
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     motor.getConfigurator().apply(config);
 
-    motorPosition.setUpdateFrequency(200);
-    motorVelocity.setUpdateFrequency(200);
-    motorVoltage.setUpdateFrequency(200);
     // for phoenix tuner x tuning:
-    double updateFreq = 50;
-    if (Robot.isSimulation()) {
-      updateFreq = 200;
-    }
-
-    motor.getClosedLoopError().setUpdateFrequency(updateFreq);
-    motor.getClosedLoopReference().setUpdateFrequency(updateFreq);
-    motor.getClosedLoopReferenceSlope().setUpdateFrequency(updateFreq);
-    motor.getClosedLoopDerivativeOutput().setUpdateFrequency(updateFreq);
-    motor.getClosedLoopOutput().setUpdateFrequency(updateFreq);
-    motor.getClosedLoopProportionalOutput().setUpdateFrequency(updateFreq);
-    motor.getClosedLoopFeedForward().setUpdateFrequency(updateFreq);
+    motor.getClosedLoopError().setUpdateFrequency(50);
+    motor.getClosedLoopReference().setUpdateFrequency(50);
+    motor.getClosedLoopDerivativeOutput().setUpdateFrequency(50);
+    motor.getClosedLoopOutput().setUpdateFrequency(50);
+    motor.getClosedLoopProportionalOutput().setUpdateFrequency(50);
+    motor.getClosedLoopFeedForward().setUpdateFrequency(50);
 
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(ZERO_OFFSET).inverted(false);
@@ -169,6 +141,14 @@ public class Wrist {
   }
 
   // Trapezoid profile
+  final TrapezoidProfile m_profile_decel =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.4));
+  final TrapezoidProfile m_profile_accel =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
+
+  TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
+  TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
+
   public void periodic() {
     motorPosition.refresh();
     motorVelocity.refresh();
@@ -177,20 +157,57 @@ public class Wrist {
     // Log to NetworkTables
     SmartDashboard.putNumber("Wrist Absolute Encoder Pos", getAbsoluteEncoderPosition());
     SmartDashboard.putNumber("Wrist Degrees (with offset)", getWristDegreesOffset());
+    SmartDashboard.putNumber("Wrist Rotations (with offset)", getWristRotations() - ARM_OFFSET);
+    SmartDashboard.putNumber("Wrist Rotations (no offset)", getWristRotations());
+    if (Robot.isSimulation())
+      SmartDashboard.putNumber(
+          "Wrist Sim Rotations (no offset)", Rotations.convertFrom(armSim.getAngleRads(), Radians));
+
     SmartDashboard.putNumber("Wrist Velocity", getVelocity());
     SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
+
+    if (setPosition) {
+      var last_setpoint = m_setpoint;
+      var chosen_profile = m_profile_decel;
+      m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+
+      /*if (m_setpoint.velocity > last_setpoint.velocity) {
+        chosen_profile = m_profile_accel;
+        m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+      }*/
+
+      var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+
+      double voltageFeedforward =
+          feedforward.calculateWithVelocities(
+              Radians.convertFrom(m_setpoint.position, Rotations),
+              Radians.convertFrom(m_setpoint.velocity, Rotations),
+              Radians.convertFrom(next_setpoint.velocity, Rotations));
+
+      double pidOutput =
+          pid.calculate(getAbsoluteEncoderPosition() + ARM_OFFSET, m_setpoint.position);
+
+      SmartDashboard.putNumber("pid setpoint", m_setpoint.position);
+      SmartDashboard.putNumber("pid setpoint velocity", m_setpoint.velocity);
+      SmartDashboard.putNumber("feedforward", voltageFeedforward);
+      SmartDashboard.putNumber("pid output", pidOutput);
+
+      motor.setControl(voltageControl.withOutput(pidOutput + voltageFeedforward));
+    }
   }
 
   // Signals
 
   public double getAbsoluteEncoderPosition() {
+    if (Robot.isSimulation()) return Rotations.convertFrom(armSim.getAngleRads(), Radians);
     return absoluteEncoder.getPosition();
   }
 
   public double getWristRotations() {
-    return motorPosition.getValueAsDouble();
+    return getAbsoluteEncoderPosition();
+    // return motorPosition.getValueAsDouble();
   }
 
   public double getWristDegrees() {
@@ -201,7 +218,8 @@ public class Wrist {
     return getWristDegrees() - ARM_OFFSET_DEG;
   }
 
-  public double getVelocity() {
+  // do not use may be bad
+  private double getVelocity() {
     return motorVelocity.getValueAsDouble();
   }
 
@@ -213,10 +231,6 @@ public class Wrist {
     return motorVoltage.getValueAsDouble();
   }
 
-  double lastSetTime = 0;
-
-  private boolean needToResetPosNow = false;
-
   // this is probably a horrible idea and I apologize to anybody looking at this in the future
   private Runnable absoluteEncoderResetter() {
     var setter =
@@ -226,69 +240,24 @@ public class Wrist {
         };
 
     return () -> {
-      if (Robot.isSimulation()) return; // Conflicts with simulationPeriodic setRawRotorPosition
+      if (Robot.isSimulation())
+        return; // Causes weird conflict with simulationPeriodic setRawRotorPosition
       double pos = getAbsoluteEncoderPosition();
-      double vel = absoluteEncoder.getVelocity();
-      double motorVel = motorVelocity.getValueAsDouble();
-      double motorPos = getWristRotations();
-
-      if (pos == 0 && vel == 0) {
-        // TODO fix me later and implement better alerting
-        // TODO rev will report last val if none detected; fix
-        DriverStation.reportError("Check absolute encoder reset", false);
-      } else {
-        double diffy = motorPos - (pos + ARM_OFFSET);
-
-        /*
-        if (needToResetPosNow) {
-          double absMotorVel = Math.abs(motorVel);
-          if (absMotorVel > 0.26) {
-            // backlash compensate
-            double wristyOffset = Math.copySign(Rotations.convertFrom(14, Degrees), motorVel);
-            System.out.println("set a");
-            setter.setPosition(pos + ARM_OFFSET + wristyOffset, 0);
-            needToResetPosNow = false;
-            lastSetTime = Timer.getFPGATimestamp();
-          }
-        }
-        if (Math.abs(diffy) > Rotations.convertFrom(0.3, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.4) {
-            if (Math.abs(motorVel) < 0.03) {
-              System.out.println("set b");
-
-              setter.setPosition(pos + ARM_OFFSET, 0);
-              lastSetTime = Timer.getFPGATimestamp();
-            }
-          }
-        }
-         */
-        if (Math.abs(diffy) > Rotations.convertFrom(1.1, Degree)) {
-          if (Timer.getFPGATimestamp() - lastSetTime > 0.1) {
-            // if (Math.abs(motorVel) < 0.03) {
-            // System.out.println("set b");
-
-            setter.setPosition(pos + ARM_OFFSET, 0);
-            lastSetTime = Timer.getFPGATimestamp();
-            // }
-          }
-        }
-      }
+      setter.setPosition(pos + ARM_OFFSET, 0);
     };
   }
 
   // Controls and stuff
 
   private void setMotorRotations(double pos) {
-    double originalLastPositionSet = lastPositionSet;
-    if (originalLastPositionSet != pos) {
-      if (Math.abs(pos - ARM_OFFSET_DEG) < Rotation.convertFrom(5, Degrees)) {
-        needToResetPosNow = true;
-      }
+    if (!setPosition) {
+      m_setpoint =
+          new TrapezoidProfile.State(getWristRotations(), motorVelocity.getValueAsDouble());
     }
-
     setPosition = true;
     lastPositionSet = pos;
-    motor.setControl(positionControl.withPosition(lastPositionSet));
+    m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
+    // let periodic do the pid thingy
   }
 
   void setMotorDegreesOffset(double deg) {
