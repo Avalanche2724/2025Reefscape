@@ -21,11 +21,11 @@ import java.util.function.Supplier;
 public class Superstructure extends SubsystemBase {
   public enum Position {
     // Intake:
-    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -14),
+    MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -10),
     ALG_INTAKE_GROUND(0.33, 0),
     ALG_PROC(0.65, 0),
 
-    STOW(Elevator.MIN_HEIGHT, 91.5),
+    STOW(Elevator.MIN_HEIGHT, 90),
     SEMISEMISTOW(Elevator.MIN_HEIGHT, 51),
     SEMISTOW(Elevator.MIN_HEIGHT, 35),
     SCORYSTOW(Elevator.MIN_HEIGHT, 0),
@@ -156,11 +156,11 @@ public class Superstructure extends SubsystemBase {
   }
 
   public boolean atWristPosition(double angle) {
-    return Math.abs(wrist.getWristDegreesOffset() - angle) < WRIST_THRESHOLD;
+    return Math.abs(wrist.getWristDegrees() - angle) < WRIST_THRESHOLD;
   }
 
   public boolean atWristPositionApprox(double angle) {
-    return Math.abs(wrist.getWristDegreesOffset() - angle) < 15;
+    return Math.abs(wrist.getWristDegrees() - angle) < 15;
   }
 
   // Controls
@@ -171,7 +171,7 @@ public class Superstructure extends SubsystemBase {
     currentWristTargetPosition = wristAngle;
 
     elevator.setMotorPosition(elevatorHeight);
-    wrist.setMotorDegreesOffset(shouldStopWrist ? 0 : wristAngle);
+    wrist.setMotorDegrees(shouldStopWrist ? 0 : wristAngle);
   }
 
   private void setPositions(Position pos) {
@@ -186,7 +186,7 @@ public class Superstructure extends SubsystemBase {
 
   // Commands
   public Command setWristPositionCommand(double angle) {
-    return runOnce(() -> wrist.setMotorDegreesOffset(angle));
+    return runOnce(() -> wrist.setMotorDegrees(angle));
   }
 
   public Command stop() {

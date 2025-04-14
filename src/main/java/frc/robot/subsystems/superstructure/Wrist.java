@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -38,17 +39,8 @@ public class Wrist {
   public static final int WRIST_ENCODER_ID = 52;
   public static final double GEAR_RATIO = 64;
 
-  /*
-  A brief explanation of wrist positioning:
-  There is the value the absolute encoder gets (from 0-1); the spark max subtracts 0.5 (making it -0.5 to 0.5)
-  and then applies the zero offset, wrapping around, where zero is "arm plate horizontal".
-  Then we add ARM_OFFSET before sending the position to the talonfx motor, because it needs to apply the correct
-  kG value to counteract gravity, and the arm center of gravity is off-center from the arm horizontal position.
-  (Which probably results in a difference of 0.13 volts at most; it should be slightly impactful)
-   */
   public static final double ZERO_OFFSET = 0.206; // rotations
-  public static final double ARM_OFFSET = -0.049;
-  public static final double ARM_OFFSET_DEG = Degrees.convertFrom(ARM_OFFSET, Rotations);
+  public static final double ARM_OFFSET = Robot.isSimulation() ? 0 : -0.049; // for kG adjustment
   public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
   public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
 
@@ -75,7 +67,7 @@ public class Wrist {
           DCMotor.getKrakenX60Foc(1),
           GEAR_RATIO, // Following arm length/mass are estimates for simulation
           SingleJointedArmSim.estimateMOI(
-              Meters.convertFrom(25, Inches), Kilograms.convertFrom(15, Pounds)),
+              Meters.convertFrom(39, Inches), Kilograms.convertFrom(15, Pounds)),
           Kilograms.convertFrom(15, Pounds),
           Radians.convertFrom(DOWN_LIMIT, Rotations),
           Radians.convertFrom(UP_LIMIT, Rotations),
@@ -102,9 +94,16 @@ public class Wrist {
   private double lastPositionSet = 0;
   private boolean setPosition = false;
 
-  private final PIDController pid = new PIDController(12, 0, 2);
+  private final double wrist_pid_sec = 0.005;
+
+  private final PIDController pid = new PIDController(40, 0, 0.4, wrist_pid_sec);
   private final ArmFeedforward feedforward =
-      new ArmFeedforward((0.5 - 0.37) / 2, (0.5 + 0.37) / 2, 7.94, 0.14);
+      new ArmFeedforward(
+          (0.5 - 0.37) / 2,
+          (0.5 + 0.37) / 2,
+          1 / Radians.convertFrom(1 / 7.94, Rotations),
+          1 / Radians.convertFrom(1 / 0.14, Rotations),
+          wrist_pid_sec);
 
   public Wrist() {
     var config = new TalonFXConfiguration();
@@ -135,14 +134,14 @@ public class Wrist {
         SparkBase.PersistMode.kPersistParameters);
 
     Robot.instance.addPeriodic(absoluteEncoderResetter(), ENCODER_POSITION_RESET_SEC);
-    if (Robot.isSimulation()) {
-      motor.setPosition(ARM_OFFSET);
-    }
+
+    var pidControlNotifier = new Notifier(this::pidcontrol);
+    pidControlNotifier.startPeriodic(wrist_pid_sec);
   }
 
   // Trapezoid profile
   final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.4));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
   final TrapezoidProfile m_profile_accel =
       new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
 
@@ -156,9 +155,8 @@ public class Wrist {
     motorVoltage.refresh();
     // Log to NetworkTables
     SmartDashboard.putNumber("Wrist Absolute Encoder Pos", getAbsoluteEncoderPosition());
-    SmartDashboard.putNumber("Wrist Degrees (with offset)", getWristDegreesOffset());
-    SmartDashboard.putNumber("Wrist Rotations (with offset)", getWristRotations() - ARM_OFFSET);
-    SmartDashboard.putNumber("Wrist Rotations (no offset)", getWristRotations());
+    SmartDashboard.putNumber("Wrist Degrees", getWristDegrees());
+    SmartDashboard.putNumber("Wrist Rotations", getWristRotations());
     if (Robot.isSimulation())
       SmartDashboard.putNumber(
           "Wrist Sim Rotations (no offset)", Rotations.convertFrom(armSim.getAngleRads(), Radians));
@@ -167,28 +165,42 @@ public class Wrist {
     SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
     SmartDashboard.putNumber("Wrist Voltage", getVoltage());
     SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
+  }
 
+  private void pidcontrol() {
     if (setPosition) {
       var last_setpoint = m_setpoint;
       var chosen_profile = m_profile_decel;
-      m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+      m_setpoint = chosen_profile.calculate(wrist_pid_sec, last_setpoint, m_goal);
 
-      /*if (m_setpoint.velocity > last_setpoint.velocity) {
-        chosen_profile = m_profile_accel;
-        m_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
-      }*/
+      double velocityDiffSign = m_setpoint.velocity - last_setpoint.velocity;
+      double positionDiffSign = m_setpoint.position - last_setpoint.position;
 
-      var next_setpoint = chosen_profile.calculate(0.020, m_setpoint, m_goal);
+      // todo later
+
+      if (positionDiffSign < 0) {
+        if (velocityDiffSign < 0) {
+          chosen_profile = m_profile_accel;
+        }
+      } else {
+        if (velocityDiffSign > 0) {
+          chosen_profile = m_profile_accel;
+        }
+      }
+      if (chosen_profile == m_profile_accel) {
+        m_setpoint = chosen_profile.calculate(wrist_pid_sec, last_setpoint, m_goal);
+      }
 
       double voltageFeedforward =
           feedforward.calculateWithVelocities(
-              Radians.convertFrom(m_setpoint.position, Rotations),
-              Radians.convertFrom(m_setpoint.velocity, Rotations),
-              Radians.convertFrom(next_setpoint.velocity, Rotations));
+              Radians.convertFrom(m_setpoint.position + ARM_OFFSET, Rotations),
+              Radians.convertFrom(last_setpoint.velocity, Rotations),
+              Radians.convertFrom(m_setpoint.velocity, Rotations));
 
-      double pidOutput =
-          pid.calculate(getAbsoluteEncoderPosition() + ARM_OFFSET, m_setpoint.position);
+      double position = getAbsoluteEncoderPosition();
+      double pidOutput = pid.calculate(position, m_setpoint.position);
 
+      SmartDashboard.putNumber("pid current pos", position);
       SmartDashboard.putNumber("pid setpoint", m_setpoint.position);
       SmartDashboard.putNumber("pid setpoint velocity", m_setpoint.velocity);
       SmartDashboard.putNumber("feedforward", voltageFeedforward);
@@ -207,15 +219,10 @@ public class Wrist {
 
   public double getWristRotations() {
     return getAbsoluteEncoderPosition();
-    // return motorPosition.getValueAsDouble();
   }
 
   public double getWristDegrees() {
     return Degrees.convertFrom(getWristRotations(), Rotations);
-  }
-
-  public double getWristDegreesOffset() {
-    return getWristDegrees() - ARM_OFFSET_DEG;
   }
 
   // do not use may be bad
@@ -243,7 +250,7 @@ public class Wrist {
       if (Robot.isSimulation())
         return; // Causes weird conflict with simulationPeriodic setRawRotorPosition
       double pos = getAbsoluteEncoderPosition();
-      setter.setPosition(pos + ARM_OFFSET, 0);
+      setter.setPosition(pos, 0);
     };
   }
 
@@ -260,8 +267,8 @@ public class Wrist {
     // let periodic do the pid thingy
   }
 
-  void setMotorDegreesOffset(double deg) {
-    setMotorRotations(Rotations.convertFrom(deg + ARM_OFFSET_DEG, Degrees));
+  void setMotorDegrees(double deg) {
+    setMotorRotations(Rotations.convertFrom(deg, Degrees));
   }
 
   void stopMotor() {
@@ -305,7 +312,7 @@ public class Wrist {
   }
 
   public void updateMechanism2d() {
-    wristRotatePart.setAngle(getWristDegreesOffset());
+    wristRotatePart.setAngle(getWristDegrees());
   }
 
   public void simulationPeriodic(double deltaTime) {
