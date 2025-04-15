@@ -24,27 +24,37 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
+import frc.robot.Util;
 
 public class Wrist {
   // Constants
   public static final int WRIST_ID = 51;
   public static final int WRIST_ENCODER_ID = 52;
   public static final double GEAR_RATIO = 64;
-
   public static final double ZERO_OFFSET = 0.206; // rotations
-  public static final double ARM_OFFSET = Robot.isSimulation() ? 0 : -0.049; // for kG adjustment
-  public static final double UP_LIMIT = Rotations.convertFrom(90, Degrees);
-  public static final double DOWN_LIMIT = Rotations.convertFrom(-10, Degrees);
-
-  private static final double ENCODER_POSITION_RESET_SEC = 0.02;
+  // adjustment on position passed to feedforward for kG accuracy
+  public static final double ARM_OFFSET = Robot.isSimulation() ? 0 : -0.049;
+  // PID stuff
+  private final double WRIST_PID_PERIOD = 0.02;
+  private final PIDController pid = new PIDController(40, 0, 0.4, WRIST_PID_PERIOD);
+  private final ArmFeedforward feedforward =
+      new ArmFeedforward(
+          (0.5 - 0.37) / 2,
+          (0.5 + 0.37) / 2,
+          1 / Radians.convertFrom(1 / 7.94, Rotations),
+          1 / Radians.convertFrom(1 / 0.14, Rotations),
+          WRIST_PID_PERIOD);
+  // Trapezoid profile
+  private final TrapezoidProfile profileDeceleration =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
+  private final TrapezoidProfile profileAcceleration =
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -53,14 +63,12 @@ public class Wrist {
   private final StatusSignal<Current> motorTorqueCurrent = motor.getTorqueCurrent();
   private final StatusSignal<Voltage> motorVoltage = motor.getMotorVoltage();
   // Controls
-  // private final MotionMagicVoltage motionMagicControl = new MotionMagicVoltage(0).withSlot(0);
-  // private final PositionVoltage positionControl = new PositionVoltage(0).withSlot(0);
   private final VoltageOut voltageControl = new VoltageOut(0).withUpdateFreqHz(0);
-
   // Absolute encoder reading
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
   private final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
+  private final Runnable absoluteEncoderResetter = absoluteEncoderResetter();
   // Simulation
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
@@ -69,8 +77,8 @@ public class Wrist {
           SingleJointedArmSim.estimateMOI(
               Meters.convertFrom(39, Inches), Kilograms.convertFrom(15, Pounds)),
           Kilograms.convertFrom(15, Pounds),
-          Radians.convertFrom(DOWN_LIMIT, Rotations),
-          Radians.convertFrom(UP_LIMIT, Rotations),
+          Radians.convertFrom(Rotations.convertFrom(-10, Degrees), Rotations),
+          Radians.convertFrom(Rotations.convertFrom(90, Degrees), Rotations),
           true,
           0);
   // SysId
@@ -89,39 +97,25 @@ public class Wrist {
               null,
               Superstructure.instance));
 
+  // Other PID stuff:
+  private TrapezoidProfile.State profileGoal = new TrapezoidProfile.State(0, 0);
+  private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0, 0);
+  // Whether PID control should run
+  private boolean setPosition = false;
+
   // Mechanism2d:
   private MechanismLigament2d wristRotatePart;
   private double lastPositionSet = 0;
-  private boolean setPosition = false;
-
-  private final double wrist_pid_sec = 0.005;
-
-  private final PIDController pid = new PIDController(40, 0, 0.4, wrist_pid_sec);
-  private final ArmFeedforward feedforward =
-      new ArmFeedforward(
-          (0.5 - 0.37) / 2,
-          (0.5 + 0.37) / 2,
-          1 / Radians.convertFrom(1 / 7.94, Rotations),
-          1 / Radians.convertFrom(1 / 0.14, Rotations),
-          wrist_pid_sec);
 
   public Wrist() {
     var config = new TalonFXConfiguration();
 
+    // Note: TalonFX position/feedback is not actually used in code
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
-
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     motor.getConfigurator().apply(config);
-
-    // for phoenix tuner x tuning:
-    motor.getClosedLoopError().setUpdateFrequency(50);
-    motor.getClosedLoopReference().setUpdateFrequency(50);
-    motor.getClosedLoopDerivativeOutput().setUpdateFrequency(50);
-    motor.getClosedLoopOutput().setUpdateFrequency(50);
-    motor.getClosedLoopProportionalOutput().setUpdateFrequency(50);
-    motor.getClosedLoopFeedForward().setUpdateFrequency(50);
 
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.absoluteEncoder.zeroCentered(true).zeroOffset(ZERO_OFFSET).inverted(false);
@@ -132,79 +126,60 @@ public class Wrist {
         sparkMaxConfig,
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
-
-    Robot.instance.addPeriodic(absoluteEncoderResetter(), ENCODER_POSITION_RESET_SEC);
-
-    var pidControlNotifier = new Notifier(this::pidcontrol);
-    pidControlNotifier.startPeriodic(wrist_pid_sec);
   }
-
-  // Trapezoid profile
-  final TrapezoidProfile m_profile_decel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
-  final TrapezoidProfile m_profile_accel =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
-
-  TrapezoidProfile.State m_goal = new TrapezoidProfile.State(0, 0);
-  TrapezoidProfile.State m_setpoint = new TrapezoidProfile.State(0, 0);
 
   public void periodic() {
     motorPosition.refresh();
     motorVelocity.refresh();
     motorTorqueCurrent.refresh();
     motorVoltage.refresh();
-    // Log to NetworkTables
-    SmartDashboard.putNumber("Wrist Absolute Encoder Pos", getAbsoluteEncoderPosition());
-    SmartDashboard.putNumber("Wrist Degrees", getWristDegrees());
-    SmartDashboard.putNumber("Wrist Rotations", getWristRotations());
-    if (Robot.isSimulation())
-      SmartDashboard.putNumber(
-          "Wrist Sim Rotations (no offset)", Rotations.convertFrom(armSim.getAngleRads(), Radians));
 
-    SmartDashboard.putNumber("Wrist Velocity", getVelocity());
-    SmartDashboard.putNumber("Wrist Current", getTorqueCurrent());
-    SmartDashboard.putNumber("Wrist Voltage", getVoltage());
-    SmartDashboard.putNumber("Wrist ultimate target no offset", lastPositionSet);
+    absoluteEncoderResetter.run();
+    runPositionControl();
+
+    Util.logDouble("Wrist Pos", getAbsoluteEncoderPosition());
+    Util.logDouble("Wrist Degrees", getWristDegrees());
+    Util.logDouble("Wrist Velocity", getVelocity());
+    Util.logDouble("Wrist Current", getTorqueCurrent());
+    Util.logDouble("Wrist Voltage", getVoltage());
+    Util.logDouble("Wrist Target", lastPositionSet);
   }
 
-  private void pidcontrol() {
+  private void runPositionControl() {
     if (setPosition) {
-      var last_setpoint = m_setpoint;
-      var chosen_profile = m_profile_decel;
-      m_setpoint = chosen_profile.calculate(wrist_pid_sec, last_setpoint, m_goal);
+      var lastSetpoint = profileSetpoint;
+      var chosenProfile = profileDeceleration;
+      profileSetpoint = chosenProfile.calculate(WRIST_PID_PERIOD, lastSetpoint, profileGoal);
 
-      double velocityDiffSign = m_setpoint.velocity - last_setpoint.velocity;
-      double positionDiffSign = m_setpoint.position - last_setpoint.position;
-
-      // todo later
+      double velocityDiffSign = profileSetpoint.velocity - lastSetpoint.velocity;
+      double positionDiffSign = profileSetpoint.position - lastSetpoint.position;
 
       if (positionDiffSign < 0) {
         if (velocityDiffSign < 0) {
-          chosen_profile = m_profile_accel;
+          chosenProfile = profileAcceleration;
         }
       } else {
         if (velocityDiffSign > 0) {
-          chosen_profile = m_profile_accel;
+          chosenProfile = profileAcceleration;
         }
       }
-      if (chosen_profile == m_profile_accel) {
-        m_setpoint = chosen_profile.calculate(wrist_pid_sec, last_setpoint, m_goal);
+      if (chosenProfile == profileAcceleration) {
+        profileSetpoint = chosenProfile.calculate(WRIST_PID_PERIOD, lastSetpoint, profileGoal);
       }
 
       double voltageFeedforward =
           feedforward.calculateWithVelocities(
-              Radians.convertFrom(m_setpoint.position + ARM_OFFSET, Rotations),
-              Radians.convertFrom(last_setpoint.velocity, Rotations),
-              Radians.convertFrom(m_setpoint.velocity, Rotations));
+              Radians.convertFrom(profileSetpoint.position + ARM_OFFSET, Rotations),
+              Radians.convertFrom(lastSetpoint.velocity, Rotations),
+              Radians.convertFrom(profileSetpoint.velocity, Rotations));
 
       double position = getAbsoluteEncoderPosition();
-      double pidOutput = pid.calculate(position, m_setpoint.position);
+      double pidOutput = pid.calculate(position, profileSetpoint.position);
 
-      SmartDashboard.putNumber("pid current pos", position);
-      SmartDashboard.putNumber("pid setpoint", m_setpoint.position);
-      SmartDashboard.putNumber("pid setpoint velocity", m_setpoint.velocity);
-      SmartDashboard.putNumber("feedforward", voltageFeedforward);
-      SmartDashboard.putNumber("pid output", pidOutput);
+      Util.logDouble("Wrist pid setpoint", profileSetpoint.position);
+      Util.logDouble("Wrist pid setpoint velocity", profileSetpoint.velocity);
+      Util.logDouble("Wrist pid feedforward", voltageFeedforward);
+      Util.logDouble("Wrist pid output", pidOutput);
 
       motor.setControl(voltageControl.withOutput(pidOutput + voltageFeedforward));
     }
@@ -225,7 +200,7 @@ public class Wrist {
     return Degrees.convertFrom(getWristRotations(), Rotations);
   }
 
-  // do not use may be bad
+  // NOTE: uses motor velocity, might be inaccurate
   private double getVelocity() {
     return motorVelocity.getValueAsDouble();
   }
@@ -238,7 +213,7 @@ public class Wrist {
     return motorVoltage.getValueAsDouble();
   }
 
-  // this is probably a horrible idea and I apologize to anybody looking at this in the future
+  // this is probably a bad idea and I apologize to anybody looking at this in the future
   private Runnable absoluteEncoderResetter() {
     var setter =
         new TalonFXConfigurator(new DeviceIdentifier(WRIST_ID, "talon fx", "")) {
@@ -258,13 +233,13 @@ public class Wrist {
 
   private void setMotorRotations(double pos) {
     if (!setPosition) {
-      m_setpoint =
+      profileSetpoint =
           new TrapezoidProfile.State(getWristRotations(), motorVelocity.getValueAsDouble());
     }
     setPosition = true;
     lastPositionSet = pos;
-    m_goal = new TrapezoidProfile.State(lastPositionSet, 0);
-    // let periodic do the pid thingy
+    profileGoal = new TrapezoidProfile.State(lastPositionSet, 0);
+    // don't command motor from here, but let periodic do pid control
   }
 
   void setMotorDegrees(double deg) {
