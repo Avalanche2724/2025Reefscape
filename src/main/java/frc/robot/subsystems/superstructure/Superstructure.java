@@ -26,9 +26,9 @@ public class Superstructure extends SubsystemBase {
     ALG_PROC(0.65, 0),
 
     STOW(Elevator.MIN_HEIGHT, 90),
-    SEMISEMISTOW(Elevator.MIN_HEIGHT, 51),
-    SEMISTOW(Elevator.MIN_HEIGHT, 35),
-    SCORYSTOW(Elevator.MIN_HEIGHT, 0),
+    ALGAELAUNCHSTOW(Elevator.MIN_HEIGHT, 51),
+    HPSTOW(Elevator.MIN_HEIGHT, 35),
+    FLATSTOW(Elevator.MIN_HEIGHT, 0),
 
     INTAKE_CORAL_STATION(0.83, 35),
     // Straight outtake:
@@ -93,21 +93,21 @@ public class Superstructure extends SubsystemBase {
     }
 
     stopMotors();
-    RobotModeTriggers.disabled().onTrue(runOnce(this::stopMotors).ignoringDisable(true));
+    RobotModeTriggers.disabled().onTrue(stop().ignoringDisable(true));
 
     // TODO
     isStowed =
         new Trigger(
             () ->
                 (lastSetPosition == Position.STOW
-                        || lastSetPosition == Position.SEMISTOW
-                        || lastSetPosition == Position.SCORYSTOW
-                        || lastSetPosition == Position.SEMISEMISTOW)
+                        || lastSetPosition == Position.HPSTOW
+                        || lastSetPosition == Position.FLATSTOW
+                        || lastSetPosition == Position.ALGAELAUNCHSTOW)
                     && (atWristPositionApprox(currentWristTargetPosition)
                         || currentWristTargetPosition == Position.STOW.wristAngle
-                        || currentWristTargetPosition == Position.SEMISTOW.wristAngle
-                        || currentWristTargetPosition == Position.SCORYSTOW.wristAngle
-                        || currentWristTargetPosition == Position.SEMISEMISTOW.wristAngle)
+                        || currentWristTargetPosition == Position.HPSTOW.wristAngle
+                        || currentWristTargetPosition == Position.FLATSTOW.wristAngle
+                        || currentWristTargetPosition == Position.ALGAELAUNCHSTOW.wristAngle)
                     && atMostElevatorPosition(0.4)
                     && atLeastElevatorPosition(0.25)
                     && getCurrentCommand() == null);
@@ -133,11 +133,6 @@ public class Superstructure extends SubsystemBase {
   }
 
   // Inputs
-  public boolean atPosition(Position pos) {
-    return atElevatorPosition(currentElevatorTargetPosition)
-        && atWristPosition(currentWristTargetPosition);
-  }
-
   public boolean atTargetPosition() {
     return atElevatorPosition(currentElevatorTargetPosition)
         && atWristPosition(currentWristTargetPosition);
@@ -165,13 +160,11 @@ public class Superstructure extends SubsystemBase {
 
   // Controls
   public void setPositions(double elevatorHeight, double wristAngle) {
-    boolean shouldStopWrist =
-        false; // elevatorHeight < ELEVATOR_SAFETY_THRESHOLD && wristAngle < 0;
     currentElevatorTargetPosition = elevatorHeight;
     currentWristTargetPosition = wristAngle;
 
     elevator.setMotorPosition(elevatorHeight);
-    wrist.setMotorDegrees(shouldStopWrist ? 0 : wristAngle);
+    wrist.setMotorDegrees(wristAngle);
   }
 
   private void setPositions(Position pos) {
@@ -204,7 +197,7 @@ public class Superstructure extends SubsystemBase {
 
   public Command elevatorAlgaeLaunchSetup() {
     return sequence(
-        setWristPositionCommand(Position.SEMISEMISTOW.wristAngle),
+        setWristPositionCommand(Position.ALGAELAUNCHSTOW.wristAngle),
         runOnce(elevator::setMotorLaunchingVelocityUp),
         waitUntil(() -> atLeastElevatorPosition(0.88)));
   }
@@ -213,14 +206,14 @@ public class Superstructure extends SubsystemBase {
     return sequence(
         runOnce(elevator::setMotorLaunchingVelocityDown),
         waitSeconds(0.3),
-        runOnce(() -> setPositions(Position.SEMISEMISTOW)));
+        runOnce(() -> setPositions(Position.ALGAELAUNCHSTOW)));
   }
 
   public Command protectCommand(Command t) {
     return t.finallyDo(
-        (intr) -> {
-          if (!t.isFinished() || intr) {
-            setPositions(Position.SEMISEMISTOW);
+        (interrupted) -> {
+          if (!t.isFinished() || interrupted) {
+            setPositions(Position.ALGAELAUNCHSTOW);
           }
         });
   }
@@ -241,10 +234,6 @@ public class Superstructure extends SubsystemBase {
     return goToPosition(pos).finallyDo(() -> setPositions(Position.STOW));
   }
 
-  public Command getToPositionThenHold(Supplier<Position> pos) {
-    return goToPosition(pos).finallyDo(() -> setPositions(Position.STOW));
-  }
-
   public Command incrementElevator(DoubleSupplier d) {
     return run(
         () ->
@@ -262,13 +251,13 @@ public class Superstructure extends SubsystemBase {
   // Mechanism + simulation stuff
   public void createMechanism2d() {
     // the main mechanism object
-    var mech = new Mechanism2d(Meters.convertFrom(28, Inches), 4);
+    var mechanism = new Mechanism2d(Meters.convertFrom(28, Inches), 4);
     // the mechanism root node
-    var root = mech.getRoot("root", Inches.of(19.5).in(Meters), 0);
+    var root = mechanism.getRoot("root", Inches.of(19.5).in(Meters), 0);
 
     root.append(elevator.createMechanism2d()).append(wrist.createMechanism2d());
 
-    SmartDashboard.putData("Mechanism", mech);
+    SmartDashboard.putData("Mechanism", mechanism);
   }
 
   public void updateMechanism2d() {
