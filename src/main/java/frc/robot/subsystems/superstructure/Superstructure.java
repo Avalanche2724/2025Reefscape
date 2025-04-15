@@ -23,30 +23,26 @@ public class Superstructure extends SubsystemBase {
     // Intake:
     MIN_INTAKE_GROUND(Elevator.MIN_HEIGHT, -10),
     ALG_INTAKE_GROUND(0.33, 0),
+    INTAKE_CORAL_STATION(0.83, 35),
+    // Processor algae + lollipop algae
+    // TODO: algae presets angled up to catch algae falling
     ALG_PROC(0.65, 0),
 
+    // Various stowing configurations:
     STOW(Elevator.MIN_HEIGHT, 90),
     ALGAELAUNCHSTOW(Elevator.MIN_HEIGHT, 51),
     HPSTOW(Elevator.MIN_HEIGHT, 35),
     FLATSTOW(Elevator.MIN_HEIGHT, 0),
 
-    INTAKE_CORAL_STATION(0.83, 35),
     // Straight outtake:
     OUTTAKE_L1(0.75, 0),
-    /*OUTTAKE_L2(0.927, -35),
-    OUTTAKE_L3(1.3, -35),*/
     // Launching outtake:
     OUTTAKE_L2_LAUNCH(0.95, 0),
     OUTTAKE_L3_LAUNCH(1.36, 0),
-    OUTTAKE_L4_LAUNCH(1.47, 85),
     // Vertical outtake:
-    // OUTTAKE_L1_VERTICAL(0.875, -45),
-    OUTTAKE_L4_VERT_P1(1.52, 60),
-    OUTTAKE_L4_VERT_P2(1.52, 0),
     // Algae:
     INTAKE_ALGAE_L2(1.04, 0),
-    INTAKE_ALGAE_L3(1.42, 0),
-    OUTTAKE_NET(1.15, 45);
+    INTAKE_ALGAE_L3(1.42, 0);
 
     // Meters
     public final double elevatorHeight;

@@ -77,11 +77,11 @@ public class AutoRoutines {
   }
 
   public Command waitAndSemiStow() {
-    return waitSeconds(0.4).andThen(superstructure.goToPosition(Position.SEMISTOW));
+    return waitSeconds(0.4).andThen(superstructure.goToPosition(Position.HPSTOW));
   }
 
   public Command waitAndScoryStow() {
-    return waitSeconds(0.4).andThen(superstructure.goToPosition(Position.SCORYSTOW));
+    return waitSeconds(0.4).andThen(superstructure.goToPosition(Position.FLATSTOW));
   }
 
   public Command waitAndCoralStation() {
@@ -100,7 +100,7 @@ public class AutoRoutines {
     return (superstructure.goToPosition(Position.STOW))
         .alongWith(intake.semiSend())
         .withTimeout(0.4)
-        .andThen(superstructure.goToPosition(Position.SEMISTOW));
+        .andThen(superstructure.goToPosition(Position.HPSTOW));
   }
 
   public Command noWaitAndCoralStation() {
@@ -158,7 +158,7 @@ public class AutoRoutines {
         .onTrue(
             (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
                 .andThen(START_TO_BRANCH1.cmd()));
-    routine.active().onTrue(superstructure.goToPosition(Position.SCORYSTOW));
+    routine.active().onTrue(superstructure.goToPosition(Position.FLATSTOW));
 
     START_TO_BRANCH1.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
     START_TO_BRANCH1
@@ -336,7 +336,7 @@ public class AutoRoutines {
 
     BRANCH1_TO_TAKEALG.active().onTrue(intakeForever());
     BRANCH1_TO_TAKEALG.done().onTrue(ALGAE_TO_NET.cmd());
-    ALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.SEMISEMISTOW));
+    ALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.ALGAELAUNCHSTOW));
 
     ALGAE_TO_NET
         .done()
@@ -356,7 +356,7 @@ public class AutoRoutines {
         .onTrue(sequence(Commands.print("Reached Lollipop 2"), SIDEALGAE_TO_NET.spawnCmd()));
 
     SIDEALGAE_TO_NET.active().onTrue(Commands.print("test3"));
-    SIDEALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.SEMISEMISTOW));
+    SIDEALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.ALGAELAUNCHSTOW));
 
     SIDEALGAE_TO_NET.done().onTrue(controls.driveToAlgaeLaunchCmd());
     SIDEALGAE_TO_NET

@@ -34,14 +34,14 @@ public class Controls {
   private static final double MAX_ANGLE_RATE = RotationsPerSecond.of(2.0).in(RadiansPerSecond);
   private static final double STICK_DEADBAND = 0;
   private static final double SWERVEAPI_DEADBAND = 0.0;
+  // Controllers
+  public final GenericGamepad driver = GenericGamepad.from(0);
   // Subsystems and things
   private final RobotContainer bot;
   private final Drivetrain drivetrain;
   private final Superstructure superstructure;
   private final Intake intake;
   private final Climber climber;
-  // Controllers
-  public final GenericGamepad driver = GenericGamepad.from(0);
   private final GenericGamepad operator = GenericGamepad.from(1);
   // Swerve requests
   private final SwerveRequest.FieldCentric drive =
@@ -124,7 +124,7 @@ public class Controls {
     driver.povUp.whileTrue(drivetrain.wheelCharacterization());
     driver.povRight.whileTrue(driveToAlgaeLaunchCmd());
     driver.povRight.whileTrue(
-        intake.holdIntake().raceWith(superstructure.goToPosition(Position.SEMISEMISTOW)));
+        intake.holdIntake().raceWith(superstructure.goToPosition(Position.ALGAELAUNCHSTOW)));
 
     new Trigger(createAtTargetPositionSupplier(() -> Meters.convertFrom(14, Inch), () -> 6))
         .and(driver.povRight)
@@ -155,7 +155,7 @@ public class Controls {
 
     wantingToAlgaeAlignRn
         .and(nearAlgaeTargetTrigger)
-        .onFalse(superstructure.goToPositionOnce(Position.SEMISEMISTOW));
+        .onFalse(superstructure.goToPositionOnce(Position.ALGAELAUNCHSTOW));
 
     // AUTO ALIGN CORAL
 
@@ -228,7 +228,7 @@ public class Controls {
 
     coralAlgaeSettingPresets(operator.b, Position.OUTTAKE_L2_LAUNCH, Position.INTAKE_ALGAE_L2);
     coralAlgaeSettingPresets(operator.x, Position.OUTTAKE_L3_LAUNCH, Position.INTAKE_ALGAE_L3);
-    coralAlgaeActivePresets(operator.y, Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
+    // oralAlgaeActivePresets(operator.y, Position.OUTTAKE_L4_LAUNCH, Position.OUTTAKE_NET);
     // operator.leftTriggerB.whileTrue(superstructure.getToPositionThenHold(() ->
     // nextTargetPosition));
     operator.leftTriggerB.whileTrue(superstructure.goToPosition(Position.STOW));
@@ -354,7 +354,7 @@ public class Controls {
       case OUTTAKE_L1 -> ReefLevel.L1;
       case OUTTAKE_L2_LAUNCH, INTAKE_ALGAE_L2 -> ReefLevel.L2;
       case OUTTAKE_L3_LAUNCH, INTAKE_ALGAE_L3 -> ReefLevel.L3;
-      case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
+      // case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
       default -> null;
     };
   }
