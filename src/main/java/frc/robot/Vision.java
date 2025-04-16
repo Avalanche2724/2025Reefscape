@@ -35,8 +35,6 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -49,19 +47,19 @@ import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
 public class Vision {
-  // TODO: should be andymark; appears to have bug in sim (?)
   public static final AprilTagFieldLayout APRILTAG_FIELD_LAYOUT;
 
   static {
-    var layout1 = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
-    var list = layout1.getTags();
+    var originalLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    var list = originalLayout.getTags();
     list.removeIf(
         tag -> {
           int tagId = tag.ID;
           return !((tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22));
         });
     APRILTAG_FIELD_LAYOUT =
-        new AprilTagFieldLayout(list, layout1.getFieldLength(), layout1.getFieldWidth());
+        new AprilTagFieldLayout(
+            list, originalLayout.getFieldLength(), originalLayout.getFieldWidth());
   }
 
   public VisionSystemSim visionSim = Robot.isSimulation() ? new VisionSystemSim("main") : null;
@@ -81,14 +79,6 @@ public class Vision {
               new Translation3d(Inches.of(14 - 1.93), Inches.of(-14 + 7.95), Inches.of(7.8)),
               new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(15))));
 
-  /*
-    public Camera cameraFlSwerve =
-        new Camera(
-            "Arducam_fl_swerve",
-            new Transform3d(
-                new Translation3d(Inches.of(14 - 3.0), Inches.of(14 - 3.0), Inches.of(8.7)),
-                new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(-15))));
-  */
   {
     if (Robot.isSimulation()) {
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
@@ -101,11 +91,6 @@ public class Vision {
   }
 
   // ----- Simulation
-
-  /** Reset pose history of the robot in the vision system simulation. */
-  public void resetSimPose(Pose2d pose) {
-    if (Robot.isSimulation()) visionSim.resetRobotPose(pose);
-  }
 
   /** A Field2d for visualizing our robot and objects on the field. */
   public Field2d getSimDebugField() {
@@ -121,37 +106,23 @@ public class Vision {
     // PNP params
     private static final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> pnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
-    // Publishers for position telemetry
-    private final StructPublisher<Pose2d> constrainedPoseTelemetry;
-    private final StructPublisher<Pose2d> pnpPoseTelemetry;
+    private final String visionEstimationKey;
     // PhotonVision stuff
     private final PhotonCamera camera;
     private final PhotonPoseEstimator photonEstimator;
-    // Other things:
-    private final Transform3d robotToCam;
-    private final String cameraName;
-    private final String visionEstimationKey;
     private Optional<Matrix<N3, N3>> cameraMatrix;
     private Optional<Matrix<N8, N1>> cameraDistortion;
 
     public Camera(String cameraName, Transform3d robotToCam) {
-      this.cameraName = cameraName;
-      this.visionEstimationKey = "Vision Estimation " + cameraName;
-      this.robotToCam = robotToCam;
+      visionEstimationKey = "Vision Estimation " + cameraName;
+      // Other things:
       camera = new PhotonCamera(cameraName);
       cameraMatrix = camera.getCameraMatrix();
       cameraDistortion = camera.getDistCoeffs();
 
-      var smartDashboardTable = NetworkTableInstance.getDefault().getTable("SmartDashboard");
-
-      constrainedPoseTelemetry =
-          smartDashboardTable.getStructTopic("CON" + visionEstimationKey, Pose2d.struct).publish();
-      pnpPoseTelemetry =
-          smartDashboardTable.getStructTopic("PNP" + visionEstimationKey, Pose2d.struct).publish();
-
       photonEstimator =
           new PhotonPoseEstimator(
-              APRILTAG_FIELD_LAYOUT, PoseStrategy.CONSTRAINED_SOLVEPNP, this.robotToCam);
+              APRILTAG_FIELD_LAYOUT, PoseStrategy.CONSTRAINED_SOLVEPNP, robotToCam);
       photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
 
       if (Robot.isSimulation()) {
@@ -163,12 +134,11 @@ public class Vision {
         cameraProp.setLatencyStdDevMs(4);
 
         var cameraSim = new PhotonCameraSim(camera, cameraProp);
-        visionSim.addCamera(cameraSim, this.robotToCam);
+        visionSim.addCamera(cameraSim, robotToCam);
         cameraSim.enableDrawWireframe(true);
       }
     }
 
-    // TODO: should we return multiple poses?
     // TODO we need alerting and stuff for when the camera is not connected
     public void getEstimatedGlobalPose(
         double headingFpgaTimestamp,
@@ -199,7 +169,7 @@ public class Vision {
 
         var solvePnpEstimate = solvePnpEst.get();
 
-        pnpPoseTelemetry.set(solvePnpEstimate.estimatedPose.toPose2d());
+        Util.logPose2d("Pose" + visionEstimationKey, solvePnpEstimate.estimatedPose.toPose2d());
 
         // Get tags
         var targets = change.getTargets();

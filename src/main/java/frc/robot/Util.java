@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.hardware.DeviceIdentifier;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class Util {
+  private static double[] m_poseArray = new double[3];
+
   public static void configureUserButton() {
     var canMotors =
         Stream.concat(
@@ -71,5 +74,13 @@ public class Util {
   public static void logDouble(String name, double value) {
     SmartDashboard.putNumber(name, value);
     SignalLogger.writeDouble(name, value);
+  }
+
+  public static void logPose2d(String key, Pose2d pose) {
+    m_poseArray[0] = pose.getX();
+    m_poseArray[1] = pose.getY();
+    m_poseArray[2] = pose.getRotation().getDegrees();
+    SignalLogger.writeDoubleArray(key, m_poseArray);
+    SmartDashboard.putNumberArray(key, m_poseArray);
   }
 }

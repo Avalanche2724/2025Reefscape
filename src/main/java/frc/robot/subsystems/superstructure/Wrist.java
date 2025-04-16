@@ -40,6 +40,11 @@ public class Wrist {
   public static final double ZERO_OFFSET = 0.206; // rotations
   // adjustment on position passed to feedforward for kG accuracy
   public static final double ARM_OFFSET = Robot.isSimulation() ? 0 : -0.049;
+
+  // limits
+  private static final double UP_LIMIT = Rotations.convertFrom(95, Degrees);
+  private static final double DOWN_LIMIT = Rotations.convertFrom(-15, Degrees);
+
   // PID stuff
   private final double WRIST_PID_PERIOD = 0.02;
   private final PIDController pid = new PIDController(40, 0, 0.4, WRIST_PID_PERIOD);
@@ -68,7 +73,6 @@ public class Wrist {
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
   private final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
-  private final Runnable absoluteEncoderResetter = absoluteEncoderResetter();
   // Simulation
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
@@ -81,6 +85,7 @@ public class Wrist {
           Radians.convertFrom(Rotations.convertFrom(90, Degrees), Rotations),
           true,
           0);
+  private final Runnable absoluteEncoderSetter = absoluteEncoderSetter();
   // SysId
   public VoltageOut sysIdControl = new VoltageOut(0);
 
@@ -110,10 +115,16 @@ public class Wrist {
   public Wrist() {
     var config = new TalonFXConfiguration();
 
-    // Note: TalonFX position/feedback is not actually used in code
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    // Note: TalonFX position/feedback is not actually used in code, but if
+    // the encoder disconnects for some reason, the limits will stop the wrist from going too far
+    // TODO: or actually not since we can't detect encoder disconnects
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = UP_LIMIT;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = DOWN_LIMIT;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     motor.getConfigurator().apply(config);
 
@@ -134,7 +145,7 @@ public class Wrist {
     motorTorqueCurrent.refresh();
     motorVoltage.refresh();
 
-    absoluteEncoderResetter.run();
+    absoluteEncoderSetter.run();
     runPositionControl();
 
     Util.logDouble("Wrist Pos", getAbsoluteEncoderPosition());
@@ -188,6 +199,15 @@ public class Wrist {
   // Signals
 
   public double getAbsoluteEncoderPosition() {
+    var pos = absoluteEncoder.getPosition();
+    // TODO alerting better
+    if (absoluteEncoderSparkMax.getFaults().sensor) {
+      System.out.println("Warning: sensor fault");
+    }
+    if (pos == 0) {
+      System.out.println("Warning: pos exactly 0, disconnected?");
+    }
+
     if (Robot.isSimulation()) return Rotations.convertFrom(armSim.getAngleRads(), Radians);
     return absoluteEncoder.getPosition();
   }
@@ -214,7 +234,7 @@ public class Wrist {
   }
 
   // this is probably a bad idea and I apologize to anybody looking at this in the future
-  private Runnable absoluteEncoderResetter() {
+  private Runnable absoluteEncoderSetter() {
     var setter =
         new TalonFXConfigurator(new DeviceIdentifier(WRIST_ID, "talon fx", "")) {
           @Override
