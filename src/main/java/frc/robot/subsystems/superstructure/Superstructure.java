@@ -30,7 +30,7 @@ public class Superstructure extends SubsystemBase {
 
     // Various stowing configurations:
     STOW(Elevator.MIN_HEIGHT, 90),
-    ALGAELAUNCHSTOW(Elevator.MIN_HEIGHT, 51),
+    ALGAELAUNCHSTOW(Elevator.MIN_HEIGHT, 54),
     HPSTOW(Elevator.MIN_HEIGHT, 35),
     FLATSTOW(Elevator.MIN_HEIGHT, 0),
 

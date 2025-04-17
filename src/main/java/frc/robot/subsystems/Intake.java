@@ -23,10 +23,12 @@ public class Intake extends SubsystemBase {
   private final VoltageOut voltageOut = new VoltageOut(0);
   private final TorqueCurrentFOC torqueCurrent = new TorqueCurrentFOC(0);
   public Trigger hasGamePieceTrigger = new Trigger(this::hasGamePiece).debounce(0.1);
-  DutyCycleOut fullSend = new DutyCycleOut(-1.0);
+  // experiment 3
+  public VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
 
   // TODO
   // private boolean everControlledSinceDisable = false;
+  DutyCycleOut fullSend = new DutyCycleOut(-1.0);
 
   public Intake() {
     var config = new TalonFXConfiguration();
@@ -80,7 +82,7 @@ public class Intake extends SubsystemBase {
   // used during algae launch
   // todo: lower voltages so consistent?
   public Command fullSend() {
-    return run(() -> setVoltages(-9, -9));
+    return run(() -> setVoltages(-11, -11));
   }
 
   // general outtake command
@@ -148,6 +150,8 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  // experiment 2
+
   // experiment 1
   public Command alternatingSpinny() {
     int[] a = new int[1];
@@ -163,8 +167,6 @@ public class Intake extends SubsystemBase {
         });
   }
 
-  // experiment 2
-
   public Command limitedTorqueIntake() {
     return run(
         () -> {
@@ -172,9 +174,6 @@ public class Intake extends SubsystemBase {
           rightMotor.setControl(torqueCurrent.withOutput(20).withMaxAbsDutyCycle(0.5));
         });
   }
-
-  // experiment 3
-  public VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
 
   public Command limitedSpeedIntake() {
     return run(

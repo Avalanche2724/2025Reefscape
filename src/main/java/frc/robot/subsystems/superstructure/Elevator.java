@@ -211,7 +211,7 @@ public class Elevator {
   }
 
   void setMotorLaunchingVelocityUp() {
-    setMotorVelocitySmooth(2.7, false);
+    setMotorVelocitySmooth(2.8, false);
   }
 
   void setMotorLaunchingVelocityDown() {
