@@ -309,10 +309,15 @@ public class AutoRoutines {
   }
 
   public AutoRoutine Samecage2net() {
-    return newbestmiddlepath("Leftsidenet");
+    return newbestmiddlepath("Leftsidenet", false);
   }
 
   public AutoRoutine newbestmiddlepath(String pathname) {
+    return newbestmiddlepath(pathname, true);
+  }
+
+  public AutoRoutine newbestmiddlepath(String pathname, boolean eeee) {
+
     var routine = m_factory.newRoutine("BestMiddlePathFR");
 
     var START_TO_BRANCH1 = routine.trajectory(pathname, 0);
@@ -334,7 +339,8 @@ public class AutoRoutines {
         .onTrue(
             sequence(
                 driveToBranchAndScore(true, FieldConstants.ReefLevel.L3),
-                superstructure.goToPositionOnce(Position.INTAKE_ALGAE_L2),
+                superstructure.goToPositionOnce(
+                    eeee ? Position.INTAKE_ALGAE_L2 : Position.INTAKE_ALGAE_L3),
                 Commands.waitSeconds(0.4),
                 BRANCH1_TO_TAKEALG.spawnCmd()));
 
@@ -355,7 +361,9 @@ public class AutoRoutines {
                 .andThen(NET_TO_SideAlgae.spawnCmd()));
     NET_TO_SideAlgae.active().onTrue(intakeForever());
     NET_TO_SideAlgae.atTimeBeforeEnd(1.3)
-        .onTrue(superstructure.goToPositionOnce(Superstructure.Position.INTAKE_ALGAE_L3));
+        .onTrue(
+            superstructure.goToPositionOnce(
+                eeee ? Position.INTAKE_ALGAE_L3 : Position.INTAKE_ALGAE_L2));
     NET_TO_SideAlgae.done()
         .onTrue(sequence(Commands.print("Reached Lollipop 2"), SIDEALGAE_TO_NET.spawnCmd()));
 
