@@ -150,6 +150,10 @@ public class Intake extends SubsystemBase {
         });
   }
 
+  public Command algaeMajority() {
+    return run(() -> setVoltages(6, 6));
+  }
+
   // experiment 2
 
   // experiment 1

@@ -48,7 +48,7 @@ public class Wrist {
   // PID stuff
   private final double WRIST_PID_PERIOD = 0.02;
   private final PIDController pid =
-      new PIDController(Robot.isReal() ? 12 : 60, 0, 0.1, WRIST_PID_PERIOD);
+      new PIDController(Robot.isReal() ? 12 : 60, 0, 0.5, WRIST_PID_PERIOD);
   private final ArmFeedforward feedforward =
       new ArmFeedforward(
           (0.5 - 0.37) / 2,
@@ -58,9 +58,9 @@ public class Wrist {
           WRIST_PID_PERIOD);
   // Trapezoid profile
   private final TrapezoidProfile profileDeceleration =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.4));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(0.5, 0.45));
   private final TrapezoidProfile profileAcceleration =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.7));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(0.5, 1.05));
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
