@@ -73,6 +73,7 @@ public class Wrist {
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
   private final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
+  private final Runnable absoluteEncoderSetter = absoluteEncoderSetter();
   // Simulation
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
@@ -85,7 +86,6 @@ public class Wrist {
           Radians.convertFrom(Rotations.convertFrom(90, Degrees), Rotations),
           true,
           0);
-  private final Runnable absoluteEncoderSetter = absoluteEncoderSetter();
   // SysId
   public VoltageOut sysIdControl = new VoltageOut(0);
 
@@ -202,6 +202,8 @@ public class Wrist {
 
   public double getAbsoluteEncoderPosition() {
     var pos = absoluteEncoder.getPosition();
+    if (Robot.isSimulation()) return Rotations.convertFrom(armSim.getAngleRads(), Radians);
+
     // TODO alerting better
     if (absoluteEncoderSparkMax.getFaults().sensor) {
       System.out.println("Warning: sensor fault");
@@ -210,7 +212,6 @@ public class Wrist {
       System.out.println("Warning: pos exactly 0, disconnected?");
     }
 
-    if (Robot.isSimulation()) return Rotations.convertFrom(armSim.getAngleRads(), Radians);
     return absoluteEncoder.getPosition();
   }
 

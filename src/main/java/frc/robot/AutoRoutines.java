@@ -308,6 +308,10 @@ public class AutoRoutines {
     return newbestmiddlepath("Extremely_Cool_Middle_Path_PROCSIDE");
   }
 
+  public AutoRoutine Samecage2net() {
+    return newbestmiddlepath("Leftsidenet");
+  }
+
   public AutoRoutine newbestmiddlepath(String pathname) {
     var routine = m_factory.newRoutine("BestMiddlePathFR");
 
