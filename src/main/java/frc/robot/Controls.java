@@ -388,8 +388,8 @@ public class Controls {
                     LED.getXNetScore(),
                     drivetrain.getState().Pose.getY(),
                     LED.getXFlipped()
-                        ? Rotation2d.kZero
-                        : AllianceFlipUtil.flip(Rotation2d.kZero)));
+                        ? AllianceFlipUtil.flip(Rotation2d.kZero)
+                        : Rotation2d.kZero));
   }
 
   /**

@@ -55,11 +55,11 @@ public class LED extends SubsystemBase {
     double flipped = AllianceFlipUtil.flipX(6.7);
     double ndist = Math.abs(currentx - normal);
     double fldist = Math.abs(currentx - flipped);
-    return fldist > ndist;
+    return fldist < ndist;
   }
 
   public static double getXNetScore() {
-    return getXFlipped() ? 6.7 : AllianceFlipUtil.flipX(6.7);
+    return getXFlipped() ? AllianceFlipUtil.flipX(6.7) : 6.7;
   }
 
   @Override
@@ -217,7 +217,7 @@ public class LED extends SubsystemBase {
           var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
           var coralMode = Robot.instance.robotContainer.controls.isOnCoralBindings;
 
-          if (Math.abs(position - getXNetScore()) < Meters.convertFrom(1, Inch)) {
+          if (Math.abs(position - getXNetScore()) < Meters.convertFrom(1.2, Inch)) {
             LEDPattern.solid(Color.kRed).applyTo(m_buffer);
             Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
           } else if (hasGamePiece) {
