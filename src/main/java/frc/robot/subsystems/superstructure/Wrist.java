@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -47,7 +48,7 @@ public class Wrist {
 
   // PID stuff
   private final double WRIST_PID_PERIOD = 0.02;
-  private final PIDController pid = new PIDController(40, 0, 0.4, WRIST_PID_PERIOD);
+  private final PIDController pid = new PIDController(10, 0, 0.4, WRIST_PID_PERIOD);
   private final ArmFeedforward feedforward =
       new ArmFeedforward(
           (0.5 - 0.37) / 2,
@@ -57,9 +58,9 @@ public class Wrist {
           WRIST_PID_PERIOD);
   // Trapezoid profile
   private final TrapezoidProfile profileDeceleration =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.5));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 0.4));
   private final TrapezoidProfile profileAcceleration =
-      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4));
+      new TrapezoidProfile(new TrapezoidProfile.Constraints(1.4, 1.4);
   // I/O
   private final TalonFX motor = new TalonFX(WRIST_ID);
   // Signals
@@ -73,6 +74,7 @@ public class Wrist {
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
   private final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
+  private final Runnable absoluteEncoderSetter = absoluteEncoderSetter();
   // Simulation
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
@@ -85,7 +87,6 @@ public class Wrist {
           Radians.convertFrom(Rotations.convertFrom(90, Degrees), Rotations),
           true,
           0);
-  private final Runnable absoluteEncoderSetter = absoluteEncoderSetter();
   // SysId
   public VoltageOut sysIdControl = new VoltageOut(0);
 
@@ -137,6 +138,8 @@ public class Wrist {
         sparkMaxConfig,
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
+
+    SmartDashboard.putData("wrist pid", pid);
   }
 
   public void periodic() {

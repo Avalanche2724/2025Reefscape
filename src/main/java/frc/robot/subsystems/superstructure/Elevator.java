@@ -115,7 +115,7 @@ public class Elevator {
     // For algae launching
     config.Slot2.kG = config.Slot1.kG;
     config.Slot2.kS = config.Slot1.kS;
-    config.Slot2.kP = 100;
+    config.Slot2.kP = 120;
     config.Slot2.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
 
     // Other things
