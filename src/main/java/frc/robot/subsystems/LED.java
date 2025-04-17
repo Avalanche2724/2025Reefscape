@@ -15,17 +15,29 @@ import java.util.List;
 import java.util.Random;
 
 public class LED extends SubsystemBase {
+  static final double GAMMA = Robot.isReal() ? 2.2 : 1.0;
   private static final int kPort = 9;
   private static final int kLength = 18;
-
+  // Example constants you can tweak
+  private static final double TIME_STEP = 0.02; // Called ~50x/sec if periodic
+  private static final double SNOW_START_POSITION = 19.0; // Where new snow spawns
+  // Bottom stack constants
+  private static final double BOTTOM_STACK_SHIFT_FACTOR = -0.3; // Proportional push term
+  private static final double INITIAL_BOTTOM_STACK_POS = 3.0; // Starting stack height
+  // Falling snow constants
+  private static final double FLAKE_RANDOM_SPEED = -30; // Random part of velocity
+  private static final double FLAKE_BASE_SPEED = 5; // Base velocity
   private final AddressableLED m_led;
   private final AddressableLEDBuffer m_buffer;
-
   // Fields for blue fire simulation
   private final List<Flame> flames = new ArrayList<>();
   private final int simulationBarLength = kLength; // Use LED strip length for simulation
   private final int notActuallyMaxIntensity = 16;
   private final Random random = new Random();
+  public ArrayList<Double> snowPositions = new ArrayList<>();
+  public double bottomSnowStackPosition = INITIAL_BOTTOM_STACK_POS;
+  public double timeSinceLastSnowflake = 1.5;
+  public double nextSnowflakeDelay = 0;
 
   public LED() {
     m_led = new AddressableLED(kPort);
@@ -35,6 +47,19 @@ public class LED extends SubsystemBase {
 
     // Set the default command to netchecker (which now uses our blue fire simulation)
     setDefaultCommand(netchecker().withName("ledchanger"));
+  }
+
+  public static boolean getXFlipped() {
+    double currentx = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
+    double normal = 6.7;
+    double flipped = AllianceFlipUtil.flipX(6.7);
+    double ndist = Math.abs(currentx - normal);
+    double fldist = Math.abs(currentx - flipped);
+    return fldist > ndist;
+  }
+
+  public static double getXNetScore() {
+    return getXFlipped() ? 6.7 : AllianceFlipUtil.flipX(6.7);
   }
 
   @Override
@@ -62,24 +87,6 @@ public class LED extends SubsystemBase {
   public Command thingy2() {
     return runPattern(LEDPattern.solid(Color.kBlack));
   }
-
-  // Example constants you can tweak
-  private static final double TIME_STEP = 0.02; // Called ~50x/sec if periodic
-  private static final double SNOW_START_POSITION = 19.0; // Where new snow spawns
-
-  // Bottom stack constants
-  private static final double BOTTOM_STACK_SHIFT_FACTOR = -0.3; // Proportional push term
-  private static final double INITIAL_BOTTOM_STACK_POS = 3.0; // Starting stack height
-
-  // Falling snow constants
-  private static final double FLAKE_RANDOM_SPEED = -30; // Random part of velocity
-  private static final double FLAKE_BASE_SPEED = 5; // Base velocity
-
-  public ArrayList<Double> snowPositions = new ArrayList<>();
-  public double bottomSnowStackPosition = INITIAL_BOTTOM_STACK_POS;
-
-  public double timeSinceLastSnowflake = 1.5;
-  public double nextSnowflakeDelay = 0;
 
   /** Update positions of falling snowflakes and bottom snow stack. */
   public void updateSnow() {
@@ -113,8 +120,6 @@ public class LED extends SubsystemBase {
       bottomSnowStackPosition += 1.0;
     }
   }
-
-  static final double GAMMA = Robot.isReal() ? 2.2 : 1.0;
 
   private int gammaCorrect(int value) {
     // Convert [0..255] to [0..1], raise to 1/gamma, then convert back.
@@ -204,10 +209,6 @@ public class LED extends SubsystemBase {
         writer.setRGB(i, gammaCorrect(r), gammaCorrect(g), gammaCorrect(b));
       }
     };
-  }
-
-  public static double getXNetScore() {
-    return AllianceFlipUtil.applyX(6.7);
   }
 
   public Command netchecker() {
@@ -355,12 +356,12 @@ public class LED extends SubsystemBase {
       return length;
     }
 
-    public int getPosition() {
-      return position;
-    }
-
     public void setLength(int length) {
       this.length = length;
+    }
+
+    public int getPosition() {
+      return position;
     }
 
     public void setPosition(int position) {

@@ -354,7 +354,7 @@ public class Controls {
       case OUTTAKE_L1 -> ReefLevel.L1;
       case OUTTAKE_L2_LAUNCH, INTAKE_ALGAE_L2 -> ReefLevel.L2;
       case OUTTAKE_L3_LAUNCH, INTAKE_ALGAE_L3 -> ReefLevel.L3;
-        // case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
+      // case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
       default -> null;
     };
   }
@@ -387,7 +387,9 @@ public class Controls {
                 new Pose2d(
                     LED.getXNetScore(),
                     drivetrain.getState().Pose.getY(),
-                    AllianceFlipUtil.apply(Rotation2d.kZero)));
+                    LED.getXFlipped()
+                        ? Rotation2d.kZero
+                        : AllianceFlipUtil.flip(Rotation2d.kZero)));
   }
 
   /**

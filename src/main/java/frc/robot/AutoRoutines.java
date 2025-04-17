@@ -336,7 +336,7 @@ public class AutoRoutines {
 
     BRANCH1_TO_TAKEALG.active().onTrue(intakeForever());
     BRANCH1_TO_TAKEALG.done().onTrue(ALGAE_TO_NET.cmd());
-    ALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.ALGAELAUNCHSTOW));
+    ALGAE_TO_NET.atTime(0.8).onTrue(superstructure.goToPositionOnce(Position.ALGAELAUNCHSTOW));
 
     ALGAE_TO_NET
         .done()
@@ -356,7 +356,7 @@ public class AutoRoutines {
         .onTrue(sequence(Commands.print("Reached Lollipop 2"), SIDEALGAE_TO_NET.spawnCmd()));
 
     SIDEALGAE_TO_NET.active().onTrue(Commands.print("test3"));
-    SIDEALGAE_TO_NET.atTime(0.75).onTrue(superstructure.goToPositionOnce(Position.ALGAELAUNCHSTOW));
+    SIDEALGAE_TO_NET.atTime(0.8).onTrue(superstructure.goToPositionOnce(Position.ALGAELAUNCHSTOW));
 
     SIDEALGAE_TO_NET.done().onTrue(controls.driveToAlgaeLaunchCmd());
     SIDEALGAE_TO_NET
