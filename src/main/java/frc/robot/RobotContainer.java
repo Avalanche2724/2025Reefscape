@@ -48,6 +48,7 @@ public class RobotContainer {
     autoChooser.addRoutine("l1forauto_PUSH", autoRoutines::l1forauto_PUSH);
     autoChooser.addRoutine("BestMiddlePathLOL", autoRoutines::BestMiddlePathLOL);
     autoChooser.addRoutine("BestMiddlePathxD_PROC", autoRoutines::BestMiddlePathxD_PROC);
+    autoChooser.addRoutine("Samecage2net", autoRoutines::Samecage2net);
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
