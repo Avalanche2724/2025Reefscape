@@ -26,7 +26,6 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -48,7 +47,7 @@ public class Wrist {
 
   // PID stuff
   private final double WRIST_PID_PERIOD = 0.02;
-  private final PIDController pid = new PIDController(6, 0, 0.1, WRIST_PID_PERIOD);
+  private final PIDController pid = new PIDController(11, 0, 0.1, WRIST_PID_PERIOD);
   private final ArmFeedforward feedforward =
       new ArmFeedforward(
           (0.5 - 0.37) / 2,
@@ -74,6 +73,7 @@ public class Wrist {
   private final SparkMax absoluteEncoderSparkMax =
       new SparkMax(WRIST_ENCODER_ID, MotorType.kBrushed);
   private final SparkAbsoluteEncoder absoluteEncoder = absoluteEncoderSparkMax.getAbsoluteEncoder();
+  private final Runnable absoluteEncoderSetter = absoluteEncoderSetter();
   // Simulation
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
@@ -86,7 +86,6 @@ public class Wrist {
           Radians.convertFrom(Rotations.convertFrom(90, Degrees), Rotations),
           true,
           0);
-  private final Runnable absoluteEncoderSetter = absoluteEncoderSetter();
   // SysId
   public VoltageOut sysIdControl = new VoltageOut(0);
 
@@ -139,7 +138,7 @@ public class Wrist {
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
 
-    SmartDashboard.putData("wrist pid", pid);
+    // SmartDashboard.putData("wrist pid", pid);
   }
 
   public void periodic() {

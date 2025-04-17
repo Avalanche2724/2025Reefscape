@@ -56,7 +56,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private static final double ELEVATOR_AT_POSITION_THRESHOLD = Meters.convertFrom(1, Inch);
-  private static final double WRIST_THRESHOLD = 2; // DEGREES
+  private static final double WRIST_THRESHOLD = 3; // DEGREES
   // Simulation
   private static final double SIM_LOOP_PERIOD = 0.005;
 

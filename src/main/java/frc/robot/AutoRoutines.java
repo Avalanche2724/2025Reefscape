@@ -331,7 +331,7 @@ public class AutoRoutines {
             sequence(
                 driveToBranchAndScore(true, FieldConstants.ReefLevel.L3),
                 superstructure.goToPositionOnce(Position.INTAKE_ALGAE_L2),
-                Commands.waitSeconds(0.3),
+                Commands.waitSeconds(0.4),
                 BRANCH1_TO_TAKEALG.spawnCmd()));
 
     BRANCH1_TO_TAKEALG.active().onTrue(intakeForever());
