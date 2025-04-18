@@ -35,6 +35,7 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -101,8 +102,10 @@ public class Vision {
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public class Camera {
     // Standard deviations for vision estimations:
-    private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(4, 4, 1000);
+    private static final Matrix<N3, N1> singleTagDevs = VecBuilder.fill(4, 4, 1_000_000);
     private static final Matrix<N3, N1> multiTagDevs = VecBuilder.fill(0.4, 0.4, 15);
+    private static final Matrix<N3, N1> multiTagDevsEnabled = VecBuilder.fill(0.4, 0.4, 1_000_000);
+
     // PNP params
     private static final Optional<PhotonPoseEstimator.ConstrainedSolvepnpParams> pnpParams =
         Optional.of(new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1e12));
@@ -122,7 +125,7 @@ public class Vision {
 
       photonEstimator =
           new PhotonPoseEstimator(
-              APRILTAG_FIELD_LAYOUT, PoseStrategy.CONSTRAINED_SOLVEPNP, robotToCam);
+              APRILTAG_FIELD_LAYOUT, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCam);
       photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
 
       if (Robot.isSimulation()) {
@@ -188,13 +191,12 @@ public class Vision {
         }
         avgDist /= numTags;
 
-        var estStdDevs = numTags == 1 ? singleTagDevs : multiTagDevs;
+        var estStdDevs =
+            numTags == 1
+                ? singleTagDevs
+                : (DriverStation.isDisabled() ? multiTagDevs : multiTagDevsEnabled);
         // Just taken from the photonvision example
         estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
-
-        // if (DriverStation.isEnabled()) {
-        //  estStdDevs.set(2, 0, 99999999);
-        // }
 
         // TODO caused some issue; fix later
 
