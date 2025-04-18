@@ -35,7 +35,7 @@ public class Superstructure extends SubsystemBase {
     FLATSTOW(Elevator.MIN_HEIGHT, 0),
 
     // Straight outtake:
-    OUTTAKE_L1(0.75, 5),
+    OUTTAKE_L1(0.68, 8),
     // Launching outtake:
     OUTTAKE_L2_LAUNCH(0.95, 0),
     OUTTAKE_L3_LAUNCH(1.36, 0),

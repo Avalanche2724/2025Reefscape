@@ -107,7 +107,7 @@ public class Intake extends SubsystemBase {
 
   // for L1 outtake maybe?
   public Command semiSpinnyL1Outtake() {
-    return run(() -> setVoltages(-12, 0));
+    return run(() -> setVoltages(-3, 0));
   }
 
   // used for default command

@@ -219,12 +219,12 @@ public class LED extends SubsystemBase {
 
           if (Math.abs(position - getXNetScore()) < Meters.convertFrom(1.2, Inch)) {
             LEDPattern.solid(Color.kRed).applyTo(m_buffer);
-            Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
+            // Robot.instance.robotContainer.controls.driver.rumble.accept(0.7);
           } else if (hasGamePiece) {
             LEDPattern.solid(Color.kGreen).applyTo(m_buffer);
-            Robot.instance.robotContainer.controls.driver.rumble.accept(0.2);
+            // Robot.instance.robotContainer.controls.driver.rumble.accept(0.2);
           } else {
-            Robot.instance.robotContainer.controls.driver.rumble.accept(0);
+            // Robot.instance.robotContainer.controls.driver.rumble.accept(0);
             if (!coralMode) {
               LEDPattern.solid(Color.kBlue).applyTo(m_buffer);
             } else {
