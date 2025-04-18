@@ -408,8 +408,8 @@ public class AutoRoutines {
                 BRANCH1_TO_TAKEALG.spawnCmd()));
 
     BRANCH1_TO_TAKEALG.active().onTrue(intakeForever());
-    BRANCH1_TO_TAKEALG.atTimeBeforeEnd(1.7).onTrue(superstructure.goToPosition(Position.ALG_PROC));
-    BRANCH1_TO_TAKEALG.done().onTrue((intake.algSend()));
+    BRANCH1_TO_TAKEALG.done().onTrue(superstructure.goToPosition(Position.STOW));
+    // BRANCH1_TO_TAKEALG.done().onTrue((intake.algSend()));
 
     return routine;
   }
