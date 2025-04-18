@@ -65,7 +65,7 @@ public class AutoRoutines {
   }
 
   public Command intakeForever() {
-    return intake.leftMajority();
+    return intake.limitedSpeedIntake();
   }
 
   public Command waitAndL2() {
@@ -338,7 +338,8 @@ public class AutoRoutines {
         .atTimeBeforeEnd(0.4)
         .onTrue(
             sequence(
-                driveToBranchAndScore(true, FieldConstants.ReefLevel.L3),
+                driveToBranchAndScore(
+                    true, eeee ? FieldConstants.ReefLevel.L3 : FieldConstants.ReefLevel.L2),
                 superstructure.goToPositionOnce(
                     eeee ? Position.INTAKE_ALGAE_L2 : Position.INTAKE_ALGAE_L3),
                 Commands.waitSeconds(0.4),
