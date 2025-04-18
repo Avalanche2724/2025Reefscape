@@ -361,7 +361,7 @@ public class AutoRoutines {
                 .andThen(controls.algaeLaunchSequence())
                 .andThen(NET_TO_SideAlgae.spawnCmd()));
     NET_TO_SideAlgae.active().onTrue(intakeForever());
-    NET_TO_SideAlgae.atTimeBeforeEnd(1.3)
+    NET_TO_SideAlgae.atTimeBeforeEnd(1.5)
         .onTrue(
             superstructure.goToPositionOnce(
                 eeee ? Position.INTAKE_ALGAE_L3 : Position.INTAKE_ALGAE_L2));
