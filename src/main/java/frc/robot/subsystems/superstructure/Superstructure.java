@@ -30,12 +30,12 @@ public class Superstructure extends SubsystemBase {
 
     // Various stowing configurations:
     STOW(Elevator.MIN_HEIGHT, 90),
-    ALGAELAUNCHSTOW(Elevator.MIN_HEIGHT, 54),
+    ALGAELAUNCHSTOW(Elevator.MIN_HEIGHT, 56),
     HPSTOW(Elevator.MIN_HEIGHT, 35),
     FLATSTOW(Elevator.MIN_HEIGHT, 0),
 
     // Straight outtake:
-    OUTTAKE_L1(0.75, 0),
+    OUTTAKE_L1(0.75, 5),
     // Launching outtake:
     OUTTAKE_L2_LAUNCH(0.95, 0),
     OUTTAKE_L3_LAUNCH(1.36, 0),

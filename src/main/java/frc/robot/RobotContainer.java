@@ -50,6 +50,8 @@ public class RobotContainer {
     autoChooser.addRoutine("BestMiddlePathxD_PROC", autoRoutines::BestMiddlePathxD_PROC);
     autoChooser.addRoutine("Samecage2net", autoRoutines::Samecage2net);
 
+    autoChooser.addRoutine("RightSideL3", autoRoutines::RightSideL3);
+
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     // Set up drivetrain telemetry

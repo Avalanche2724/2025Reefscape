@@ -161,42 +161,43 @@ public class AutoRoutines {
     routine.active().onTrue(superstructure.goToPosition(Position.FLATSTOW));
 
     START_TO_BRANCH1.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
-    START_TO_BRANCH1
-        .atTimeBeforeEnd(0.4)
-        .onTrue(sequence(driveToL2BranchAndScore(false), BRANCH1_TO_HP.spawnCmd()));
+    START_TO_BRANCH1.atTimeBeforeEnd(0.4).onTrue(sequence(driveToL2BranchAndScore(false)));
 
-    BRANCH1_TO_HP.active().onTrue(noWaitAndStowWhileOuttakeThenSemiStow());
-    BRANCH1_TO_HP.atTimeBeforeEnd(1.1).onTrue(noWaitAndCoralStation());
-    BRANCH1_TO_HP
-        .atTimeBeforeEnd(0.5)
-        .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
+    // , BRANCH1_TO_HP.spawnCmd()));
 
-    BRANCH1_TO_HP.done().onTrue(drivetrain.brakeOnce());
+    /*
+        BRANCH1_TO_HP.active().onTrue(noWaitAndStowWhileOuttakeThenSemiStow());
+        BRANCH1_TO_HP.atTimeBeforeEnd(1.1).onTrue(noWaitAndCoralStation());
+        BRANCH1_TO_HP
+            .atTimeBeforeEnd(0.5)
+            .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH2.spawnCmd()));
 
-    HP_TO_BRANCH2.active().onTrue(waitAndScoryStow());
-    HP_TO_BRANCH2.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
-    HP_TO_BRANCH2
-        .atTimeBeforeEnd(0.4)
-        .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
+        BRANCH1_TO_HP.done().onTrue(drivetrain.brakeOnce());
 
-    BRANCH2_TO_HP.active().onTrue(noWaitAndStowWhileOuttakeThenSemiStow());
-    BRANCH2_TO_HP.atTimeBeforeEnd(1.1).onTrue(noWaitAndCoralStation());
-    BRANCH2_TO_HP
-        .atTimeBeforeEnd(0.5)
-        .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
+        HP_TO_BRANCH2.active().onTrue(waitAndScoryStow());
+        HP_TO_BRANCH2.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
+        HP_TO_BRANCH2
+            .atTimeBeforeEnd(0.4)
+            .onTrue(sequence(driveToL2BranchAndScore(true), BRANCH2_TO_HP.spawnCmd()));
 
-    BRANCH2_TO_HP.done().onTrue(drivetrain.brakeOnce());
+        BRANCH2_TO_HP.active().onTrue(noWaitAndStowWhileOuttakeThenSemiStow());
+        BRANCH2_TO_HP.atTimeBeforeEnd(1.1).onTrue(noWaitAndCoralStation());
+        BRANCH2_TO_HP
+            .atTimeBeforeEnd(0.5)
+            .onTrue(sequence(intakeUntilGamePiece(), HP_TO_BRANCH3.spawnCmd()));
 
-    HP_TO_BRANCH3.active().onTrue(waitAndScoryStow());
-    HP_TO_BRANCH3.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
-    HP_TO_BRANCH3
-        .atTimeBeforeEnd(0.4)
-        .onTrue(
-            sequence(
-                driveToL2BranchAndScore(false),
-                Commands.print("Complete!"),
-                superstructure.goToPositionOnce(Position.STOW)));
+        BRANCH2_TO_HP.done().onTrue(drivetrain.brakeOnce());
 
+        HP_TO_BRANCH3.active().onTrue(waitAndScoryStow());
+        HP_TO_BRANCH3.atTimeBeforeEnd(1.1).onTrue(noWaitAndL2());
+        HP_TO_BRANCH3
+            .atTimeBeforeEnd(0.4)
+            .onTrue(
+                sequence(
+                    driveToL2BranchAndScore(false),
+                    Commands.print("Complete!"),
+                    superstructure.goToPositionOnce(Position.STOW)));
+    */
     return routine; // TODO
   }
 
@@ -317,7 +318,6 @@ public class AutoRoutines {
   }
 
   public AutoRoutine newbestmiddlepath(String pathname, boolean eeee) {
-
     var routine = m_factory.newRoutine("BestMiddlePathFR");
 
     var START_TO_BRANCH1 = routine.trajectory(pathname, 0);
@@ -379,6 +379,37 @@ public class AutoRoutines {
                     controls.createAtTargetPositionSupplier(
                         () -> Meters.convertFrom(9, Inch), () -> 8))
                 .andThen(controls.algaeLaunchSequence()));
+
+    return routine;
+  }
+
+  public AutoRoutine RightSideL3() {
+
+    var routine = m_factory.newRoutine("sus7");
+
+    var START_TO_BRANCH = routine.trajectory("RightSideL3", 0);
+    var BRANCH1_TO_TAKEALG = routine.trajectory("RightSideL3", 1);
+
+    routine
+        .active()
+        .onTrue(
+            (Robot.isSimulation() ? START_TO_BRANCH.resetOdometry() : print("Starting auto"))
+                .andThen(waitSeconds(0.2))
+                .andThen(START_TO_BRANCH.cmd()));
+
+    START_TO_BRANCH.atTime(0.8).onTrue(superstructure.goToPosition(Position.OUTTAKE_L3_LAUNCH));
+    START_TO_BRANCH
+        .atTimeBeforeEnd(0.4)
+        .onTrue(
+            sequence(
+                driveToBranchAndScore(false, FieldConstants.ReefLevel.L3),
+                superstructure.goToPositionOnce(Position.INTAKE_ALGAE_L2),
+                Commands.waitSeconds(0.9),
+                BRANCH1_TO_TAKEALG.spawnCmd()));
+
+    BRANCH1_TO_TAKEALG.active().onTrue(intakeForever());
+    BRANCH1_TO_TAKEALG.atTimeBeforeEnd(1.7).onTrue(superstructure.goToPosition(Position.ALG_PROC));
+    BRANCH1_TO_TAKEALG.done().onTrue((intake.algSend()));
 
     return routine;
   }
