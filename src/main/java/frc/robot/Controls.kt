@@ -1,6 +1,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.GenericHID.RumbleType
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -10,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.Commands.runOnce
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.subsystems.CommandSwerveDrivetrain
 import frc.robot.subsystems.Shooter.ShootingSpeed
 import java.util.function.DoubleUnaryOperator
 import kotlin.math.atan2
@@ -18,7 +18,7 @@ import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
 
-const val enableOutreachModeConst = false
+const val enableOutreachModeConst = true
 
 class Controls(bot: RobotContainer) {
     val outreachMode
@@ -50,39 +50,72 @@ class Controls(bot: RobotContainer) {
         }
     }
 
+    var MaxSpeed = 3;
+    var MaxAngularRate = 1;
+    var mult = 1;
+
+    private var drive =
+        SwerveRequest.FieldCentric()
+            .withDeadband(5 * 0.001)
+            .withRotationalDeadband(1 * 0.001) // Add a 10% deadband
+
+
     fun configureDriveBindings() {
         var joyrightstick = joystick.rightStick()
-        drivetrain.defaultCommand = drivetrain.applyRequest {
+        // drivetrain.defaultCommand = drivetrain.applyRequest {
 
-            val joystickY = -joystick.leftY
-            val joystickX = joystick.leftX
-            //0.5
-            var joystickRotation = -joystick.rightX
-            val leftJoystickAngle = atan2(joystickY, joystickX)
-            var leftJoystickDist = hypot(joystickX, joystickY)
+        val joystickY = -joystick.leftY
+        val joystickX = joystick.leftX
+        //0.5
+        var joystickRotation = -joystick.rightX
+        val leftJoystickAngle = atan2(joystickY, joystickX)
+        var leftJoystickDist = hypot(joystickX, joystickY)
 
-            joystickRotation = stickDeadband.applyAsDouble(joystickRotation)
-            leftJoystickDist = stickDeadband.applyAsDouble(leftJoystickDist)
+        joystickRotation = stickDeadband.applyAsDouble(joystickRotation)
+        leftJoystickDist = stickDeadband.applyAsDouble(leftJoystickDist)
 
-            val forward = sin(leftJoystickAngle) * leftJoystickDist
-            val left = -(cos(leftJoystickAngle) * leftJoystickDist)
+        val forward = sin(leftJoystickAngle) * leftJoystickDist
+        val left = -(cos(leftJoystickAngle) * leftJoystickDist)
+        /*
+                    drivetrain.teleopDriveRequest
+                        .withVelocityX( // Drive forward with negative Y (forward)
+                            forward * CommandSwerveDrivetrain.MAX_SPEED
+                        )
+                        .withVelocityY( // Drive left with negative X (left)
+                            left * CommandSwerveDrivetrain.MAX_SPEED
+                        )
+                        .withRotationalRate( // Drive counterclockwise with negative X (left)
+                            joystickRotation * CommandSwerveDrivetrain.MAX_ANGLE_RATE
+                        )*/
+        //}
 
-            drivetrain.teleopDriveRequest
-                .withVelocityX( // Drive forward with negative Y (forward)
-                    forward * CommandSwerveDrivetrain.MAX_SPEED
-                )
-                .withVelocityY( // Drive left with negative X (left)
-                    left * CommandSwerveDrivetrain.MAX_SPEED
-                )
-                .withRotationalRate( // Drive counterclockwise with negative X (left)
-                    joystickRotation * CommandSwerveDrivetrain.MAX_ANGLE_RATE
-                )
-        }
+
+        drivetrain.defaultCommand = drivetrain.applyRequest(
+            {
+                drive
+                    .withVelocityX(
+                        (-joystick.getLeftY())
+                                * MaxSpeed
+                                * mult
+                    ) // Drive forward with negative Y (forward)
+                    .withVelocityY(
+                        (-joystick.getLeftX())
+                                * MaxSpeed
+                                * mult
+                    ) // Drive left with negative X (left)
+                    .withRotationalRate(
+                        (-joystick.getRightX())
+                                * MaxAngularRate
+                                * mult
+                    ); // Drive counterclockwise with negative X (left)
+            })
+
+        joystick.back().onTrue(drivetrain.runOnce { drivetrain.seedFieldCentric() });
 
         // Back button: Recenter gyro
         // Note that the battery must be at the back of the robot from the driver's POV
-        joystick.back()
-            .onTrue(drivetrain.runOnce(drivetrain::resetGyroToForwardFromOperatorPointOfView))
+        //joystick.back()
+        //    .onTrue(drivetrain.runOnce(drivetrain::resetGyroToForwardFromOperatorPointOfView))
     }
 
     private fun CommandXboxController.rumble(type: RumbleType, value: Double): Command =

@@ -1,7 +1,6 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC
 import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
@@ -10,13 +9,12 @@ import edu.wpi.first.math.util.Units
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.subsystems.Shooter.ShootingSpeed.Speeds
-import frc.robot.sysIdSingleMotor
 import java.util.function.Supplier
 import kotlin.math.absoluteValue
 
 
 // possible TODO: telemetry, supply limits, current detection, simulation
-private const val TALONFX_ID_TOP = 20
+private const val TALONFX_ID_TOP = 12
 private const val TALONFX_ID_BOTTOM = 0
 
 private const val SPEED_TOL = 0.25;
@@ -51,7 +49,6 @@ class Shooter : SubsystemBase() {
     private val controlTop = VelocityVoltage(0.0)
     private val controlBottom = VelocityVoltage(0.0)
 
-    val sysIdRoutine = sysIdSingleMotor(this, bottomMotor)
 
     init {
         defaultCommand = stopCmd()
@@ -100,8 +97,10 @@ class Shooter : SubsystemBase() {
         AUTOSHOT(Speeds(1700.0, 2500.0)),
 
         OLDSUBWOOFER(Speeds(1200.0, 3600.0)), // previously 1200/3200
+
         //OLDSUBWOOFER(Speeds(1200.0, 3250.0)),
         SUBWOOFER(Speeds(1800.0, 4050.0)),
+
         //LINESHOT(Speeds(4000.0, 1800.0)),
         FARTHERSHOT(Speeds(3200.0, 2200.0)),
         OUTREACHSHOT1(Speeds(700.0, 1400.0)),

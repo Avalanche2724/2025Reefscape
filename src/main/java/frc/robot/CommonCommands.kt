@@ -71,7 +71,8 @@ class CommonCommands(private val bot: RobotContainer) {
         race(
             shooter.speedCmd(speeds),
             sequence(
-                waitUntil { bot.shooter.atDesiredSpeeds(speeds) },
+                waitSeconds(1.0),
+                //waitUntil { bot.shooter.atDesiredSpeeds(speeds) },
                 race(bothIntake(), waitSeconds(0.4))
             )
         )
