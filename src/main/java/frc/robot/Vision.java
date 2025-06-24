@@ -63,7 +63,8 @@ public class Vision {
             list, originalLayout.getFieldLength(), originalLayout.getFieldWidth());
   }
 
-  public VisionSystemSim visionSim = Robot.isSimulation() ? new VisionSystemSim("main") : null;
+  public VisionSystemSim visionSim =
+      RobotContainer.Robot.isSimulation() ? new VisionSystemSim("main") : null;
 
   public Camera cameraFlSwerve =
       new Camera(
@@ -81,7 +82,7 @@ public class Vision {
               new Rotation3d(Degrees.of(0), Degrees.of(-15), Degrees.of(15))));
 
   {
-    if (Robot.isSimulation()) {
+    if (RobotContainer.Robot.isSimulation()) {
       // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
       visionSim.addAprilTags(APRILTAG_FIELD_LAYOUT);
     }
@@ -95,7 +96,7 @@ public class Vision {
 
   /** A Field2d for visualizing our robot and objects on the field. */
   public Field2d getSimDebugField() {
-    if (!Robot.isSimulation()) return null;
+    if (!RobotContainer.Robot.isSimulation()) return null;
     return visionSim.getDebugField();
   }
 
@@ -128,7 +129,7 @@ public class Vision {
               APRILTAG_FIELD_LAYOUT, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCam);
       photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.PNP_DISTANCE_TRIG_SOLVE);
 
-      if (Robot.isSimulation()) {
+      if (RobotContainer.Robot.isSimulation()) {
         var cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(79));
         cameraProp.setCalibError(0, 0);

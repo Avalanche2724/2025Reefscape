@@ -8,14 +8,14 @@ import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.util.AllianceFlipUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class LED extends SubsystemBase {
-  static final double GAMMA = Robot.isReal() ? 2.2 : 1.0;
+  static final double GAMMA = RobotContainer.Robot.isReal() ? 2.2 : 1.0;
   private static final int kPort = 9;
   private static final int kLength = 18;
   // Example constants you can tweak
@@ -50,7 +50,7 @@ public class LED extends SubsystemBase {
   }
 
   public static boolean getXFlipped() {
-    double currentx = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
+    double currentx = RobotContainer.instance.drivetrain.getState().Pose.getX();
     double normal = 6.7;
     double flipped = AllianceFlipUtil.flipX(6.7);
     double ndist = Math.abs(currentx - normal);
@@ -213,9 +213,9 @@ public class LED extends SubsystemBase {
 
   public Command netchecker() {
     return run(() -> {
-          var position = Robot.instance.robotContainer.drivetrain.getState().Pose.getX();
-          var hasGamePiece = Robot.instance.robotContainer.intake.hasGamePiece();
-          var coralMode = Robot.instance.robotContainer.controls.isOnCoralBindings;
+          var position = RobotContainer.instance.drivetrain.getState().Pose.getX();
+          var hasGamePiece = RobotContainer.instance.intake.hasGamePiece();
+          var coralMode = RobotContainer.instance.controls.isOnCoralBindings;
 
           if (Math.abs(position - getXNetScore()) < Meters.convertFrom(1.2, Inch)) {
             LEDPattern.solid(Color.kRed).applyTo(m_buffer);

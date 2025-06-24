@@ -156,7 +156,9 @@ public class AutoRoutines {
     routine
         .active()
         .onTrue(
-            (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
+            (RobotContainer.Robot.isSimulation()
+                    ? START_TO_BRANCH1.resetOdometry()
+                    : print("Starting auto"))
                 .andThen(START_TO_BRANCH1.cmd()));
     routine.active().onTrue(superstructure.goToPosition(Position.FLATSTOW));
 
@@ -329,7 +331,9 @@ public class AutoRoutines {
     routine
         .active()
         .onTrue(
-            (Robot.isSimulation() ? START_TO_BRANCH1.resetOdometry() : print("Starting auto"))
+            (RobotContainer.Robot.isSimulation()
+                    ? START_TO_BRANCH1.resetOdometry()
+                    : print("Starting auto"))
                 .andThen(waitSeconds(0.2))
                 .andThen(START_TO_BRANCH1.cmd()));
 
@@ -393,7 +397,9 @@ public class AutoRoutines {
     routine
         .active()
         .onTrue(
-            (Robot.isSimulation() ? START_TO_BRANCH.resetOdometry() : print("Starting auto"))
+            (RobotContainer.Robot.isSimulation()
+                    ? START_TO_BRANCH.resetOdometry()
+                    : print("Starting auto"))
                 .andThen(waitSeconds(0.2))
                 .andThen(START_TO_BRANCH.cmd()));
 

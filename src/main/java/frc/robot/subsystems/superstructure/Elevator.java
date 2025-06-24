@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.Util;
 
 @SuppressWarnings("FieldCanBeLocal") // Stop intellij complaints
@@ -94,8 +94,8 @@ public class Elevator {
     double kgHigh = 0.75;
     double kgLow = 0.38;
 
-    config.Slot0.kP = Robot.isSimulation() ? 20 : 125;
-    config.Slot0.kD = Robot.isSimulation() ? 0.1 : 1;
+    config.Slot0.kP = RobotContainer.Robot.isSimulation() ? 20 : 125;
+    config.Slot0.kD = RobotContainer.Robot.isSimulation() ? 0.1 : 1;
     config.Slot0.kG = (kgHigh + kgLow) / 2;
     config.Slot0.kS = (kgHigh - kgLow) / 2;
     config.Slot0.kA = config.Slot0.kG / 9.8;

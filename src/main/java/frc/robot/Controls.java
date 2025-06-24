@@ -74,7 +74,7 @@ public class Controls {
     intake = bot.intake;
     climber = bot.climber;
 
-    Robot.instance.addPeriodic(this::periodic, 0.02);
+    RobotContainer.instance.robot.addPeriodic(this::periodic, 0.02);
   }
 
   public Command tuneDrivetrainStaticFriction() {

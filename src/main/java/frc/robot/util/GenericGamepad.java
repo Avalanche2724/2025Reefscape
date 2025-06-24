@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 
@@ -125,7 +125,7 @@ public class GenericGamepad {
   }
 
   public static GenericGamepad from(int port) {
-    if (Robot.isSimulation()
+    if (RobotContainer.Robot.isSimulation()
         && System.getProperty("os.name").toLowerCase().contains("mac")
         && false) {
       return new GenericGamepad(new CommandPS4Controller(port));

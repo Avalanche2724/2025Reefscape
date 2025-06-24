@@ -29,7 +29,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.Util;
 
 public class Wrist {
@@ -39,7 +39,7 @@ public class Wrist {
   public static final double GEAR_RATIO = 64;
   public static final double ZERO_OFFSET = 0.206; // rotations
   // adjustment on position passed to feedforward for kG accuracy
-  public static final double ARM_OFFSET = Robot.isSimulation() ? 0 : -0.049;
+  public static final double ARM_OFFSET = RobotContainer.Robot.isSimulation() ? 0 : -0.049;
 
   // limits
   private static final double UP_LIMIT = Rotations.convertFrom(95, Degrees);
@@ -48,7 +48,7 @@ public class Wrist {
   // PID stuff
   private final double WRIST_PID_PERIOD = 0.02;
   private final PIDController pid =
-      new PIDController(Robot.isReal() ? 13 : 60, 0, 0.9, WRIST_PID_PERIOD);
+      new PIDController(RobotContainer.Robot.isReal() ? 13 : 60, 0, 0.9, WRIST_PID_PERIOD);
   private final ArmFeedforward feedforward =
       new ArmFeedforward(
           (0.5 - 0.37) / 2,
@@ -203,7 +203,8 @@ public class Wrist {
 
   public double getAbsoluteEncoderPosition() {
     var pos = absoluteEncoder.getPosition();
-    if (Robot.isSimulation()) return Rotations.convertFrom(armSim.getAngleRads(), Radians);
+    if (RobotContainer.Robot.isSimulation())
+      return Rotations.convertFrom(armSim.getAngleRads(), Radians);
 
     // TODO alerting better
     if (absoluteEncoderSparkMax.getFaults().sensor) {
@@ -246,7 +247,7 @@ public class Wrist {
         };
 
     return () -> {
-      if (Robot.isSimulation())
+      if (RobotContainer.Robot.isSimulation())
         return; // Causes weird conflict with simulationPeriodic setRawRotorPosition
       double pos = getAbsoluteEncoderPosition();
       if (absoluteEncoderSparkMax.getFaults().sensor || pos == 0) {

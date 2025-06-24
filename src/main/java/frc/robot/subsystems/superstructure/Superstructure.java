@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -84,7 +84,7 @@ public class Superstructure extends SubsystemBase {
     wrist = new Wrist();
 
     createMechanism2d();
-    if (Robot.isSimulation()) {
+    if (RobotContainer.Robot.isSimulation()) {
       createSimulationThread();
     }
 
