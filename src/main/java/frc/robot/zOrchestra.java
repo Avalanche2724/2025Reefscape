@@ -86,7 +86,6 @@ public class zOrchestra {
   }
 
   /** Closes this Orchestra instance. */
-  @Override
   public void close() {
     jni.JNI_Close();
   }
