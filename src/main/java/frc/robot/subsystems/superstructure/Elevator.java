@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -13,6 +14,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -87,6 +89,8 @@ public class Elevator {
               null,
               Superstructure.instance));
 
+  Orchestra m_orchestra;
+
   public Elevator() {
     var config = new TalonFXConfiguration();
 
@@ -128,6 +132,7 @@ public class Elevator {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     // does this fix things?
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_HEIGHT;
+    config.Audio.AllowMusicDurDisable = true;
 
     config.CurrentLimits.StatorCurrentLimit = 90;
 
@@ -144,13 +149,32 @@ public class Elevator {
     var followerConfig = new TalonFXConfiguration();
     followerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     followerConfig.CurrentLimits.StatorCurrentLimit = config.CurrentLimits.StatorCurrentLimit;
+    followerConfig.Audio.AllowMusicDurDisable = true;
     followerMotor.getConfigurator().apply(followerConfig);
     followerMotor.setControl(new Follower(ELEVATOR_ID, false));
 
     zeroElevatorPosition();
+
+    // music();
+  }
+
+  public void music() {
+    m_orchestra = new Orchestra();
+
+    m_orchestra.addInstrument(motor);
+    m_orchestra.addInstrument(followerMotor);
+
+    var status = m_orchestra.loadMusic("output.chrp");
+
+    if (!status.isOK()) {
+      System.err.println("Failed to load music: " + status.getDescription());
+      SmartDashboard.putString("error music", status.getDescription());
+      // log error
+    }
   }
 
   public void periodic() {
+    // if (!m_orchestra.isPlaying()) m_orchestra.play();
     motorPosition.refresh();
     motorVelocity.refresh();
     motorTorqueCurrent.refresh();

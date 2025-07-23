@@ -1,6 +1,7 @@
 package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.hardware.DeviceIdentifier;
@@ -24,28 +25,7 @@ public class Util {
   private static double[] m_poseArray = new double[3];
 
   public static void configureUserButton() {
-    var canMotors =
-        Stream.concat(
-                Stream.of(
-                        TunerConstants.FrontLeft.DriveMotorId,
-                        TunerConstants.FrontRight.DriveMotorId,
-                        TunerConstants.BackLeft.DriveMotorId,
-                        TunerConstants.BackRight.DriveMotorId,
-                        TunerConstants.FrontLeft.SteerMotorId,
-                        TunerConstants.FrontRight.SteerMotorId,
-                        TunerConstants.BackLeft.SteerMotorId,
-                        TunerConstants.BackRight.SteerMotorId)
-                    .map(id -> new DeviceIdentifier(id, "talon fx", "CANivore")),
-                Stream.of(
-                        Elevator.ELEVATOR_ID,
-                        Elevator.ELEVATOR2_ID,
-                        Wrist.WRIST_ID,
-                        Intake.LEFTMOTOR_ID,
-                        Intake.RIGHTMOTOR_ID,
-                        Climber.MOTOR_ID)
-                    .map(id -> new DeviceIdentifier(id, "talon fx", "")))
-            .map(TalonFXConfigurator::new)
-            .toList();
+    var canMotors = getCanMotors();
 
     var userButton =
         new Trigger(RobotController::getUserButton)
@@ -58,6 +38,56 @@ public class Util {
                 () -> setMotorBrake(canMotors, false), () -> setMotorBrake(canMotors, true))
             .withTimeout(5) // todo: necessary?
             .ignoringDisable(true));
+  }
+
+  public static zOrchestra configureOrchestra() {
+    var orchestra = new zOrchestra();
+    getCanMotors();
+    var canMotors = getCanMotors();
+    for (var conf : canMotors) {
+      var audioConfigs = new AudioConfigs();
+      audioConfigs.AllowMusicDurDisable = true;
+      conf.apply(audioConfigs, 0);
+    }
+
+    for (var conf : motorIds().toList()) {
+      orchestra.addInstrument(conf, 0);
+    }
+
+    var status = orchestra.loadMusic("output2.chrp");
+
+    if (!status.isOK()) {
+      System.err.println("Failed to load music: " + status.getDescription());
+      SmartDashboard.putString("error music", status.getDescription());
+      // log error
+    }
+    return orchestra;
+  }
+
+  private static List<TalonFXConfigurator> getCanMotors() {
+    return motorIds().map(TalonFXConfigurator::new).toList();
+  }
+
+  private static Stream<DeviceIdentifier> motorIds() {
+    return Stream.concat(
+        Stream.of(
+                TunerConstants.FrontLeft.DriveMotorId,
+                TunerConstants.FrontRight.DriveMotorId,
+                TunerConstants.BackLeft.DriveMotorId,
+                TunerConstants.BackRight.DriveMotorId,
+                TunerConstants.FrontLeft.SteerMotorId,
+                TunerConstants.FrontRight.SteerMotorId,
+                TunerConstants.BackLeft.SteerMotorId,
+                TunerConstants.BackRight.SteerMotorId)
+            .map(id -> new DeviceIdentifier(id, "talon fx", "CANivore")),
+        Stream.of(
+                Elevator.ELEVATOR_ID,
+                Elevator.ELEVATOR2_ID,
+                Wrist.WRIST_ID,
+                Intake.LEFTMOTOR_ID,
+                Intake.RIGHTMOTOR_ID,
+                Climber.MOTOR_ID)
+            .map(id -> new DeviceIdentifier(id, "talon fx", "")));
   }
 
   private static void setMotorBrake(List<TalonFXConfigurator> configurator, boolean brake) {

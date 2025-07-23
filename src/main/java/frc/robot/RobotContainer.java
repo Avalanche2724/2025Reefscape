@@ -34,6 +34,8 @@ public class RobotContainer {
   private final AutoRoutines autoRoutines = new AutoRoutines(autoFactory, this);
   private final AutoChooser autoChooser = new AutoChooser();
 
+  private final zOrchestra orchestra;
+
   public RobotContainer() {
     // Register autos
     autoChooser.addRoutine("Start Left - SimplePath (ONLY FORWARD)", autoRoutines::simplePathAuto);
@@ -62,6 +64,10 @@ public class RobotContainer {
     controls.configureBindings();
 
     Util.configureUserButton();
+
+    // Set up music
+    orchestra = Util.configureOrchestra();
+    orchestra.play();
   }
 
   public static void main(String... args) {
