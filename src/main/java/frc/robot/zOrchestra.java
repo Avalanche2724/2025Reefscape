@@ -7,6 +7,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.jni.OrchestraJNI;
 import java.util.Collection;
 
+// sorry ctre don't sue us please
 /**
  * Orchestra is used to play music through devices. It uses a "Chirp" (.chrp) music file that can be
  * generated using Phoenix Tuner. Chirp files are generated from standard MIDI files.
@@ -95,7 +96,6 @@ public class zOrchestra {
    *
    * <p>This adds the instrument to the next track; it does not wrap back to track 0 if all tracks
    * have been filled. To assign multiple instruments to a track, use {@link
-   * #addInstrument(ParentDevice, int)}.
    *
    * @param instrument The device to add to the orchestra
    * @return Status code of adding the device
