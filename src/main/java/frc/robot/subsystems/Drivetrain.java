@@ -236,91 +236,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         this::integrateVisionCorrection);
   }
 
-  // auto-align code mostly adapted from Ben from CTRE's messages in the FRC discord
-  // but kinda messy, should fix later lol
-  public static class PidToPointRequest implements SwerveRequest {
-    public Pose2d target;
-
-    private final PIDController autoAlignXController = new PIDController(9, 0, 0.2);
-    private final PIDController autoAlignYController = new PIDController(9, 0, 0.2);
-    private final PIDController autoAlignThetaController = new PIDController(7, 0, 0);
-
-    private final TrapezoidProfile autoAlignProfile =
-        new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 3.7));
-    private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
-    private TrapezoidProfile.State autoAlignGoal;
-    private Rotation2d autoAlignHeading;
-    private Pose2d autoAlignInitialPose;
-    private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
-        new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
-
-    @Override
-    public StatusCode apply(
-        SwerveControlParameters parameters, SwerveModule<?, ?, ?>... modulesToApply) {
-      autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
-      // calculate our new distance and velocity in the desired direction of travel
-      autoAlignState = autoAlignProfile.calculate(1.0 / 250.0, autoAlignState, autoAlignGoal);
-
-      Pose2d curPose = parameters.currentPose;
-
-      double currentDistance = curPose.getTranslation().getDistance(target.getTranslation());
-
-      double ffMinRadius = 0.2;
-      double ffMaxRadius = 1.1;
-
-      double ffScaler =
-          MathUtil.clamp((currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius), 0.0, 1.0);
-
-      double xSpeed =
-          ffScaler * autoAlignState.velocity * autoAlignHeading.getCos()
-              + autoAlignXController.calculate(
-                  curPose.getX(),
-                  autoAlignInitialPose.getX()
-                      + autoAlignState.position * autoAlignHeading.getCos());
-      double ySpeed =
-          ffScaler * autoAlignState.velocity * autoAlignHeading.getSin()
-              + autoAlignYController.calculate(
-                  curPose.getY(),
-                  autoAlignInitialPose.getY()
-                      + autoAlignState.position * autoAlignHeading.getSin());
-      double thetaSpeed =
-          autoAlignThetaController.calculate(
-              curPose.getRotation().getRadians(), target.getRotation().getRadians());
-      if (Math.abs(
-              MathUtil.angleModulus(
-                  curPose.getRotation().getRadians() - target.getRotation().getRadians()))
-          < Radians.convertFrom(0.7, Degrees)) {
-        thetaSpeed = 0;
-      }
-
-      if (currentDistance < Meters.convertFrom(0.8, Inches)) {
-        ySpeed = 0;
-        xSpeed = 0;
-      }
-
-      return pathPidToPoint
-          .withSpeeds(new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed))
-          .apply(parameters, modulesToApply);
-    }
-
-    public void initializeRequest(Pose2d target, SwerveDriveState state) {
-      this.target = target;
-      autoAlignInitialPose = state.Pose;
-
-      var translation = target.getTranslation().minus(autoAlignInitialPose.getTranslation());
-      var distance = translation.getNorm();
-      autoAlignHeading = translation.getAngle();
-
-      var speeds = ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.getRotation());
-      var initialVel =
-          speeds.vxMetersPerSecond * autoAlignHeading.getCos()
-              + speeds.vyMetersPerSecond * autoAlignHeading.getSin();
-
-      autoAlignState = new TrapezoidProfile.State(0, initialVel);
-      autoAlignGoal = new TrapezoidProfile.State(distance, 0);
-    }
-  }
-
   public Command driveToPosition(Supplier<Pose2d> target) {
     var req = new PidToPointRequest();
 
@@ -329,7 +244,9 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               // inside method
               req.initializeRequest(target.get(), getState());
             })
-        .andThen(run(() -> setControl(req)).finallyDo(() -> setControl(brake)));
+        .andThen(
+            run(() -> setControl(req.resetTarget(target.get())))
+                .finallyDo(() -> setControl(brake)));
   }
 
   /**
@@ -413,8 +330,6 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 })));
   }
 
-  // Simulation stuff
-
   private void startSimThread() {
     m_lastSimTime = Utils.getCurrentTimeSeconds();
 
@@ -437,5 +352,95 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
               }
             });
     m_simNotifier.startPeriodic(0.005);
+  }
+
+  // Simulation stuff
+
+  // auto-align code mostly adapted from Ben from CTRE's messages in the FRC discord
+  // but kinda messy, should fix later lol
+  public static class PidToPointRequest implements SwerveRequest {
+    private final PIDController autoAlignXController = new PIDController(9, 0, 0.2);
+    private final PIDController autoAlignYController = new PIDController(9, 0, 0.2);
+    private final PIDController autoAlignThetaController = new PIDController(8, 0, 0);
+    private final TrapezoidProfile autoAlignProfile =
+        new TrapezoidProfile(new TrapezoidProfile.Constraints(5, 4));
+    private final SwerveRequest.ApplyFieldSpeeds pathPidToPoint =
+        new SwerveRequest.ApplyFieldSpeeds().withDriveRequestType(DriveRequestType.Velocity);
+    public Pose2d target;
+    private TrapezoidProfile.State autoAlignState = new TrapezoidProfile.State();
+    private TrapezoidProfile.State autoAlignGoal;
+    private Rotation2d autoAlignHeading;
+    private Pose2d autoAlignInitialPose;
+
+    public PidToPointRequest resetTarget(Pose2d newTarget) {
+      target = newTarget;
+      return this;
+    }
+
+    @Override
+    public StatusCode apply(
+        SwerveControlParameters parameters, SwerveModule<?, ?, ?>... modulesToApply) {
+      autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
+      // calculate our new distance and velocity in the desired direction of travel
+      autoAlignState = autoAlignProfile.calculate(1.0 / 250.0, autoAlignState, autoAlignGoal);
+
+      Pose2d curPose = parameters.currentPose;
+
+      double currentDistance = curPose.getTranslation().getDistance(target.getTranslation());
+
+      double ffMinRadius = 0.2;
+      double ffMaxRadius = 1.1;
+
+      double ffScaler =
+          MathUtil.clamp((currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius), 0.0, 1.0);
+
+      double xSpeed =
+          ffScaler * autoAlignState.velocity * autoAlignHeading.getCos()
+              + autoAlignXController.calculate(
+                  curPose.getX(),
+                  autoAlignInitialPose.getX()
+                      + autoAlignState.position * autoAlignHeading.getCos());
+      double ySpeed =
+          ffScaler * autoAlignState.velocity * autoAlignHeading.getSin()
+              + autoAlignYController.calculate(
+                  curPose.getY(),
+                  autoAlignInitialPose.getY()
+                      + autoAlignState.position * autoAlignHeading.getSin());
+      double thetaSpeed =
+          autoAlignThetaController.calculate(
+              curPose.getRotation().getRadians(), target.getRotation().getRadians());
+      if (Math.abs(
+              MathUtil.angleModulus(
+                  curPose.getRotation().getRadians() - target.getRotation().getRadians()))
+          < Radians.convertFrom(0.5, Degrees)) {
+        thetaSpeed = 0;
+      }
+
+      if (currentDistance < Meters.convertFrom(0.8, Inches)) {
+        ySpeed = 0;
+        xSpeed = 0;
+      }
+
+      return pathPidToPoint
+          .withSpeeds(new ChassisSpeeds(xSpeed, ySpeed, thetaSpeed))
+          .apply(parameters, modulesToApply);
+    }
+
+    public void initializeRequest(Pose2d target, SwerveDriveState state) {
+      this.target = target;
+      autoAlignInitialPose = state.Pose;
+
+      var translation = target.getTranslation().minus(autoAlignInitialPose.getTranslation());
+      var distance = translation.getNorm();
+      autoAlignHeading = translation.getAngle();
+
+      var speeds = ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.getRotation());
+      var initialVel =
+          speeds.vxMetersPerSecond * autoAlignHeading.getCos()
+              + speeds.vyMetersPerSecond * autoAlignHeading.getSin();
+
+      autoAlignState = new TrapezoidProfile.State(0, initialVel);
+      autoAlignGoal = new TrapezoidProfile.State(distance, 0);
+    }
   }
 }

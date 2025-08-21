@@ -127,7 +127,8 @@ public class GenericGamepad {
   public static GenericGamepad from(int port) {
     if (RobotContainer.Robot.isSimulation()
         && System.getProperty("os.name").toLowerCase().contains("mac")
-        && false) {
+    // && false) { // why did I add false here? lol
+    ) {
       return new GenericGamepad(new CommandPS4Controller(port));
     } else {
       return new GenericGamepad(new CommandXboxController(port));

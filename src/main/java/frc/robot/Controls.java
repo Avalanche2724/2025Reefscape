@@ -356,7 +356,7 @@ public class Controls {
       case OUTTAKE_L1 -> ReefLevel.L1;
       case OUTTAKE_L2_LAUNCH, INTAKE_ALGAE_L2 -> ReefLevel.L2;
       case OUTTAKE_L3_LAUNCH, INTAKE_ALGAE_L3 -> ReefLevel.L3;
-        // case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
+      // case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
       default -> null;
     };
   }
@@ -394,6 +394,11 @@ public class Controls {
                         : Rotation2d.kZero));
   }
 
+  private Pose2d getCurrentPos() {
+    // current pos
+    return drivetrain.getState().Pose;
+  }
+
   /**
    * Finds the nearest reef branch at the specified level and side. Returns Pose2d to target
    *
@@ -402,10 +407,12 @@ public class Controls {
    * @return The proper robot pose for scoring at the nearest reef branch
    */
   private Pose2d findNearestReefBranch(ReefLevel level, boolean leftSide) {
-    Pose2d currentPose = drivetrain.getState().Pose;
+    Pose2d currentPose = getCurrentPos();
+
     Pose2d nearestBranch = null;
     double minAngleDifference = Double.MAX_VALUE;
-    List<Map<ReefLevel, Pose2d>> branchPositions2d =
+
+    var branchPositions2d =
         AllianceFlipUtil.shouldFlip()
             ? FieldConstants.Reef.redBranchPositions2d
             : FieldConstants.Reef.branchPositions2d;
@@ -422,15 +429,10 @@ public class Controls {
       Map<ReefLevel, Pose2d> branchMap = branchPositions2d.get(i);
       Pose2d branchPose = branchMap.get(level);
       if (branchPose != null) {
-        // Calculate the angle robot needs to have when facing the branch (180° from branch angle)
         Rotation2d branchRotation = branchPose.getRotation();
         Rotation2d targetRobotRotation = branchRotation.plus(Rotation2d.fromDegrees(180));
-
-        // Calculate the angle difference between robot's current rotation and target rotation
         double angleDifference =
             Math.abs(currentPose.getRotation().minus(targetRobotRotation).getDegrees());
-
-        // Check if this branch requires less turning than the current best
         if (angleDifference < minAngleDifference) {
           minAngleDifference = angleDifference;
           nearestBranch = branchPose;
@@ -441,31 +443,31 @@ public class Controls {
     if (nearestBranch != null) {
       // The branch poses face outward, so we need to face the opposite direction to face the branch
       Rotation2d branchRotation = nearestBranch.getRotation();
-      // Calculate a position that is away from the branch
-      // in the direction opposite to the branch's orientation
       double scoringDistance = Meters.convertFrom(33.5, Inches);
-      if (level == ReefLevel.L4) {
-        scoringDistance = Meters.convertFrom(25, Inches);
-      }
+      if (level == ReefLevel.L4) scoringDistance = Meters.convertFrom(25, Inches);
 
       double offsetX = scoringDistance * Math.cos(branchRotation.getRadians());
       double offsetY = scoringDistance * Math.sin(branchRotation.getRadians());
-      // Also move the robot position inch to the robot's left
-      // because the intake is offset :cry:
-      // NVM: this seemed to do worse; fix in code later?
-      offsetX +=
-          Meters.convertFrom(0, Inches) * Math.cos(branchRotation.getRadians() + Math.PI / 2);
-      offsetY +=
-          Meters.convertFrom(0, Inches) * Math.sin(branchRotation.getRadians() + Math.PI / 2);
 
-      // Create the robot scoring position: offset from branch and facing toward the branch
-      return new Pose2d(
-          nearestBranch.getX() + offsetX,
-          nearestBranch.getY() + offsetY,
-          branchRotation.plus(Rotation2d.fromDegrees(180)) // Face toward the branch
-          );
+      // thank you chatgpt for the code here
+      double targetX = nearestBranch.getX() + offsetX;
+      double targetY = nearestBranch.getY() + offsetY;
+
+      // --- NEW: aim at the branch from the robot's current position ---
+      Rotation2d aimAtBranch =
+          new Rotation2d(
+              nearestBranch.getX() - currentPose.getX(), nearestBranch.getY() - currentPose.getY());
+
+      // keep it within ±2.5° of the ideal "face the branch" direction
+      Rotation2d idealFacing = branchRotation.plus(Rotation2d.fromDegrees(180));
+      double delta = aimAtBranch.minus(idealFacing).getRadians();
+      double maxErr = Math.toRadians(2.5);
+      delta = MathUtil.clamp(delta, -maxErr, maxErr);
+      Rotation2d desiredHeading = idealFacing.plus(new Rotation2d(delta));
+
+      return new Pose2d(targetX, targetY, desiredHeading);
     }
-    // If we didn't find a branch, return the current pose
+
     System.out.println("Warning: could not find nearest reef branch");
     return currentPose;
   }
