@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.wpilibj2.command.Commands.*;
+
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -34,9 +36,10 @@ public class RobotContainer {
   private final AutoRoutines autoRoutines = new AutoRoutines(autoFactory, this);
   private final AutoChooser autoChooser = new AutoChooser();
 
-  private final zOrchestra orchestra;
+  private zOrchestra orchestra;
 
   public RobotContainer() {
+
     // Register autos
     autoChooser.addRoutine("Start Left - SimplePath (ONLY FORWARD)", autoRoutines::simplePathAuto);
     // autoChooser.addRoutine("NOT SIMPLE PATH", autoRoutines::simplePathAuto2);
@@ -66,8 +69,12 @@ public class RobotContainer {
     Util.configureUserButton();
 
     // Set up music
+    /*
     orchestra = Util.configureOrchestra();
+
     orchestra.play();
+
+     */
   }
 
   public static void main(String... args) {
