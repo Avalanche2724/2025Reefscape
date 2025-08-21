@@ -249,6 +249,7 @@ public class Controls {
     double hypot = Math.hypot(x, y);
     double angle = Math.atan2(y, x);
     hypot = deadband(hypot);
+    // hypot *= 1.1; // SPEED!!!! no
     x = hypot * Math.cos(angle);
     y = hypot * Math.sin(angle);
 
@@ -258,6 +259,7 @@ public class Controls {
         .withVelocityX(y * MAX_SPEED)
         .withVelocityY(-x * MAX_SPEED)
         .withRotationalRate(deadband(-turnX) * MAX_ANGLE_RATE);
+    // .withDesaturateWheelSpeeds(false);
   }
 
   private void configureDriveTuningBindings() {
