@@ -220,8 +220,9 @@ public class Controls {
     operator.rightMiddle // right lines
         .onTrue(runOnce(() -> isOnCoralBindings = true));
 
-    coralAlgaeActivePresets(
-        operator.leftBumper, Position.INTAKE_CORAL_STATION, Position.INTAKE_CORAL_STATION);
+    // coralAlgaeActivePresets(
+    //    operator.leftBumper, Position.INTAKE_CORAL_STATION, Position.INTAKE_CORAL_STATION);
+    operator.leftBumper.whileTrue(superstructure.goToPosition(() -> nextTargetPosition));
 
     coralAlgaeActivePresets(
         operator.rightBumper, Position.MIN_INTAKE_GROUND, Position.ALG_INTAKE_GROUND);
@@ -358,7 +359,7 @@ public class Controls {
       case OUTTAKE_L1 -> ReefLevel.L1;
       case OUTTAKE_L2_LAUNCH, INTAKE_ALGAE_L2 -> ReefLevel.L2;
       case OUTTAKE_L3_LAUNCH, INTAKE_ALGAE_L3 -> ReefLevel.L3;
-      // case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
+        // case OUTTAKE_L4_LAUNCH, OUTTAKE_NET -> ReefLevel.L4;
       default -> null;
     };
   }
